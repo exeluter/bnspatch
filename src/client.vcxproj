@@ -114,7 +114,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib\$(PlatformTarget)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -147,7 +147,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib\$(PlatformTarget)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -182,7 +182,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib\$(PlatformTarget)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -219,7 +219,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>lib\$(PlatformTarget)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -272,6 +272,9 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
     </ClCompile>
     <ClCompile Include="modulever.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
