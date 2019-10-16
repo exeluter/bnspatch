@@ -3,14 +3,14 @@ Personal project I decided to (partially) release to the public.
 
 ### Understand the following
 - For educational purposes only.
-- There is no support. Attempts to contact me for help will be ignored.
+- There is no support. Attempts to contact me for support will be ignored.
 - No binaries are distributed, compile it yourself.
 - Pull requests that I think add value to the project will be accepted.
 - Using it on a live server is against the Blade & Soul [Rules of Conduct][0] and [User Agreement][1].
 - I accept no responsibility should you manage to get yourself banned while using it.
 
 ## Components
-The client and launcher components of betterbns can be used individually or in tandem.
+The client and launcher components can be used individually or in tandem.
 
 ### Client features (public)
 - [x] Enables multi-client.
