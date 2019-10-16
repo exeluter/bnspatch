@@ -1,0 +1,67 @@
+LIBRARY CRYPTSP.dll
+EXPORTS
+    CheckSignatureInFile
+    CryptAcquireContextA
+    CryptAcquireContextW
+    CryptContextAddRef
+    CryptCreateHash
+    CryptDecrypt
+    CryptDeriveKey
+    CryptDestroyHash
+    CryptDestroyKey
+    CryptDuplicateHash
+    CryptDuplicateKey
+    CryptEncrypt
+    CryptEnumProviderTypesA
+    CryptEnumProviderTypesW
+    CryptEnumProvidersA
+    CryptEnumProvidersW
+    CryptExportKey
+    CryptGenKey
+    CryptGenRandom
+    CryptGetDefaultProviderA
+    CryptGetDefaultProviderW
+    CryptGetHashParam
+    CryptGetKeyParam
+    CryptGetProvParam
+    CryptGetUserKey
+    CryptHashData
+    CryptHashSessionKey
+    CryptImportKey
+    CryptReleaseContext
+    CryptSetHashParam
+    CryptSetKeyParam
+    CryptSetProvParam
+    CryptSetProviderA
+    CryptSetProviderExA
+    CryptSetProviderExW
+    CryptSetProviderW
+    CryptSignHashA
+    CryptSignHashW
+    CryptVerifySignatureA
+    CryptVerifySignatureW
+	SystemFunction006 = RtlDigestLM
+	SystemFunction007 = RtlDigestNTLM
+	SystemFunction008 = RtlLMResponseToChallenge
+	SystemFunction009 = RtlLMResponseToChallenge
+	SystemFunction010 = RtlDigestMD4only16Bytes
+	SystemFunction011 = RtlDigestMD4only16Bytes
+	SystemFunction012 = RtlEncryptDES2blocks2keys
+	SystemFunction013 = RtlDecryptDES2blocks2keys
+	SystemFunction014 = RtlEncryptDES2blocks2keys
+	SystemFunction015 = RtlDecryptDES2blocks2keys
+	SystemFunction016 = RtlEncryptDES2blocks1key
+	SystemFunction018 =	RtlEncryptDES2blocks1key
+	SystemFunction020 =	RtlEncryptDES2blocks2keys
+	SystemFunction021 =	RtlDecryptDES2blocks2keys
+	SystemFunction022 =	RtlEncryptDES2blocks2keys
+	SystemFunction023 =	RtlDecryptDES2blocks2keys
+	SystemFunction024 = RtlEncryptDES2blocks1DWORD
+	SystemFunction025 = RtlDecryptDES2blocks1DWORD
+	SystemFunction026 =	RtlEncryptDES2blocks1DWORD
+	SystemFunction027 =	RtlDecryptDES2blocks1DWORD
+	SystemFunction030 = RtlEqualMemory16Bytes
+	SystemFunction031 = RtlEqualMemory16Bytes
+	SystemFunction032 = RtlEncryptDecryptRC4
+	SystemFunction033 = RtlEncryptDecryptRC4
+	SystemFunction035 = RtlCheckSignatureInFile
