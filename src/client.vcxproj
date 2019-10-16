@@ -124,7 +124,7 @@
       <ErrorReporting>3</ErrorReporting>
     </MASM>
     <PreBuildEvent>
-      <Command>cd ".\lib\$(PlatformTarget)"
+      <Command>cd "$(ProjectDir)lib\$(PlatformTarget)"
 cl /c /nologo "$(TargetName).cpp" /WX
 link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
     </PreBuildEvent>
@@ -157,7 +157,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <ErrorReporting>3</ErrorReporting>
     </MASM>
     <PreBuildEvent>
-      <Command>cd ".\lib\$(PlatformTarget)"
+      <Command>cd "$(ProjectDir)lib\$(PlatformTarget)"
 cl /c /nologo "$(TargetName).cpp" /WX
 link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
     </PreBuildEvent>
@@ -194,7 +194,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <PreBuildEvent>
-      <Command>cd ".\lib\$(PlatformTarget)"
+      <Command>cd "$(ProjectDir)lib\$(PlatformTarget)"
 cl /c /nologo "$(TargetName).cpp" /WX
 link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
     </PreBuildEvent>
@@ -231,7 +231,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <PreBuildEvent>
-      <Command>cd ".\lib\$(PlatformTarget)"
+      <Command>cd "$(ProjectDir)lib\$(PlatformTarget)"
 cl /c /nologo "$(TargetName).cpp" /WX
 link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
     </PreBuildEvent>
