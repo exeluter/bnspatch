@@ -1,4 +1,4 @@
-# bnspatch
+# bnspatch [![Build status](https://ci.appveyor.com/api/projects/status/altu43hhdd5akowp?svg=true)](https://ci.appveyor.com/project/zeffy/bnspatch)
 Personal project I decided to (partially) release to the public.
 
 ### Understand the following
