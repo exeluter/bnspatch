@@ -38,28 +38,24 @@ The client and launcher components can be used individually or in tandem.
 
 ## FAQ
 
-#### Q: Why should I use this? What's wrong with BnS Buddy?
-[Read this][3] and make your own decision.
-
-#### Q: Does this work with [**d912pxy**][4]?
+#### Q: Does this work with [**d912pxy**][3]?
 Yes.
 
 ## Acknowledgements
-- [processhacker/**phnt**][5] (CC-BY-4.0 license)
-- [microsoft/**Detours**][6] (MIT license)
-- [microsoft/**GSL**][7] (MIT license)
-- [microsoft/**wil**][8] (MIT license)
-- [pardeike/**Harmony**][9] (MIT license)
-- [gabime/**spdlog**][10] (MIT license)
+- [processhacker/**phnt**][4] (CC-BY-4.0 license)
+- [microsoft/**Detours**][5] (MIT license)
+- [microsoft/**GSL**][6] (MIT license)
+- [microsoft/**wil**][7] (MIT license)
+- [pardeike/**Harmony**][8] (MIT license)
+- [gabime/**spdlog**][9] (MIT license)
 
 [0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
 [2]: https://docs.unrealengine.com/udk/Three/CommandLineArguments.html
-[3]: https://github.com/zeffy/bnspatch/blob/master/docs/BNSBUDDY_BAD.md
-[4]: https://github.com/megai2/d912pxy
-[5]: https://github.com/processhacker/phnt
-[6]: https://github.com/microsoft/Detours
-[7]: https://github.com/microsoft/GSL
-[8]: https://github.com/microsoft/wil
-[9]: https://github.com/pardeike/Harmony
-[10]: https://github.com/gabime/spdlog
+[3]: https://github.com/megai2/d912pxy
+[4]: https://github.com/processhacker/phnt
+[5]: https://github.com/microsoft/Detours
+[6]: https://github.com/microsoft/GSL
+[7]: https://github.com/microsoft/wil
+[8]: https://github.com/pardeike/Harmony
+[9]: https://github.com/gabime/spdlog
