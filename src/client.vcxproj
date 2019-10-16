@@ -102,12 +102,12 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions);NOGZIP</PreprocessorDefinitions>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <UseFullPaths>false</UseFullPaths>
       <ErrorReporting>None</ErrorReporting>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include;$(ProjectDir)\include\phnt</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -119,7 +119,6 @@
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <AdditionalOptions>/ignore:4248 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <MASM>
       <ErrorReporting>3</ErrorReporting>
@@ -136,12 +135,12 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);NOGZIP</PreprocessorDefinitions>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <UseFullPaths>false</UseFullPaths>
       <ErrorReporting>None</ErrorReporting>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include;$(ProjectDir)\include\phnt</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -153,7 +152,6 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <AdditionalOptions>/ignore:4248 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <MASM>
       <ErrorReporting>3</ErrorReporting>
@@ -169,14 +167,14 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions);NOGZIP</PreprocessorDefinitions>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <DebugInformationFormat>None</DebugInformationFormat>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <UseFullPaths>false</UseFullPaths>
       <ErrorReporting>None</ErrorReporting>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include;$(ProjectDir)\include\phnt</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -190,7 +188,6 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <AdditionalOptions>/ignore:4248 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <MASM>
       <ErrorReporting>3</ErrorReporting>
@@ -207,14 +204,14 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);NOGZIP</PreprocessorDefinitions>
-      <TreatWarningAsError>false</TreatWarningAsError>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
       <DebugInformationFormat>None</DebugInformationFormat>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <UseFullPaths>false</UseFullPaths>
       <ErrorReporting>None</ErrorReporting>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include;$(ProjectDir)\include\phnt</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -228,7 +225,6 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <AdditionalOptions>/ignore:4248 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <MASM>
       <ErrorReporting>3</ErrorReporting>
