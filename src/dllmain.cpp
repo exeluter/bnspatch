@@ -70,7 +70,7 @@ const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdl
 {
     PCSTR pszDllName;
     WCHAR wszPath[MAX_PATH];
-    size_t Count;
+    int Count;
 
     switch ( dliNotify ) {
     case dliStartProcessing:
@@ -79,7 +79,7 @@ const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdl
         pszDllName = GetDllName(&__ImageBase);
         if ( pszDllName && !_stricmp(pdli->szDll, pszDllName) ) {
             Count = GetSystemDirectoryW(wszPath, ARRAYSIZE(wszPath));
-            if ( !Count || Count + 1 > ARRAYSIZE(wszPath) )
+            if ( !Count || (size_t)Count + 1 > ARRAYSIZE(wszPath) )
                 return nullptr;
 
             wszPath[Count++] = '\\';
