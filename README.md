@@ -4,9 +4,9 @@ Personal project I decided to (partially) release to the public.
 ### Understand the following
 - For educational purposes only.
 - There is no support. Attempts to contact me for help will be ignored.
-- Binaries are available from build artifacts and almost assuredly have severe bugs.
+- No binaries are distributed, compile it yourself.
 - Pull requests that I think add value to the project will be accepted.
-- Using it on a live server is against the  Blade & Soul [Rules of Conduct][0] and [User Agreement][1].
+- Using it on a live server is against the Blade & Soul [Rules of Conduct][0] and [User Agreement][1].
 - I accept no responsibility should you manage to get yourself banned while using it.
 
 ## Components
