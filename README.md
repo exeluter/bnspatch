@@ -21,7 +21,7 @@ The client and launcher components can be used individually or in tandem.
 - [ ] 32-bit client support.
 
 ### Launcher features (private, in-progress)
-*Waiting on [**Harmony**][9] v2.x before making the source public.*
+*Waiting on [**Harmony**][8] v2.x before making the source public.*
 
 - Fixes miscellaneous bugs and annoying behavior in the official launcher, such as:
   * [x] Unnecessary localization files are no longer downloaded.
