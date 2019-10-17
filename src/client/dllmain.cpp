@@ -3,7 +3,8 @@
 #include "modulever.h"
 #include "hooks.hpp"
 
-EXTERN_C BOOL APIENTRY DllMain(
+EXTERN_C 
+BOOL APIENTRY DllMain(
     const HINSTANCE instance,
     const DWORD reason,
     const PVOID reserved)
