@@ -13,6 +13,8 @@ Personal project I decided to (partially) release to the public.
 The client and launcher components can be used individually or in tandem.
 
 ### Client features (public)
+Only tested on NA/EU client. Other regions have invasive anti-cheats 
+
 - [x] Enables multi-client.
 - [x] Bypasses WinLicense "Detect File/Registry Monitors" protection.
 - [x] Prevents `aegisty64.bin` from loading.
@@ -23,17 +25,15 @@ The client and launcher components can be used individually or in tandem.
 ### Launcher features (private, in-progress)
 *Waiting on [**Harmony**][8] v2.x before making the source public.*
 
-- Fixes miscellaneous bugs and annoying behavior in the official launcher, such as:
-  * [x] Unnecessary localization files are no longer downloaded.
-  * [x] Textboxes on the login window no longer unexpectedly change focus.
+- [x] Compatible with all versions of NC Launcher 2 for NA/EU and KR.
+- [x] Unnecessary localization files are no longer downloaded.
+- [x] Controls on the login window no longer switch focus if a field isn't filled in.
 - [x] Disables AppInsights telemetry.
 - [x] Disables encryption on log files (only for debugging).
-- [x] Can Prevent the launcher from updating or repairing specific files.
+- [x] Can prevent the launcher from updating or repairing specific files.
 - [x] [Command line arguments][2] that are set on the launcher shortcut are forwarded to the client
       when it is started.
-- [x] Exposes a scriptable interface for certain events, e.g. to automatically pause a torrent client
-      when the game starts and resume it when the game is closed, among any number of other potential
-      uses.
+- [x] Exposes a scriptable interface for certain events, such as the game starting and ending.
       
 #### Planned features
 - [ ] Apply patches to `xml64.dat` and `config64.dat` automatically after installing new updates.
@@ -51,6 +51,7 @@ Yes.
 - [microsoft/**wil**][7] (MIT license)
 - [pardeike/**Harmony**][8] (MIT license)
 - [gabime/**spdlog**][9] (MIT license)
+- [madler/**zlib**][10] (zlib license)
 
 [0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
@@ -62,3 +63,4 @@ Yes.
 [7]: https://github.com/microsoft/wil
 [8]: https://github.com/pardeike/Harmony
 [9]: https://github.com/gabime/spdlog
+[10]: https://github.com/madler/zlib
