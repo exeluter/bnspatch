@@ -6,7 +6,7 @@
 PCSTR GetDllName(LPCVOID BaseOfImage)
 {
     if ( !BaseOfImage )
-        return nullptr;
+        BaseOfImage = GetModuleHandleW(nullptr);
 
     const auto DosHeader = (const PIMAGE_DOS_HEADER)BaseOfImage;
     if ( DosHeader->e_magic != IMAGE_DOS_SIGNATURE )
