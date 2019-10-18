@@ -19,14 +19,19 @@ EXTERN_C const IMAGE_DOS_HEADER __ImageBase;
 #include <strsafe.h>
 #include <stdint.h>
 
+#include <wil/stl.h>
+#include <wil/win32_helpers.h>
+#include <wil/token_helpers.h>
+
 #include <string>
+#include <memory>
+#include <codecvt>
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include <codecvt>
-#include <gsl/gsl>
-#include <wil/token_helpers.h>
 #include <wil/resource.h>
+
+#include <gsl/gsl>
 
 #define DETOURS_INTERNAL
 #include <detours/detours.h>

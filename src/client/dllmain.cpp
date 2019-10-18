@@ -71,19 +71,18 @@ const PfnDliHook __pfnDliNotifyHook2 = [](
     PDelayLoadInfo pdli) -> FARPROC
 {
     PCSTR DllName;
-    std::array<WCHAR, MAX_PATH> Buffer;
+    std::wstring result;
 
     switch ( dliNotify ) {
     case dliStartProcessing:
         break;
     case dliNotePreLoadLibrary:
-        DllName = GetDllName(&__ImageBase);
-        if ( DllName && !_stricmp(pdli->szDll, DllName)
-            && GetSystemDirectoryW(Buffer.data(), (UINT)Buffer.size()) ) {
+        if ( (DllName = GetDllName(&__ImageBase))
+            && !_stricmp(pdli->szDll, DllName)
+            && SUCCEEDED(wil::GetSystemDirectoryW(result)) ) {
 
-            auto Path = fs::path(Buffer.data());
+            auto Path = fs::path(result);
             Path /= pdli->szDll;
-
             return (FARPROC)LoadLibraryExW(Path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
         }
         break;
