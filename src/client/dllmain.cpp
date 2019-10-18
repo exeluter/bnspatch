@@ -3,19 +3,18 @@
 #include "..\common\modulever.h"
 #include "hooks.hpp"
 
-EXTERN_C 
-BOOL APIENTRY DllMain(
-    const HINSTANCE instance,
-    const DWORD reason,
-    const PVOID reserved)
+extern "C" BOOL WINAPI DllMain(
+    HINSTANCE hInstance,
+    DWORD     fdwReason,
+    LPVOID    lpvReserved)
 {
     HMODULE ModuleHandle;
     PCNZWCH ProductName;
     PCNZWCH OriginalFilename;
 
-    switch ( reason ) {
+    switch ( fdwReason ) {
     case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(instance);
+        DisableThreadLibraryCalls(hInstance);
         if ( GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\ProductName", &(LPCVOID &)ProductName) >= 0
             && !wcscmp(ProductName, L"Blade & Soul")
             && GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)OriginalFilename) >= 0
@@ -66,8 +65,10 @@ BOOL APIENTRY DllMain(
     return TRUE;
 }
 
-EXTERN_C
-const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC
+ExternC
+const PfnDliHook __pfnDliNotifyHook2 = [](
+    unsigned       dliNotify,
+    PDelayLoadInfo pdli) -> FARPROC
 {
     PCSTR DllName;
     std::array<WCHAR, MAX_PATH> Buffer;
