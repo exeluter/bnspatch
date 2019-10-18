@@ -31,6 +31,9 @@ The client and launcher components can be used individually or in tandem.
 - [x] Can Prevent the launcher from updating or repairing specific files.
 - [x] [Command line arguments][2] that are set on the launcher shortcut are forwarded to the client
       when it is started.
+- [x] Exposes a scriptable interface for certain events, e.g. to automatically pause a torrent client
+      when the game starts and resume it when the game is closed, among any number of other potential
+      uses.
       
 #### Planned features
 - [ ] Apply patches to `xml64.dat` and `config64.dat` automatically after installing new updates.
