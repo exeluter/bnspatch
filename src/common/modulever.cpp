@@ -62,16 +62,16 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
     block = (const VERBLOCK *)head;
 
     while ( *pwszSubBlock ) {
-        while ( *pwszSubBlock == '\\' ) ++pwszSubBlock;
+        while ( *pwszSubBlock == '\\' )
+            ++pwszSubBlock;
         if ( !*pwszSubBlock ) break;
 
         end = (UINT_PTR)block + block->wTotLen;
         sub = (const VERBLOCK *)((UINT_PTR)block + DWORDUP(len));
 
-        for ( start = pwszSubBlock;
-            *pwszSubBlock && *pwszSubBlock != '\\';
-            pwszSubBlock++ )
-            __noop;
+        start = pwszSubBlock;
+        while ( *pwszSubBlock && *pwszSubBlock != '\\' )
+            ++pwszSubBlock;
 
         cch = (int)(pwszSubBlock - start);
 
@@ -88,20 +88,26 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
 
         ncmp = 0;
         while ( SUCCEEDED(UIntPtrSub(end, (UINT_PTR)sub, &remain))
-            && remain >= sizeof * sub
-            && sub->wTotLen >= sizeof * sub
+            && remain >= sizeof *sub
+            && sub->wTotLen >= sizeof *sub
             && sub->wTotLen <= remain
             && SUCCEEDED(StringCbLengthW(sub->szKey, KEYSIZEMAX(sub), &cb))
-            && (len = (off = DWORDUP(sizeof * sub + cb)) + sub->wValLen) <= sub->wTotLen ) {
+            && (len = (off = DWORDUP(sizeof *sub + cb)) + sub->wValLen) <= sub->wTotLen ) {
 
             if ( index >= 0 ) {
                 if ( !index-- )
                     ncmp = CSTR_EQUAL;
             } else {
-                ncmp = CompareStringEx(LOCALE_NAME_INVARIANT, NORM_IGNORECASE,
-                    start, cch,
-                    sub->szKey, (int)(cb / sizeof * sub->szKey),
-                    NULL, NULL, 0);
+                ncmp = CompareStringEx(
+                    LOCALE_NAME_INVARIANT,
+                    NORM_IGNORECASE,
+                    start,
+                    cch,
+                    sub->szKey,
+                    (int)(cb / sizeof *sub->szKey),
+                    NULL,
+                    NULL,
+                    0);
                 if ( !ncmp )
                     return -1;
             }
