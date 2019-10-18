@@ -1,7 +1,4 @@
-#include <windows.h>
-#include <strsafe.h>
-#include <intsafe.h>
-#include <stdlib.h>
+#include "pch.h"
 #include "modulever.h"
 
 #define DWORDUP(x) (((x) + 3) & ~3)
@@ -50,7 +47,7 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
     if ( !pwszSubBlock
         || !(rsrc = FindResourceW(hModule, MAKEINTRESOURCEW(VS_VERSION_INFO), VS_FILE_INFO))
         || !(cb = SizeofResource(hModule, rsrc))
-        || !(head = LoadResource(hModule, rsrc))
+        || !(head = (VERHEAD *)LoadResource(hModule, rsrc))
         || head->wTotLen > cb
         || head->wTotLen < sizeof * head
         || head->wTotLen > MAXSHORT
@@ -65,24 +62,24 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
     block = (const VERBLOCK *)head;
 
     while ( *pwszSubBlock ) {
-        while ( *pwszSubBlock == L'\\' ) ++pwszSubBlock;
+        while ( *pwszSubBlock == '\\' ) ++pwszSubBlock;
         if ( !*pwszSubBlock ) break;
 
         end = (UINT_PTR)block + block->wTotLen;
         sub = (const VERBLOCK *)((UINT_PTR)block + DWORDUP(len));
 
         for ( start = pwszSubBlock;
-            *pwszSubBlock && *pwszSubBlock != L'\\';
+            *pwszSubBlock && *pwszSubBlock != '\\';
             pwszSubBlock++ )
             __noop;
 
         cch = (int)(pwszSubBlock - start);
 
         index = -1;
-        if ( *start == L'*' && start + 1 == pwszSubBlock ) {
+        if ( *start == '*' && start + 1 == pwszSubBlock ) {
             // take first match
             index = 0;
-        } else if ( *start == L'#' ) {
+        } else if ( *start == '#' ) {
             // take index #n
             index = wcstol(start + 1, &endptr, 10);
             if ( endptr != pwszSubBlock )
@@ -117,8 +114,6 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
         if ( ncmp != CSTR_EQUAL )
             return -1;
     }
-    *ppv = (LPCVOID)(off < block->wTotLen
-        ? (UINT_PTR)block + off
-        : (UINT_PTR)block->szKey + cb);
+    *ppv = (LPCVOID)(off < block->wTotLen ? (UINT_PTR)block + off : (UINT_PTR)block->szKey + cb);
     return block->wValLen;
 }
