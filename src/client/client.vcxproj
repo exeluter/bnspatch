@@ -194,6 +194,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <SetChecksum>true</SetChecksum>
     </Link>
     <MASM>
       <ErrorReporting>3</ErrorReporting>
@@ -233,6 +234,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <SetChecksum>true</SetChecksum>
     </Link>
     <MASM>
       <ErrorReporting>3</ErrorReporting>
