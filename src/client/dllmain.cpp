@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "dllname.h"
-#include "modulever.h"
+#include "..\common\dllname.h"
+#include "..\common\modulever.h"
 #include "hooks.hpp"
 
 EXTERN_C 
@@ -69,24 +69,21 @@ BOOL APIENTRY DllMain(
 EXTERN_C
 const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC
 {
-    PCSTR pszDllName;
-    WCHAR wszPath[MAX_PATH];
-    int Count;
+    PCSTR DllName;
+    std::array<WCHAR, MAX_PATH> Buffer;
 
     switch ( dliNotify ) {
     case dliStartProcessing:
         break;
     case dliNotePreLoadLibrary:
-        pszDllName = GetDllName(&__ImageBase);
-        if ( pszDllName && !_stricmp(pdli->szDll, pszDllName) ) {
-            Count = GetSystemDirectoryW(wszPath, ARRAYSIZE(wszPath));
-            if ( !Count || (size_t)Count + 1 > ARRAYSIZE(wszPath) )
-                return nullptr;
+        DllName = GetDllName(&__ImageBase);
+        if ( DllName && !_stricmp(pdli->szDll, DllName)
+            && GetSystemDirectoryW(Buffer.data(), (UINT)Buffer.size()) ) {
 
-            wszPath[Count++] = '\\';
+            auto Path = fs::path(Buffer.data());
+            Path /= pdli->szDll;
 
-            if ( MultiByteToWideChar(CP_ACP, 0, pdli->szDll, -1, wszPath + Count, ARRAYSIZE(wszPath) - Count) )
-                return (FARPROC)LoadLibraryExW(wszPath, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+            return (FARPROC)LoadLibraryExW(Path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
         }
         break;
     case dliNotePreGetProcAddress:
