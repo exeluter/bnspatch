@@ -23,8 +23,6 @@ Only tested on NA/EU client.
 - [ ] 32-bit client support.
 
 ### Launcher features (private, in-progress)
-*Waiting on [**Harmony**][8] v2.x before making the source public.*
-
 Compatible with NC Launcher 2 for NA/EU and KR.
 
 - [x] Unnecessary localization files are no longer downloaded.
