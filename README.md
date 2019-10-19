@@ -50,7 +50,7 @@ Yes.
 - [microsoft/**Detours**][5] (MIT license)
 - [microsoft/**GSL**][6] (MIT license)
 - [microsoft/**wil**][7] (MIT license)
-- [pardeike/**Harmony**][8] (MIT license)
+- [MonoMod/**MonoMod**][8] (MIT license)
 - [gabime/**spdlog**][9] (MIT license)
 - [madler/**zlib**][10] (zlib license)
 
@@ -62,6 +62,6 @@ Yes.
 [5]: https://github.com/microsoft/Detours
 [6]: https://github.com/microsoft/GSL
 [7]: https://github.com/microsoft/wil
-[8]: https://github.com/pardeike/Harmony
+[8]: https://github.com/MonoMod/MonoMod
 [9]: https://github.com/gabime/spdlog
 [10]: https://github.com/madler/zlib
