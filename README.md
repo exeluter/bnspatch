@@ -13,7 +13,7 @@ Personal project I decided to (partially) release to the public.
 The client and launcher components can be used individually or in tandem.
 
 ### Client features (public)
-Only tested on NA/EU client. Other regions have invasive anti-cheats 
+Only tested on NA/EU client.
 
 - [x] Enables multi-client.
 - [x] Bypasses WinLicense "Detect File/Registry Monitors" protection.
@@ -25,7 +25,8 @@ Only tested on NA/EU client. Other regions have invasive anti-cheats
 ### Launcher features (private, in-progress)
 *Waiting on [**Harmony**][8] v2.x before making the source public.*
 
-- [x] Compatible with all versions of NC Launcher 2 for NA/EU and KR.
+Compatible with NC Launcher 2 for NA/EU and KR.
+
 - [x] Unnecessary localization files are no longer downloaded.
 - [x] Controls on the login window no longer switch focus if a field isn't filled in.
 - [x] Disables AppInsights telemetry.
