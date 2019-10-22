@@ -14,10 +14,11 @@ Check out this repository's [**Projects**](https://github.com/zeffy/bnspatch/pro
 break-down of features by component.
 
 ## FAQ
-**Q: Does this work with [**d912pxy**][3]?**
+
+#### Q: Does this work with [**d912pxy**][3]?
 Yes.
 
-**Q: Do I have to use all of the components for bnspatch to work?**
+#### Q: Do I have to use all of the components for bnspatch to work?
 No. Each component works individually and may be used together or separately.
 
 ## Acknowledgements
