@@ -9,39 +9,16 @@ Personal project I decided to (partially) release to the public.
 - Using it on a live server is against the Blade & Soul [Rules of Conduct][0] and [User Agreement][1].
 - I accept no responsibility should you manage to get yourself banned while using it.
 
-## Components
-The client and launcher components can be used individually or in tandem.
-
-### Client features (public)
-Only tested on NA/EU client.
-
-- [x] Enables multi-client.
-- [x] Bypasses WinLicense "Detect File/Registry Monitors" protection.
-- [x] Prevents `aegisty64.bin` from loading.
-
-#### Planned features
-- [ ] 32-bit client support.
-
-### Launcher features (private, in-progress)
-Compatible with NC Launcher 2 for NA/EU and KR.
-
-- [x] Unnecessary localization files are no longer downloaded.
-- [x] Controls on the login window no longer switch focus if a field isn't filled in.
-- [x] Disables AppInsights telemetry.
-- [x] Disables encryption on log files (only for debugging).
-- [x] Can prevent the launcher from updating or repairing specific files.
-- [x] [Command line arguments][2] that are set on the launcher shortcut are forwarded to the client
-      when it is started.
-- [x] Exposes a scriptable interface for certain events, such as the game starting and ending.
-      
-#### Planned features
-- [ ] Apply patches to `xml64.dat` and `config64.dat` automatically after installing new updates.
-- [ ] Only requests administrator priviledges when installing updates.
+## Features
+Check out this repository's [**Projects**](https://github.com/zeffy/bnspatch/projects) tab for a
+break-down of features by component.
 
 ## FAQ
-
-#### Q: Does this work with [**d912pxy**][3]?
+**Q: Does this work with [**d912pxy**][3]?**
 Yes.
+
+**Q: Do I have to use all of the components for bnspatch to work?**
+No. Each component works individually and may be used together or separately.
 
 ## Acknowledgements
 - [processhacker/**phnt**][4] (CC-BY-4.0 license)
