@@ -10,7 +10,7 @@ Personal project I decided to (partially) release to the public.
 - I accept no responsibility should you manage to get yourself banned while using it.
 
 ## Features
-Check out this repository's [**Projects**](https://github.com/zeffy/bnspatch/projects) tab for a
+Check out the [**Projects**](https://github.com/zeffy/bnspatch/projects) tab for a
 break-down of features by component.
 
 ## FAQ
