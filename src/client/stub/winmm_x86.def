@@ -1,7 +1,7 @@
 LIBRARY WINMM.dll
 EXPORTS
 	_2=PlaySound @2 NONAME
-	mciExecute=?mciExecute@@YGHPBD@Z
+	mciExecute
 	CloseDriver
 	DefDriverProc
 	DriverCallback
