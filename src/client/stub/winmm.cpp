@@ -9,7 +9,31 @@
 #include <mmddk.h>
 #undef PlaySound
 
-WINMMAPI BOOL WINAPI mciExecute(LPCSTR pszCommand)
+#ifndef _WIN64
+#define CALLBACK_ARGS_SIZE 16
+
+typedef struct _CALLBACK_ARGS {
+    DWORD       dwFlags;
+    DWORD       dwFunctionAddr;
+    WORD        wHandle;
+    WORD        wMessage;
+    DWORD       dwInstance;
+    DWORD       dwParam1;
+    DWORD       dwParam2;
+} CALLBACK_ARGS;
+
+typedef struct _CALLBACK_DATA {
+    WORD wRecvCount;
+    WORD wSendCount;
+    CALLBACK_ARGS args[CALLBACK_ARGS_SIZE];
+    WORD wIntsCount;
+} CALLBACK_DATA;
+
+typedef CALLBACK_DATA FAR *VPCALLBACK_DATA;
+#endif
+
+WINMMAPI BOOL WINAPI mciExecute(
+	LPCSTR pszCommand)
 {
     return 0;
 }
@@ -58,6 +82,18 @@ WINMMAPI HMODULE WINAPI GetDriverModuleHandle(
     return 0;
 }
 
+#ifndef _WIN64
+WINMMAPI DWORD WINAPI NotifyCallbackData(
+    UINT uDevID,
+    UINT uMsg,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    VPCALLBACK_DATA parg16)
+{
+	return 0;
+}
+#endif
+
 WINMMAPI HDRVR WINAPI OpenDriver(
     LPCWSTR szDriverName,
     LPCWSTR szSectionName,
@@ -99,8 +135,48 @@ WINMMAPI LRESULT WINAPI SendDriverMessage(
     return 0;
 }
 
-//undoc
-WINMMAPI void WOWAppExit(void *) {}
+#ifndef _WIN64
+WINMMAPI BOOL APIENTRY WOW32DriverCallback(
+	DWORD dwCallback,
+	DWORD dwFlags,
+	WORD wID,
+	WORD wMsg,
+    DWORD dwUser,
+    DWORD dw1,
+    DWORD dw2)
+{
+	return 0;
+}
+
+WINMMAPI BOOL APIENTRY WOW32ResolveMultiMediaHandle(
+    UINT uHandleType,
+    UINT uMappingDirection,
+    WORD wHandle16_In,
+    LPWORD lpwHandle16_Out,
+    DWORD dwHandle32_In,
+    LPDWORD lpdwHandle32_Out)
+{
+	return 0;
+}
+#endif
+
+WINMMAPI void WINAPI WOWAppExit(
+	HANDLE hTask)
+{
+	(void)0;
+}
+
+#ifndef _WIN64
+WINMMAPI DWORD WINAPI aux32Message(
+    UINT uDeviceID,
+    UINT uMessage,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    DWORD dwParam2)
+{
+	return 0;
+}
+#endif
 
 WINMMAPI MMRESULT WINAPI auxGetDevCapsA(
     UINT_PTR uDeviceID,
@@ -145,6 +221,18 @@ WINMMAPI MMRESULT WINAPI auxSetVolume(
 {
     return 0;
 }
+
+#ifndef _WIN64
+WINMMAPI DWORD WINAPI joy32Message(
+    UINT uID,
+    UINT uMessage,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    DWORD dwParam2)
+{
+	return 0;
+}
+#endif
 
 WINMMAPI MMRESULT WINAPI joyConfigChanged(
     DWORD dwFlags)
@@ -215,6 +303,18 @@ WINMMAPI MMRESULT WINAPI joySetThreshold(
 {
     return 0;
 }
+
+#ifndef _WIN64
+WINMMAPI DWORD WINAPI mci32Message(
+    DWORD dwApi,
+    DWORD dwF1,
+    DWORD dwF2,
+    DWORD dwF3,
+    DWORD dwF4)
+{
+	return 0;
+}
+#endif
 
 BOOL APIENTRY mciDriverNotify(
     HANDLE hwndCallback,
@@ -355,6 +455,18 @@ WINMMAPI BOOL WINAPI mciSetYieldProc(
 {
     return 0;
 }
+
+#ifndef _WIN64
+WINMMAPI DWORD WINAPI mid32Message(
+    UINT uDeviceID,
+    UINT uMessage,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    DWORD dwParam2)
+{
+	return 0;
+}
+#endif
 
 WINMMAPI MMRESULT WINAPI midiConnect(
     HMIDI hmi,
@@ -804,19 +916,30 @@ DWORD APIENTRY mmGetCurrentTask(VOID)
     return 0;
 }
 
-VOID APIENTRY mmTaskBlock(DWORD h) {}
+VOID APIENTRY mmTaskBlock(
+    DWORD h)
+{
+	(void)0;
+}
 
-UINT APIENTRY mmTaskCreate(LPTASKCALLBACK lpfn, HANDLE FAR *lph, DWORD_PTR dwInst)
+UINT APIENTRY mmTaskCreate(
+	LPTASKCALLBACK lpfn,
+	HANDLE FAR *lph,
+	DWORD_PTR dwInst)
 {
     return 0;
 }
 
-BOOL APIENTRY mmTaskSignal(DWORD h)
+BOOL APIENTRY mmTaskSignal(
+    DWORD h)
 {
     return 0;
 }
 
-VOID APIENTRY mmTaskYield(VOID) {}
+VOID APIENTRY mmTaskYield(VOID)
+{
+	(void)0;
+}
 
 WINMMAPI MMRESULT WINAPI mmioAdvance(
     HMMIO hmmio,
@@ -987,11 +1110,32 @@ WINMMAPI LONG WINAPI mmioWrite(
     return 0;
 }
 
-//undoc
-WINMMAPI DWORD mmsystemGetVersion(void)
+WINMMAPI UINT WINAPI mmsystemGetVersion(void)
 {
     return 0;
 }
+
+#ifndef _WIN64
+WINMMAPI DWORD WINAPI mod32Message(
+    UINT uDeviceID,
+    UINT uMessage,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    DWORD dwParam2)
+{
+	return 0;
+}
+
+WINMMAPI DWORD WINAPI mxd32Message(
+    UINT uDeviceID,
+    UINT uMessage,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    DWORD dwParam2)
+{
+	return 0;
+}
+#endif
 
 WINMMAPI BOOL WINAPI sndPlaySoundA(
     LPCSTR pszSound,
@@ -1006,6 +1150,18 @@ WINMMAPI BOOL WINAPI sndPlaySoundW(
 {
     return 0;
 }
+
+#ifndef _WIN64
+WINMMAPI DWORD WINAPI tid32Message(
+    UINT uDevId,
+    UINT uMessage,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    DWORD dwParam2)
+{
+	return 0;
+}
+#endif
 
 WINMMAPI MMRESULT WINAPI timeBeginPeriod(
     UINT uPeriod)
@@ -1341,5 +1497,27 @@ WINMMAPI MMRESULT WINAPI waveOutWrite(
 {
     return 0;
 }
+
+#ifndef _WIN64
+WINMMAPI MMRESULT WINAPI wid32Message(
+	UINT_PTR uDeviceID,
+	UINT uMsg,
+	HWAVEIN hwi,
+	DWORD_PTR dw1,
+	DWORD_PTR fdwOpen)
+{
+	return 0;
+}
+
+WINMMAPI DWORD WINAPI wod32Message(
+    UINT uDeviceID,
+    UINT uMessage,
+    DWORD dwInstance,
+    DWORD dwParam1,
+    DWORD dwParam2)
+{
+	return 0;
+}
+#endif
 
 EXTERN_C_END

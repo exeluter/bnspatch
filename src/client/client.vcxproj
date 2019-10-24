@@ -116,7 +116,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -125,10 +125,15 @@
     <MASM>
       <ErrorReporting>3</ErrorReporting>
     </MASM>
+    <PreBuildEvent />
     <PreBuildEvent>
-      <Command>cd "$(ProjectDir)lib$(PlatformArchitecture)\"
+      <Command>cd "$(ProjectDir)stub\
 cl /c /nologo "$(TargetName).cpp" /WX
-link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
+if exist "$(TargetName)_$(PlatformTarget).def" (
+    link /lib /def:"$(TargetName)_$(PlatformTarget).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+) else (
+    link /lib /def:"$(TargetName).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+)</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -151,7 +156,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -160,10 +165,15 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
     <MASM>
       <ErrorReporting>3</ErrorReporting>
     </MASM>
+    <PreBuildEvent />
     <PreBuildEvent>
-      <Command>cd "$(ProjectDir)lib$(PlatformArchitecture)\"
+      <Command>cd "$(ProjectDir)stub\
 cl /c /nologo "$(TargetName).cpp" /WX
-link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
+if exist "$(TargetName)_$(PlatformTarget).def" (
+    link /lib /def:"$(TargetName)_$(PlatformTarget).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+) else (
+    link /lib /def:"$(TargetName).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+)</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -187,7 +197,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -200,10 +210,15 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <ErrorReporting>3</ErrorReporting>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
+    <PreBuildEvent />
     <PreBuildEvent>
-      <Command>cd "$(ProjectDir)lib$(PlatformArchitecture)\"
+      <Command>cd "$(ProjectDir)stub\
 cl /c /nologo "$(TargetName).cpp" /WX
-link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
+if exist "$(TargetName)_$(PlatformTarget).def" (
+    link /lib /def:"$(TargetName)_$(PlatformTarget).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+) else (
+    link /lib /def:"$(TargetName).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+)</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -227,7 +242,7 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)lib$(PlatformArchitecture)\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformTarget).def</ModuleDefinitionFile>
       <DelayLoadDLLs>$(TargetFileName)</DelayLoadDLLs>
@@ -240,15 +255,52 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
       <ErrorReporting>3</ErrorReporting>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
+    <PreBuildEvent />
     <PreBuildEvent>
-      <Command>cd "$(ProjectDir)lib$(PlatformArchitecture)\"
+      <Command>cd "$(ProjectDir)stub\
 cl /c /nologo "$(TargetName).cpp" /WX
-link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machine:$(PlatformTarget) /nologo /WX</Command>
+if exist "$(TargetName)_$(PlatformTarget).def" (
+    link /lib /def:"$(TargetName)_$(PlatformTarget).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+) else (
+    link /lib /def:"$(TargetName).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
+)</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\include\detours\creatwth.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\detours\detours.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\detours\disasm.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\detours\image.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\include\detours\modules.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="dllname.cpp" />
     <ClCompile Include="hooks.cpp" />
+    <ClCompile Include="modulever.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -257,13 +309,10 @@ link /lib /def:"$(TargetName).def" "$(TargetName).obj" /errorreport:none /machin
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dllname.h" />
     <ClInclude Include="hooks.hpp" />
+    <ClInclude Include="modulever.h" />
     <ClInclude Include="pch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\common\common.vcxproj">
-      <Project>{ce864083-a1c3-4c84-a043-434efe7afd75}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

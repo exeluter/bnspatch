@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "..\common\dllname.h"
-#include "..\common\modulever.h"
+#include "dllname.h"
+#include "modulever.h"
 #include "hooks.hpp"
 
 extern "C" BOOL WINAPI DllMain(

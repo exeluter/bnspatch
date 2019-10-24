@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "modulever.h"
+#include <intsafe.h>
 
 #define DWORDUP(x) (((x) + 3) & ~3)
 #define KEYSIZEMAX(p) ((p)->wTotLen - FIELD_OFFSET(VERBLOCK, szKey))
