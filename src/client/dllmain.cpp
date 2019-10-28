@@ -26,9 +26,16 @@ extern "C" BOOL WINAPI DllMain(
             msvc_logger->set_pattern("[%Y-%m-%d %T.%F] [%l] %@(%!): %v");
             spdlog::set_default_logger(msvc_logger);
 
+            NtCurrentPeb()->BeingDebugged = FALSE;
+
             DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
             if ( ModuleHandle = GetModuleHandleW(L"ntdll.dll") ) {
+                g_pfnNtQueryInformationProcess = (decltype(g_pfnNtQueryInformationProcess))GetProcAddress(ModuleHandle, "NtQueryInformationProcess");
+                SPDLOG_DEBUG("NtQueryInformationProcess: {}", (PVOID)g_pfnNtQueryInformationProcess);
+                if ( g_pfnNtQueryInformationProcess )
+                    DetourAttach(&(PVOID &)g_pfnNtQueryInformationProcess, NtQueryInformationProcess_hook);
+
                 g_pfnNtQuerySystemInformation = (decltype(g_pfnNtQuerySystemInformation))GetProcAddress(ModuleHandle, "NtQuerySystemInformation");
                 SPDLOG_DEBUG("NtQuerySystemInformation: {}", (PVOID)g_pfnNtQuerySystemInformation);
                 if ( g_pfnNtQuerySystemInformation )

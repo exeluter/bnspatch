@@ -1,6 +1,27 @@
 #include "pch.h"
 #include "hooks.hpp"
 
+decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
+NTSTATUS NTAPI NtQueryInformationProcess_hook(
+    HANDLE ProcessHandle,
+    PROCESSINFOCLASS ProcessInformationClass,
+    PVOID ProcessInformation,
+    ULONG ProcessInformationLength,
+    PULONG ReturnLength)
+{
+    if ( ProcessHandle == NtCurrentProcess()
+        && ProcessInformationClass == ProcessDebugPort ) {
+        *(DWORD_PTR *)ProcessInformation = 0;
+        return STATUS_SUCCESS;
+    }
+    return g_pfnNtQueryInformationProcess(
+        ProcessHandle,
+        ProcessInformationClass,
+        ProcessInformation,
+        ProcessInformationLength,
+        ReturnLength);
+}
+
 decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
 NTSTATUS NTAPI NtQuerySystemInformation_hook(
     SYSTEM_INFORMATION_CLASS SystemInformationClass,

@@ -7,6 +7,14 @@ HWND WINAPI NtUserFindWindowEx(
     PUNICODE_STRING pstrWindowName,
     DWORD dwType);
 
+extern decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
+NTSTATUS NTAPI NtQueryInformationProcess_hook(
+    HANDLE ProcessHandle,
+    PROCESSINFOCLASS ProcessInformationClass,
+    PVOID ProcessInformation,
+    ULONG ProcessInformationLength,
+    PULONG ReturnLength);
+
 extern decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
 NTSTATUS NTAPI NtQuerySystemInformation_hook(
     SYSTEM_INFORMATION_CLASS SystemInformationClass,
