@@ -50,6 +50,13 @@ NTSTATUS NTAPI LdrLoadDll_hook(
     PUNICODE_STRING DllName,
     PVOID *DllHandle);
 
+extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
+NTSTATUS NTAPI LdrGetDllHandle_hook(
+    PWSTR DllPath,
+    PULONG DllCharacteristics,
+    PUNICODE_STRING DllName,
+    PVOID *DllHandle);
+
 extern decltype(&NtUserFindWindowEx) g_pfnNtUserFindWindowEx;
 HWND WINAPI NtUserFindWindowEx_hook(
     HWND hwndParent,

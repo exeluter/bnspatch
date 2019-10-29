@@ -55,16 +55,21 @@ extern "C" BOOL WINAPI DllMain(
                 SPDLOG_DEBUG("LdrLoadDll: {}", (PVOID)g_pfnLdrLoadDll);
                 if ( g_pfnLdrLoadDll )
                     DetourAttach(&(PVOID &)g_pfnLdrLoadDll, LdrLoadDll_hook);
+
+                g_pfnLdrGetDllHandle = (decltype(g_pfnLdrGetDllHandle))GetProcAddress(ModuleHandle, "LdrGetDllHandle");
+                SPDLOG_DEBUG("LdrGetDllHandle: {}", (PVOID)g_pfnLdrGetDllHandle);
+                if ( g_pfnLdrGetDllHandle )
+                    DetourAttach(&(PVOID &)g_pfnLdrGetDllHandle, LdrGetDllHandle_hook);
             }
-            if ( (ModuleHandle = GetModuleHandleW(L"win32u.dll")) || (ModuleHandle = GetModuleHandleW(L"user32.dll")) ) {
+
+            if ( (ModuleHandle = GetModuleHandleW(L"win32u.dll")) ) {
                 g_pfnNtUserFindWindowEx = (decltype(g_pfnNtUserFindWindowEx))GetProcAddress(ModuleHandle, "NtUserFindWindowEx");
                 SPDLOG_DEBUG("NtUserFindWindowEx: {}", (PVOID)g_pfnNtUserFindWindowEx);
-                if ( g_pfnNtUserFindWindowEx ) {
+                if ( g_pfnNtUserFindWindowEx )
                     DetourAttach(&(PVOID &)g_pfnNtUserFindWindowEx, NtUserFindWindowEx_hook);
-                }
-                DetourTransactionCommit();
-                break;
             }
+            DetourTransactionCommit();
+            break;
         }
     case DLL_PROCESS_DETACH:
         break;

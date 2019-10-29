@@ -107,6 +107,23 @@ NTSTATUS NTAPI LdrLoadDll_hook(
     return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
 
+decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
+NTSTATUS NTAPI LdrGetDllHandle_hook(
+    PWSTR DllPath,
+    PULONG DllCharacteristics,
+    PUNICODE_STRING DllName,
+    PVOID *DllHandle)
+{
+    UNICODE_STRING DestinationString;
+
+    RtlInitUnicodeString(&DestinationString, L"kmon.dll");
+    if ( RtlEqualUnicodeString(DllName, &DestinationString, TRUE) ) {
+        *DllHandle = nullptr;
+        return STATUS_DLL_NOT_FOUND;
+    }
+    return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
+}
+
 decltype(&NtUserFindWindowEx) g_pfnNtUserFindWindowEx;
 HWND WINAPI NtUserFindWindowEx_hook(
     HWND hwndParent,
@@ -118,7 +135,14 @@ HWND WINAPI NtUserFindWindowEx_hook(
     UNICODE_STRING DestinationString;
 
     if ( pstrClassName ) {
-        for ( const auto &SourceString : { L"FilemonClass", L"PROCMON_WINDOW_CLASS", L"RegmonClass" } ) {
+        for ( const auto &SourceString : { 
+            L"OLLYDBG",
+            L"GBDYLLO",
+            L"pediy06",
+            L"FilemonClass", 
+            L"PROCMON_WINDOW_CLASS", 
+            L"RegmonClass", 
+            L"18467-41" } ) {
             RtlInitUnicodeString(&DestinationString, SourceString);
             if ( RtlEqualUnicodeString(pstrClassName, &DestinationString, FALSE) )
                 return nullptr;
