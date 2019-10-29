@@ -38,6 +38,9 @@ namespace fs = std::filesystem;
 #define DETOURS_INTERNAL
 #include <detours/detours.h>
 
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
+
 #define SPDLOG_FMT_EXTERNAL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #define SPDLOG_WCHAR_TO_UTF8_SUPPORT
