@@ -90,7 +90,7 @@ typedef struct _WOW64_PROCESS
     PVOID Wow64;
 } WOW64_PROCESS, *PWOW64_PROCESS;
 
-#include <ntpebteb.h>
+#include "ntpebteb.h"
 
 // source:http://www.microsoft.com/whdc/system/Sysinternals/MoreThan64proc.mspx
 
