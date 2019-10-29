@@ -3,9 +3,9 @@
 
 // This header file provides access to Win32, plus NTSTATUS values and some access mask values.
 
-//#ifndef CINTERFACE
-//#define CINTERFACE
-//#endif
+#ifndef CINTERFACE
+#define CINTERFACE
+#endif
 
 #ifndef COBJMACROS
 #define COBJMACROS

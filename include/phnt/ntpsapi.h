@@ -90,7 +90,7 @@ typedef struct _WOW64_PROCESS
     PVOID Wow64;
 } WOW64_PROCESS, *PWOW64_PROCESS;
 
-#include "ntpebteb.h"
+#include <ntpebteb.h>
 
 // source:http://www.microsoft.com/whdc/system/Sysinternals/MoreThan64proc.mspx
 
@@ -1176,7 +1176,7 @@ NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtGetNextProcess(
-    _In_ HANDLE ProcessHandle,
+    _In_opt_ HANDLE ProcessHandle,
     _In_ ACCESS_MASK DesiredAccess,
     _In_ ULONG HandleAttributes,
     _In_ ULONG Flags,
