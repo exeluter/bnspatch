@@ -7,6 +7,7 @@ HWND WINAPI NtUserFindWindowEx(
     PUNICODE_STRING pstrWindowName,
     DWORD dwType);
 
+#ifdef _WIN64
 extern decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
 NTSTATUS NTAPI NtQueryInformationProcess_hook(
     HANDLE ProcessHandle,
@@ -14,6 +15,7 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
     PVOID ProcessInformation,
     ULONG ProcessInformationLength,
     PULONG ReturnLength);
+#endif
 
 extern decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
 NTSTATUS NTAPI NtQuerySystemInformation_hook(
@@ -21,13 +23,6 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
     PVOID SystemInformation,
     ULONG SystemInformationLength,
     PULONG ReturnLength);
-
-extern decltype(&NtCreateMutant) g_pfnNtCreateMutant;
-NTSTATUS NTAPI NtCreateMutant_hook(
-    PHANDLE MutantHandle,
-    ACCESS_MASK DesiredAccess,
-    POBJECT_ATTRIBUTES ObjectAttributes,
-    BOOLEAN InitialOwner);
 
 extern decltype(&NtCreateFile) g_pfnNtCreateFile;
 NTSTATUS NTAPI NtCreateFile_hook(
@@ -42,6 +37,13 @@ NTSTATUS NTAPI NtCreateFile_hook(
     ULONG CreateOptions,
     PVOID EaBuffer,
     ULONG EaLength);
+
+extern decltype(&NtCreateMutant) g_pfnNtCreateMutant;
+NTSTATUS NTAPI NtCreateMutant_hook(
+    PHANDLE MutantHandle,
+    ACCESS_MASK DesiredAccess,
+    POBJECT_ATTRIBUTES ObjectAttributes,
+    BOOLEAN InitialOwner);
 
 extern decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(

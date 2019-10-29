@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "hooks.hpp"
 
+#ifdef _WIN64
 decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
 NTSTATUS NTAPI NtQueryInformationProcess_hook(
     HANDLE ProcessHandle,
@@ -21,6 +22,7 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
         ProcessInformationLength,
         ReturnLength);
 }
+#endif
 
 decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
 NTSTATUS NTAPI NtQuerySystemInformation_hook(
@@ -37,25 +39,6 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
         SystemInformation,
         SystemInformationLength,
         ReturnLength);
-}
-
-decltype(&NtCreateMutant) g_pfnNtCreateMutant;
-NTSTATUS NTAPI NtCreateMutant_hook(
-    PHANDLE MutantHandle,
-    ACCESS_MASK DesiredAccess,
-    POBJECT_ATTRIBUTES ObjectAttributes,
-    BOOLEAN InitialOwner)
-{
-    if ( ObjectAttributes && ObjectAttributes->ObjectName ) {
-        UNICODE_STRING DestinationString;
-        RtlInitUnicodeString(&DestinationString, L"BnSGameClient");
-        if ( RtlEqualUnicodeString(ObjectAttributes->ObjectName, &DestinationString, FALSE) ) {
-            ObjectAttributes->ObjectName = nullptr;
-            ObjectAttributes->Attributes &= ~OBJ_OPENIF;
-            ObjectAttributes->RootDirectory = nullptr;
-        }
-    }
-    return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
 
 decltype(&NtCreateFile) g_pfnNtCreateFile;
@@ -84,6 +67,25 @@ NTSTATUS NTAPI NtCreateFile_hook(
         CreateOptions,
         EaBuffer,
         EaLength);
+}
+
+decltype(&NtCreateMutant) g_pfnNtCreateMutant;
+NTSTATUS NTAPI NtCreateMutant_hook(
+    PHANDLE MutantHandle,
+    ACCESS_MASK DesiredAccess,
+    POBJECT_ATTRIBUTES ObjectAttributes,
+    BOOLEAN InitialOwner)
+{
+    if ( ObjectAttributes && ObjectAttributes->ObjectName ) {
+        UNICODE_STRING DestinationString;
+        RtlInitUnicodeString(&DestinationString, L"BnSGameClient");
+        if ( RtlEqualUnicodeString(ObjectAttributes->ObjectName, &DestinationString, FALSE) ) {
+            ObjectAttributes->ObjectName = nullptr;
+            ObjectAttributes->Attributes &= ~OBJ_OPENIF;
+            ObjectAttributes->RootDirectory = nullptr;
+        }
+    }
+    return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
 
 decltype(&LdrLoadDll) g_pfnLdrLoadDll;

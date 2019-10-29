@@ -31,25 +31,27 @@ extern "C" BOOL WINAPI DllMain(
             DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
             if ( ModuleHandle = GetModuleHandleW(L"ntdll.dll") ) {
+#ifdef _WIN64
                 g_pfnNtQueryInformationProcess = (decltype(g_pfnNtQueryInformationProcess))GetProcAddress(ModuleHandle, "NtQueryInformationProcess");
                 SPDLOG_DEBUG("NtQueryInformationProcess: {}", (PVOID)g_pfnNtQueryInformationProcess);
                 if ( g_pfnNtQueryInformationProcess )
                     DetourAttach(&(PVOID &)g_pfnNtQueryInformationProcess, NtQueryInformationProcess_hook);
+#endif
 
                 g_pfnNtQuerySystemInformation = (decltype(g_pfnNtQuerySystemInformation))GetProcAddress(ModuleHandle, "NtQuerySystemInformation");
                 SPDLOG_DEBUG("NtQuerySystemInformation: {}", (PVOID)g_pfnNtQuerySystemInformation);
                 if ( g_pfnNtQuerySystemInformation )
                     DetourAttach(&(PVOID &)g_pfnNtQuerySystemInformation, NtQuerySystemInformation_hook);
 
-                g_pfnNtCreateMutant = (decltype(g_pfnNtCreateMutant))GetProcAddress(ModuleHandle, "NtCreateMutant");
-                SPDLOG_DEBUG("NtCreateMutant: {}", (PVOID)g_pfnNtCreateMutant);
-                if ( g_pfnNtCreateMutant )
-                    DetourAttach(&(PVOID &)g_pfnNtCreateMutant, NtCreateMutant_hook);
-
                 g_pfnNtCreateFile = (decltype(g_pfnNtCreateFile))GetProcAddress(ModuleHandle, "NtCreateFile");
                 SPDLOG_DEBUG("NtCreateFile: {}", (PVOID)g_pfnNtCreateFile);
                 if ( g_pfnNtCreateFile )
                     DetourAttach(&(PVOID &)g_pfnNtCreateFile, NtCreateFile_hook);
+
+                g_pfnNtCreateMutant = (decltype(g_pfnNtCreateMutant))GetProcAddress(ModuleHandle, "NtCreateMutant");
+                SPDLOG_DEBUG("NtCreateMutant: {}", (PVOID)g_pfnNtCreateMutant);
+                if ( g_pfnNtCreateMutant )
+                    DetourAttach(&(PVOID &)g_pfnNtCreateMutant, NtCreateMutant_hook);
 
                 g_pfnLdrLoadDll = (decltype(g_pfnLdrLoadDll))GetProcAddress(ModuleHandle, "LdrLoadDll");
                 SPDLOG_DEBUG("LdrLoadDll: {}", (PVOID)g_pfnLdrLoadDll);
