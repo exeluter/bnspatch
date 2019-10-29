@@ -303,7 +303,6 @@ namespace wil
         //! Move assign from a like `com_ptr_t` (releases current pointer, avoids AddRef/Release by moving the parameter).
         com_ptr_t& operator=(com_ptr_t&& other) WI_NOEXCEPT
         {
-            WI_ASSERT_MSG(this != wistd::addressof(other), "R-Values should be unique: self assignment is a bug");
             attach(other.detach());
             return *this;
         }
@@ -870,13 +869,13 @@ namespace wil
         }
 
         template <class U>
-        inline com_ptr_t(_In_ U* ptr, details::tag_try_com_query) WI_NOEXCEPT
+        inline com_ptr_t(_In_ U* ptr, details::tag_try_com_query) WI_NOEXCEPT : m_ptr(nullptr)
         {
             details::query_policy_t<U>::query(ptr, &m_ptr);
         }
 
         template <class U>
-        inline com_ptr_t(_In_ U* ptr, details::tag_com_copy)
+        inline com_ptr_t(_In_opt_ U* ptr, details::tag_com_copy)
         {
             if (ptr)
             {
@@ -887,14 +886,12 @@ namespace wil
         }
 
         template <class U>
-        inline com_ptr_t(_In_ U* ptr, details::tag_try_com_copy) WI_NOEXCEPT
+        inline com_ptr_t(_In_opt_ U* ptr, details::tag_try_com_copy) WI_NOEXCEPT : m_ptr(nullptr)
         {
             if (ptr)
             {
                 details::query_policy_t<U>::query(ptr, &m_ptr);
-                return;
             }
-            m_ptr = nullptr;
         }
         /// @endcond
 
