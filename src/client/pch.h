@@ -24,6 +24,8 @@ EXTERN_C const IMAGE_DOS_HEADER __ImageBase;
 #include <wil/token_helpers.h>
 
 #include <string>
+#include <string_view>
+#include <optional>
 #include <memory>
 #include <codecvt>
 #include <filesystem>
@@ -36,6 +38,7 @@ namespace fs = std::filesystem;
 #define DETOURS_INTERNAL
 #include <detours/detours.h>
 
+#define SPDLOG_FMT_EXTERNAL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #define SPDLOG_WCHAR_TO_UTF8_SUPPORT
 #include <spdlog/spdlog.h>
