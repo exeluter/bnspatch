@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "dllname.h"
-#include "modulever.h"
-#include "hooks.hpp"
+//#include "modulever.h"
+#include "hooks.h"
 
 extern "C" BOOL WINAPI DllMain(
     HINSTANCE hInstance,
@@ -9,20 +9,24 @@ extern "C" BOOL WINAPI DllMain(
     LPVOID    lpvReserved)
 {
     HMODULE ModuleHandle;
-    PCNZWCH ProductName;
-    PCNZWCH OriginalFilename;
+    //PCNZWCH ProductName;
+    //PCNZWCH OriginalFilename;
 
     switch ( fdwReason ) {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstance);
-        if ( GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\ProductName", &(LPCVOID &)ProductName) >= 0
-            && !wcscmp(ProductName, L"Blade & Soul")
-            && GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)OriginalFilename) >= 0
-            && !wcscmp(OriginalFilename, L"Client.exe") ) {
-
+        //if ( GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\ProductName", &(LPCVOID &)ProductName) >= 0
+        //    && !wcscmp(ProductName, L"Blade & Soul")
+        //    && GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)OriginalFilename) >= 0
+        //    && !wcscmp(OriginalFilename, L"Client.exe") ) 
+        {
             auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
             auto msvc_logger = std::make_shared<spdlog::logger>("msvc_logger", sink);
+#ifdef _DEBUG
             msvc_logger->set_level(spdlog::level::debug);
+#else
+            msvc_logger->set_level(spdlog::level::info);
+#endif
             msvc_logger->set_pattern("[%Y-%m-%d %T.%F] [%l] %@(%!): %v");
             spdlog::set_default_logger(msvc_logger);
 
@@ -31,42 +35,45 @@ extern "C" BOOL WINAPI DllMain(
             DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
             if ( ModuleHandle = GetModuleHandleW(L"ntdll.dll") ) {
-#ifdef _WIN64
+               g_pfnNtSetInformationThread = (decltype(g_pfnNtSetInformationThread))GetProcAddress(ModuleHandle, "NtSetInformationThread");
+               SPDLOG_INFO(fmt("ntdll!NtSetInformationThread: {}"), (PVOID)g_pfnNtSetInformationThread);
+               if ( g_pfnNtSetInformationThread )
+                   DetourAttach(&(PVOID &)g_pfnNtSetInformationThread, NtSetInformationThread_hook);
+
                 g_pfnNtQueryInformationProcess = (decltype(g_pfnNtQueryInformationProcess))GetProcAddress(ModuleHandle, "NtQueryInformationProcess");
-                SPDLOG_DEBUG("NtQueryInformationProcess: {}", (PVOID)g_pfnNtQueryInformationProcess);
+                SPDLOG_INFO(fmt("ntdll!NtQueryInformationProcess: {}"), (PVOID)g_pfnNtQueryInformationProcess);
                 if ( g_pfnNtQueryInformationProcess )
                     DetourAttach(&(PVOID &)g_pfnNtQueryInformationProcess, NtQueryInformationProcess_hook);
-#endif
 
                 g_pfnNtQuerySystemInformation = (decltype(g_pfnNtQuerySystemInformation))GetProcAddress(ModuleHandle, "NtQuerySystemInformation");
-                SPDLOG_DEBUG("NtQuerySystemInformation: {}", (PVOID)g_pfnNtQuerySystemInformation);
+                SPDLOG_INFO(fmt("ntdll!NtQuerySystemInformation: {}"), (PVOID)g_pfnNtQuerySystemInformation);
                 if ( g_pfnNtQuerySystemInformation )
                     DetourAttach(&(PVOID &)g_pfnNtQuerySystemInformation, NtQuerySystemInformation_hook);
 
                 g_pfnNtCreateFile = (decltype(g_pfnNtCreateFile))GetProcAddress(ModuleHandle, "NtCreateFile");
-                SPDLOG_DEBUG("NtCreateFile: {}", (PVOID)g_pfnNtCreateFile);
+                SPDLOG_INFO(fmt("ntdll!NtCreateFile: {}"), (PVOID)g_pfnNtCreateFile);
                 if ( g_pfnNtCreateFile )
                     DetourAttach(&(PVOID &)g_pfnNtCreateFile, NtCreateFile_hook);
 
                 g_pfnNtCreateMutant = (decltype(g_pfnNtCreateMutant))GetProcAddress(ModuleHandle, "NtCreateMutant");
-                SPDLOG_DEBUG("NtCreateMutant: {}", (PVOID)g_pfnNtCreateMutant);
+                SPDLOG_INFO(fmt("ntdll!NtCreateMutant: {}"), (PVOID)g_pfnNtCreateMutant);
                 if ( g_pfnNtCreateMutant )
                     DetourAttach(&(PVOID &)g_pfnNtCreateMutant, NtCreateMutant_hook);
 
                 g_pfnLdrLoadDll = (decltype(g_pfnLdrLoadDll))GetProcAddress(ModuleHandle, "LdrLoadDll");
-                SPDLOG_DEBUG("LdrLoadDll: {}", (PVOID)g_pfnLdrLoadDll);
+                SPDLOG_INFO(fmt("ntdll!LdrLoadDll: {}"), (PVOID)g_pfnLdrLoadDll);
                 if ( g_pfnLdrLoadDll )
                     DetourAttach(&(PVOID &)g_pfnLdrLoadDll, LdrLoadDll_hook);
 
                 g_pfnLdrGetDllHandle = (decltype(g_pfnLdrGetDllHandle))GetProcAddress(ModuleHandle, "LdrGetDllHandle");
-                SPDLOG_DEBUG("LdrGetDllHandle: {}", (PVOID)g_pfnLdrGetDllHandle);
+                SPDLOG_INFO(fmt("ntdll!LdrGetDllHandle: {}"), (PVOID)g_pfnLdrGetDllHandle);
                 if ( g_pfnLdrGetDllHandle )
                     DetourAttach(&(PVOID &)g_pfnLdrGetDllHandle, LdrGetDllHandle_hook);
             }
 
             if ( (ModuleHandle = GetModuleHandleW(L"win32u.dll")) ) {
                 g_pfnNtUserFindWindowEx = (decltype(g_pfnNtUserFindWindowEx))GetProcAddress(ModuleHandle, "NtUserFindWindowEx");
-                SPDLOG_DEBUG("NtUserFindWindowEx: {}", (PVOID)g_pfnNtUserFindWindowEx);
+                SPDLOG_INFO(fmt("win32u!NtUserFindWindowEx: {}"), (PVOID)g_pfnNtUserFindWindowEx);
                 if ( g_pfnNtUserFindWindowEx )
                     DetourAttach(&(PVOID &)g_pfnNtUserFindWindowEx, NtUserFindWindowEx_hook);
             }

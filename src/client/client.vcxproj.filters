@@ -30,9 +30,6 @@
     <ClCompile Include="dllname.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modulever.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\include\detours\creatwth.cpp">
       <Filter>detours</Filter>
     </ClCompile>
@@ -53,13 +50,13 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hooks.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="dllname.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="modulever.h">
+    <ClInclude Include="srw_exclusive_lock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

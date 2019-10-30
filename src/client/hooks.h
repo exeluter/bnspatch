@@ -1,27 +1,25 @@
 #pragma once
 
-HWND WINAPI NtUserFindWindowEx(
-    HWND hwndParent,
-    HWND hwndChild,
-    PUNICODE_STRING pstrClassName,
-    PUNICODE_STRING pstrWindowName,
-    DWORD dwType);
-
-#ifdef _WIN64
-extern decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
-NTSTATUS NTAPI NtQueryInformationProcess_hook(
-    HANDLE ProcessHandle,
-    PROCESSINFOCLASS ProcessInformationClass,
-    PVOID ProcessInformation,
-    ULONG ProcessInformationLength,
-    PULONG ReturnLength);
-#endif
+extern decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
+NTSTATUS NTAPI NtSetInformationThread_hook(
+    HANDLE ThreadHandle,
+    THREADINFOCLASS ThreadInformationClass,
+    PVOID ThreadInformation,
+    ULONG ThreadInformationLength);
 
 extern decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
 NTSTATUS NTAPI NtQuerySystemInformation_hook(
     SYSTEM_INFORMATION_CLASS SystemInformationClass,
     PVOID SystemInformation,
     ULONG SystemInformationLength,
+    PULONG ReturnLength);
+
+extern decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
+NTSTATUS NTAPI NtQueryInformationProcess_hook(
+    HANDLE ProcessHandle,
+    PROCESSINFOCLASS ProcessInformationClass,
+    PVOID ProcessInformation,
+    ULONG ProcessInformationLength,
     PULONG ReturnLength);
 
 extern decltype(&NtCreateFile) g_pfnNtCreateFile;
@@ -59,7 +57,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
     PUNICODE_STRING DllName,
     PVOID *DllHandle);
 
-extern decltype(&NtUserFindWindowEx) g_pfnNtUserFindWindowEx;
+extern HWND(WINAPI *g_pfnNtUserFindWindowEx)(HWND, HWND, PUNICODE_STRING, PUNICODE_STRING, DWORD);
 HWND WINAPI NtUserFindWindowEx_hook(
     HWND hwndParent,
     HWND hwndChild,
