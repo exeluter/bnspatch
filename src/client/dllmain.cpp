@@ -35,6 +35,7 @@ extern "C" BOOL WINAPI DllMain(
             DetourTransactionBegin();
             DetourUpdateThread(GetCurrentThread());
             if ( ModuleHandle = GetModuleHandleW(L"ntdll.dll") ) {
+#ifdef _WIN64
                g_pfnNtSetInformationThread = (decltype(g_pfnNtSetInformationThread))GetProcAddress(ModuleHandle, "NtSetInformationThread");
                SPDLOG_INFO(fmt("ntdll!NtSetInformationThread: {}"), (PVOID)g_pfnNtSetInformationThread);
                if ( g_pfnNtSetInformationThread )
@@ -44,7 +45,7 @@ extern "C" BOOL WINAPI DllMain(
                 SPDLOG_INFO(fmt("ntdll!NtQueryInformationProcess: {}"), (PVOID)g_pfnNtQueryInformationProcess);
                 if ( g_pfnNtQueryInformationProcess )
                     DetourAttach(&(PVOID &)g_pfnNtQueryInformationProcess, NtQueryInformationProcess_hook);
-
+#endif
                 g_pfnNtQuerySystemInformation = (decltype(g_pfnNtQuerySystemInformation))GetProcAddress(ModuleHandle, "NtQuerySystemInformation");
                 SPDLOG_INFO(fmt("ntdll!NtQuerySystemInformation: {}"), (PVOID)g_pfnNtQuerySystemInformation);
                 if ( g_pfnNtQuerySystemInformation )
