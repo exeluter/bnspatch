@@ -168,8 +168,6 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
             fmt::ptr(ReturnLength));
 
         switch ( SystemInformationClass ) {
-        case SystemProcessInformation:
-            break;
         case SystemModuleInformation:
             return STATUS_ACCESS_DENIED;
         }
