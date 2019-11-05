@@ -2,7 +2,6 @@
 using Gaffeine.Data.Models;
 using Microsoft.ApplicationInsights.Extensibility;
 using MonoMod.RuntimeDetour;
-using MoreLinq.Extensions;
 using NCLauncherW.Views;
 using NCLog;
 using System;
@@ -12,6 +11,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
+using static MoreLinq.Extensions.PrependExtension;
 
 namespace Microsoft.Xml.Serialization.GeneratedAssembly
 {
@@ -22,7 +22,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
 
     static XmlSerializerContract()
     {
-      AppDomain.CurrentDomain.AssemblyLoad += (sender, args) => 
+      AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
         OutputDebugString("Assembly loaded: " + args.LoadedAssembly.FullName);
 
       AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
@@ -51,9 +51,9 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
          it will be focused instead of the password field. */
       _ = new Hook(
         typeof(SignInWindow).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-                                       .FirstOrDefault(x => x.GetParameters()
-                                                             .Select(y => y.ParameterType)
-                                                             .SequenceEqual(new[] { typeof(UIElement), typeof(bool) })),
+                            .FirstOrDefault(x => x.GetParameters()
+                                                  .Select(y => y.ParameterType)
+                                                  .SequenceEqual(new[] { typeof(UIElement), typeof(bool) })),
         new Action<Action<SignInWindow, UIElement, bool>, SignInWindow, UIElement, bool>((fn, @this, A_1, A_2) => { }));
 
       /* Forward command line arguments that aren't for NC Launcher 2 to the game client. */
@@ -71,7 +71,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
                                       .Prepend(fn(@this)))));
 
       /* Fixes bug where unnecessary localization files are downloaded. The funny thing is, it seems
-         like they intended these files to be skipped, but the code is bugged from the start and it
+         like they intended for these files to be skipped, but the code was bugged from the start and it
          has never been fixed. */
       _ = new Hook(
         typeof(LanguagePackageFiles)
@@ -83,24 +83,27 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
       /* Send unencrypted log messages to OutputDebugString */
       _ = new Hook(
         typeof(Logger)
-          .GetMethod(nameof(Logger.Debug)), 
+          .GetMethod(nameof(Logger.Debug)),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("DEBUG - " + message);
-          fn(@this, message); }));
+          fn(@this, message);
+        }));
 
       _ = new Hook(
         typeof(Logger)
           .GetMethod(nameof(Logger.Info)),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("INFO - " + message);
-          fn(@this, message); }));
+          fn(@this, message);
+        }));
 
       _ = new Hook(
         typeof(Logger)
           .GetMethod(nameof(Logger.Error), new[] { typeof(string) }),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("ERROR - " + message);
-          fn(@this, message); }));
+          fn(@this, message);
+        }));
     }
 
     private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
