@@ -56,7 +56,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
                                                              .SequenceEqual(new[] { typeof(UIElement), typeof(bool) })),
         new Action<Action<SignInWindow, UIElement, bool>, SignInWindow, UIElement, bool>((fn, @this, A_1, A_2) => { }));
 
-      // Forward command line arguments that aren't for NC Launcher 2 to the game client.
+      /* Forward command line arguments that aren't for NC Launcher 2 to the game client. */
       _ = new Hook(
         typeof(GameInfo)
           .GetProperty(nameof(GameInfo.ExeArgument))
