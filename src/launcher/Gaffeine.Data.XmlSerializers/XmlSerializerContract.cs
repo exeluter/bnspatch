@@ -2,17 +2,16 @@
 using Gaffeine.Data.Models;
 using Microsoft.ApplicationInsights.Extensibility;
 using MonoMod.RuntimeDetour;
+using MoreLinq.Extensions;
+using NCLauncherW.Views;
+using NCLog;
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Linq;
-using NCLauncherW.Views;
 using System.Windows;
-using MoreLinq.Extensions;
-using System.Security.Principal;
-using NCLog;
 
 namespace Microsoft.Xml.Serialization.GeneratedAssembly
 {
