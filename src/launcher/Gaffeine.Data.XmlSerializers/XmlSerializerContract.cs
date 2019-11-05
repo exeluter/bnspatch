@@ -22,7 +22,9 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
 
     static XmlSerializerContract()
     {
-      AppDomain.CurrentDomain.AssemblyLoad += OnAssemblyLoad;
+      AppDomain.CurrentDomain.AssemblyLoad += (sender, args) => 
+        OutputDebugString("Assembly loaded: " + args.LoadedAssembly.FullName);
+
       AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
       RegisterRuntimeDetours();
     }
@@ -91,25 +93,21 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
           .GetMethod(nameof(Logger.Info)),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("INFO - " + message);
-          fn(@this, message);
-        }));
+          fn(@this, message); }));
 
       _ = new Hook(
         typeof(Logger)
           .GetMethod(nameof(Logger.Error), new[] { typeof(string) }),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("ERROR - " + message);
-          fn(@this, message);
-        }));
+          fn(@this, message); }));
     }
-
-    private static void OnAssemblyLoad(object sender, AssemblyLoadEventArgs args) =>
-      OutputDebugString("Assembly loaded: " + args.LoadedAssembly.FullName);
 
     private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
     {
       var assemblyName = new AssemblyName(args.Name);
-      var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(assemblyName.Name + ".dll.deflate");
+      var stream = Assembly.GetExecutingAssembly()
+                           .GetManifestResourceStream(assemblyName.Name + ".dll.deflate");
       if ( stream != null ) {
         try {
           using ( var binaryReader = new BinaryReader(stream) )
