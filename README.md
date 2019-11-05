@@ -22,22 +22,24 @@ Yes.
 No. Each component works individually and may be used together or separately.
 
 ## Acknowledgements
-- [processhacker/**phnt**][4] (CC-BY-4.0 license)
-- [microsoft/**Detours**][5] (MIT license)
-- [microsoft/**GSL**][6] (MIT license)
-- [microsoft/**wil**][7] (MIT license)
-- [MonoMod/**MonoMod**][8] (MIT license)
-- [gabime/**spdlog**][9] (MIT license)
-- [madler/**zlib**][10] (zlib license)
+- [gabime/**spdlog**][4] (MIT license)
+- [madler/**zlib**][5] (zlib license)
+- [microsoft/**Detours**][6] (MIT license)
+- [microsoft/**GSL**][7] (MIT license)
+- [microsoft/**wil**][8] (MIT license)
+- [MonoMod/**MonoMod**][9] (MIT license)
+- [morelinq/**MoreLINQ**][10] (Apache-2.0 license)
+- [processhacker/**phnt**][11] (CC-BY-4.0 license)
 
 [0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
 [2]: https://docs.unrealengine.com/udk/Three/CommandLineArguments.html
 [3]: https://github.com/megai2/d912pxy
-[4]: https://github.com/processhacker/phnt
-[5]: https://github.com/microsoft/Detours
-[6]: https://github.com/microsoft/GSL
-[7]: https://github.com/microsoft/wil
-[8]: https://github.com/MonoMod/MonoMod
-[9]: https://github.com/gabime/spdlog
-[10]: https://github.com/madler/zlib
+[4]: https://github.com/gabime/spdlog
+[5]: https://github.com/madler/zlib
+[6]: https://github.com/microsoft/Detours
+[7]: https://github.com/microsoft/GSL
+[8]: https://github.com/microsoft/wil
+[9]: https://github.com/MonoMod/MonoMod
+[10]: https://github.com/morelinq/MoreLINQ
+[11]: https://github.com/processhacker/phnt
