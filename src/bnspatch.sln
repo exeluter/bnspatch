@@ -5,11 +5,7 @@ VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client", "client\client.vcxproj", "{ADE1873B-9AB0-43BF-BC98-D1A14FF4F8C3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gaffeine.Data.XmlSerializers", "launcher\Gaffeine.Data.XmlSerializers\Gaffeine.Data.XmlSerializers.csproj", "{75A29EEF-1E39-4D4D-A63D-0F1C56630363}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "launcher", "launcher", "{F8BEE626-333B-4A04-AEC5-35ABBC465BA7}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BPackage", "launcher\BPackage\version_clr.vcxproj", "{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gaffeine.Data.XmlSerializers", "Gaffeine.Data.XmlSerializers\Gaffeine.Data.XmlSerializers.csproj", "{75A29EEF-1E39-4D4D-A63D-0F1C56630363}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,23 +39,9 @@ Global
 		{75A29EEF-1E39-4D4D-A63D-0F1C56630363}.Release|x64.Build.0 = Release|Any CPU
 		{75A29EEF-1E39-4D4D-A63D-0F1C56630363}.Release|x86.ActiveCfg = Release|Any CPU
 		{75A29EEF-1E39-4D4D-A63D-0F1C56630363}.Release|x86.Build.0 = Release|Any CPU
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Debug|x64.ActiveCfg = Debug|x64
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Debug|x64.Build.0 = Debug|x64
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Debug|x86.ActiveCfg = Debug|Win32
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Debug|x86.Build.0 = Debug|Win32
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Release|Any CPU.ActiveCfg = Release|Win32
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Release|x64.ActiveCfg = Release|x64
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Release|x64.Build.0 = Release|x64
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Release|x86.ActiveCfg = Release|Win32
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{75A29EEF-1E39-4D4D-A63D-0F1C56630363} = {F8BEE626-333B-4A04-AEC5-35ABBC465BA7}
-		{C43E6300-DF66-43DA-830D-D8FDA0FCB5F4} = {F8BEE626-333B-4A04-AEC5-35ABBC465BA7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C2D3C839-0821-4A41-BF94-07F94F6E96C2}
