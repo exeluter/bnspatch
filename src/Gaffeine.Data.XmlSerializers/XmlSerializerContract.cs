@@ -49,7 +49,6 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
       /* Fixes issue where if you click on the password field without filling in the email address field,
        * it will be focused instead of the password field. 
        */
-
       var from = typeof(SignInWindow).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
                                      .FirstOrDefault(x => x.GetParameters()
                                                            .Select(y => y.ParameterType)
@@ -70,7 +69,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
                                             .Where(x => !string.IsNullOrEmpty(x)
                                                         && !x.StartsWith("nc-launcher2://")
                                                         && !x.StartsWith("nc-launcher2beta://")
-                                                        && !(x.StartsWith("/") && x.IndexOf(':') > -1))
+                                                        && !(x.StartsWith("/") && x.Contains(":")))
                                             .Prepend(fn(@this)))
               : fn(@this)));
 
