@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\XmlSerializers.cs" />
+    <Compile Include="StringExtensions.cs" />
     <Compile Include="XmlSerializerContract.cs" />
   </ItemGroup>
   <ItemGroup>
