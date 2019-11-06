@@ -50,7 +50,8 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
        * it will be focused instead of the password field. 
        */
       var from = typeof(SignInWindow).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-                                     .FirstOrDefault(x => x.GetParameters()
+                                     .FirstOrDefault(x => x.ReturnType == typeof(void)
+                                                       && x.GetParameters()
                                                            .Select(y => y.ParameterType)
                                                            .SequenceEqual(new[] { typeof(UIElement), typeof(bool) }));
       if ( from != null ) {
@@ -67,9 +68,9 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
               ? string.Join(" ", Environment.GetCommandLineArgs()
                                             .Skip(1)
                                             .Where(x => !string.IsNullOrEmpty(x)
-                                                        && !x.StartsWith("nc-launcher2://")
-                                                        && !x.StartsWith("nc-launcher2beta://")
-                                                        && !(x.StartsWith("/") && x.Contains(":")))
+                                                     && !x.StartsWith("nc-launcher2://")
+                                                     && !x.StartsWith("nc-launcher2beta://")
+                                                     && !(x.StartsWith("/") && x.Contains(":")))
                                             .Prepend(fn(@this)))
               : fn(@this)));
 
