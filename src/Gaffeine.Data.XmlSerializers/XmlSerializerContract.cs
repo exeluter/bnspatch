@@ -42,29 +42,27 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
            <DisableTelemetry>true</DisableTelemetry>
          </ApplicationInsights>
       */
-      _ = new Hook(
-        typeof(TelemetryConfiguration)
-          .GetProperty(nameof(TelemetryConfiguration.DisableTelemetry))
-          .GetGetMethod(),
+      _ = new Hook(typeof(TelemetryConfiguration).GetProperty(nameof(TelemetryConfiguration.DisableTelemetry))
+                                                 .GetGetMethod(),
         new Func<Func<TelemetryConfiguration, bool>, TelemetryConfiguration, bool>((fn, @this) => true));
 
       /* Fixes issue where if you click on the password field without filling in the email address field,
        * it will be focused instead of the password field. 
        */
-      _ = new Hook(
-        typeof(SignInWindow).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-                            .FirstOrDefault(x => x.GetParameters()
-                                                  .Select(y => y.ParameterType)
-                                                  .SequenceEqual(new[] { typeof(UIElement), typeof(bool) })),
-        new Action<Action<SignInWindow, UIElement, bool>, SignInWindow, UIElement, bool>((fn, @this, A_1, A_2) => { }));
 
+      var from = typeof(SignInWindow).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+                                     .FirstOrDefault(x => x.GetParameters()
+                                                           .Select(y => y.ParameterType)
+                                                           .SequenceEqual(new[] { typeof(UIElement), typeof(bool) }));
+      if ( from != null ) {
+        _ = new Hook(from,
+          new Action<Action<SignInWindow, UIElement, bool>, SignInWindow, UIElement, bool>((fn, @this, A_1, A_2) => { }));
+      }
       /* Forward command line arguments that probably aren't for NC Launcher 2, to the game specified by 
        * the GameID launcher argument.
        */
-      _ = new Hook(
-        typeof(GameInfo)
-          .GetProperty(nameof(GameInfo.ExeArgument))
-          .GetGetMethod(),
+      _ = new Hook(typeof(GameInfo).GetProperty(nameof(GameInfo.ExeArgument))
+                                   .GetGetMethod(),
         new Func<Func<GameInfo, string>, GameInfo, string>((fn, @this) =>
             string.Equals(@this.GameId, AppArgs.Instance.GameId, StringComparison.InvariantCultureIgnoreCase)
               ? string.Join(" ", Environment.GetCommandLineArgs()
@@ -74,41 +72,31 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
                                                         && !x.StartsWith("nc-launcher2beta://")
                                                         && !(x.StartsWith("/") && x.IndexOf(':') > -1))
                                             .Prepend(fn(@this)))
-              : fn(@this)
-        ));
+              : fn(@this)));
 
       /* Fixes bug where unnecessary localization files are downloaded. The funny thing is, it seems
        * like they intended for these files to be skipped, but the code was bugged from the start and it
        * has never been fixed. 
        */
-      _ = new Hook(
-        typeof(LanguagePackageFiles)
-          .GetMethod(nameof(LanguagePackageFiles.Exists), new[] { typeof(string) }),
+      _ = new Hook(typeof(LanguagePackageFiles).GetMethod(nameof(LanguagePackageFiles.Exists), new[] { typeof(string) }),
         new Func<Func<LanguagePackageFiles, string, bool>, LanguagePackageFiles, string, bool>((fn, @this, fileName) =>
-          !string.IsNullOrEmpty(fileName)
-          && @this.Exists((LanguagePackageFile x) => fileName.IndexOf(x.FileName, StringComparison.InvariantCultureIgnoreCase) > -1)));
-
+          !string.IsNullOrEmpty(fileName) && @this.Exists(x => fileName.Contains(x.FileName, StringComparison.OrdinalIgnoreCase))));
+      
       /* Send unencrypted log messages to OutputDebugString 
        */
-      _ = new Hook(
-        typeof(Logger)
-          .GetMethod(nameof(Logger.Debug)),
+      _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Debug)),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("DEBUG - " + message);
           fn(@this, message);
         }));
 
-      _ = new Hook(
-        typeof(Logger)
-          .GetMethod(nameof(Logger.Info)),
+      _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Info)),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("INFO - " + message);
           fn(@this, message);
         }));
 
-      _ = new Hook(
-        typeof(Logger)
-          .GetMethod(nameof(Logger.Error), new[] { typeof(string) }),
+      _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Error), new[] { typeof(string) }),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
           OutputDebugString("ERROR - " + message);
           fn(@this, message);
