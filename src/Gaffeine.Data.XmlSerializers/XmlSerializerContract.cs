@@ -63,7 +63,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
       _ = new Hook(typeof(GameInfo).GetProperty(nameof(GameInfo.ExeArgument))
                                    .GetGetMethod(),
         new Func<Func<GameInfo, string>, GameInfo, string>((fn, @this) =>
-            string.Equals(@this.GameId, AppArgs.Instance.GameId, StringComparison.InvariantCultureIgnoreCase)
+            string.Equals(@this.GameId, AppArgs.Instance.GameId, StringComparison.OrdinalIgnoreCase)
               ? string.Join(" ", Environment.GetCommandLineArgs()
                                             .Skip(1)
                                             .Where(x => !string.IsNullOrEmpty(x)
