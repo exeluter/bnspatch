@@ -1,4 +1,6 @@
-﻿
+﻿using Microsoft.VisualBasic;
+using Microsoft.VisualBasic.CompilerServices;
+
 namespace System
 {
   public static class StringExtensions
@@ -15,6 +17,24 @@ namespace System
     public static bool Contains(this string @this, string value, StringComparison comparisonType)
     {
       return @this.IndexOf(value, comparisonType) > -1;
+    }
+
+    /// <summary>Performs text string comparison given two strings.</summary>
+    /// <param name="pattern">The string against which this string is being compared.</param>
+    /// <returns>
+    ///   <see langword="true" /> if the strings match; otherwise, <see langword="false" />.</returns>
+    public static bool Like(this string @this, string pattern)
+    {
+      return LikeOperator.LikeString(@this, pattern, CompareMethod.Text);
+    }
+
+    /// <summary>Performs binary string comparison given two strings.</summary>
+    /// <param name="pattern">The string against which this string is being compared.</param>
+    /// <returns>
+    ///   <see langword="true" /> if the strings match; otherwise, <see langword="false" />.</returns>
+    public static bool LikeOrdinal(this string @this, string pattern)
+    {
+      return LikeOperator.LikeString(@this, pattern, CompareMethod.Binary);
     }
   }
 }
