@@ -6,29 +6,36 @@ using NCLauncherW;
 using NCLauncherW.Views;
 using NCLog;
 using System;
+using System.Collections;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Xml.Serialization;
 using static MoreLinq.Extensions.PrependExtension;
 
 namespace Microsoft.Xml.Serialization.GeneratedAssembly
 {
-  public partial class XmlSerializerContract : global::System.Xml.Serialization.XmlSerializerImplementation
+  public class XmlSerializerContract : XmlSerializerImplementation
   {
-    [DllImport("kernel32.dll")]
-    static extern void OutputDebugString(string lpOutputString);
-
     static XmlSerializerContract()
     {
       AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
-        OutputDebugString("Assembly loaded: " + args.LoadedAssembly.FullName);
+        NativeMethods.OutputDebugString("Assembly loaded: " + args.LoadedAssembly.FullName);
 
       AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
       RegisterRuntimeDetours();
     }
+
+    public override XmlSerializationReader Reader { get => null; }
+    public override XmlSerializationWriter Writer { get => null; }
+    public override Hashtable ReadMethods { get => null; }
+    public override Hashtable WriteMethods { get => null; }
+    public override Hashtable TypedSerializers { get => null; }
+    public override bool CanSerialize(Type type) => false;
+    public override XmlSerializer GetSerializer(Type type) => null;
 
     static void RegisterRuntimeDetours()
     {
@@ -36,7 +43,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
        * Important note: Exactly one event will be tracked before this hook is able to disable it,
        * which is just "NCLauncher2 Startup". To completely disable telemetry you need to overwrite
        * ApplicationInsights.config with this:
-     
+
          <?xml version="1.0" encoding="utf-8"?>
          <ApplicationInsights xmlns="http://schemas.microsoft.com/ApplicationInsights/2013/Settings">
            <DisableTelemetry>true</DisableTelemetry>
@@ -81,24 +88,24 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
       _ = new Hook(typeof(LanguagePackageFiles).GetMethod(nameof(LanguagePackageFiles.Exists), new[] { typeof(string) }),
         new Func<Func<LanguagePackageFiles, string, bool>, LanguagePackageFiles, string, bool>((fn, @this, fileName) =>
           !string.IsNullOrEmpty(fileName) && @this.Exists(x => fileName.Contains(x.FileName, StringComparison.OrdinalIgnoreCase))));
-      
+
       /* Send unencrypted log messages to OutputDebugString 
        */
       _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Debug)),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
-          OutputDebugString("DEBUG - " + message);
+          NativeMethods.OutputDebugString("DEBUG - " + message);
           fn(@this, message);
         }));
 
       _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Info)),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
-          OutputDebugString("INFO - " + message);
+          NativeMethods.OutputDebugString("INFO - " + message);
           fn(@this, message);
         }));
 
       _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Error), new[] { typeof(string) }),
         new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
-          OutputDebugString("ERROR - " + message);
+          NativeMethods.OutputDebugString("ERROR - " + message);
           fn(@this, message);
         }));
     }
@@ -122,8 +129,14 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
           stream.Dispose();
         }
       }
-      OutputDebugString("Assembly not resolved: " + args.Name);
+      NativeMethods.OutputDebugString("Assembly not resolved: " + args.Name);
       return null;
+    }
+
+    private static class NativeMethods
+    {
+      [DllImport("kernel32.dll")]
+      internal static extern void OutputDebugString(string lpOutputString);
     }
   }
 }
