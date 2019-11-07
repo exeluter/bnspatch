@@ -29,11 +29,11 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
       RegisterRuntimeDetours();
     }
 
-    public override XmlSerializationReader Reader { get => null; }
-    public override XmlSerializationWriter Writer { get => null; }
-    public override Hashtable ReadMethods { get => null; }
-    public override Hashtable WriteMethods { get => null; }
-    public override Hashtable TypedSerializers { get => null; }
+    public override XmlSerializationReader Reader => null;
+    public override XmlSerializationWriter Writer => null;
+    public override Hashtable ReadMethods => null;
+    public override Hashtable WriteMethods => null;
+    public override Hashtable TypedSerializers => null;
     public override bool CanSerialize(Type type) => false;
     public override XmlSerializer GetSerializer(Type type) => null;
 
