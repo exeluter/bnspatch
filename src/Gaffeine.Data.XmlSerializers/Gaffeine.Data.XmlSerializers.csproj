@@ -43,6 +43,7 @@
     </Reference>
     <Reference Include="GameUpdateService">
       <HintPath>$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\GameUpdateService.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.ApplicationInsights">
       <HintPath>$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\Microsoft.ApplicationInsights.dll</HintPath>
