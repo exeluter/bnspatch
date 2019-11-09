@@ -41,15 +41,11 @@
       <HintPath>$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\Gaffeine.Data.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="GameUpdateService">
-      <HintPath>$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\GameUpdateService.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Microsoft.ApplicationInsights">
-      <HintPath>$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\Microsoft.ApplicationInsights.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="Mono.Cecil">
+      <HintPath>lib\Mono.Cecil\Mono.Cecil.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
       <HintPath>lib\MonoMod\MonoMod.RuntimeDetour.dll</HintPath>
       <Private>False</Private>
@@ -62,14 +58,6 @@
       <HintPath>lib\MoreLinq\MoreLinq.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="NCLauncher2">
-      <HintPath>$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\NCLauncher2.exe</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="NCLog">
-      <HintPath>$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\NCLog.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -78,6 +66,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IntrospectionExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringExtensions.cs" />
     <Compile Include="XmlSerializerContract.cs" />

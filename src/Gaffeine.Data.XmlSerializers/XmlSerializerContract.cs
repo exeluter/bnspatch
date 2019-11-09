@@ -1,17 +1,16 @@
 ﻿using Gaffeine.Data;
 using Gaffeine.Data.Models;
-using Microsoft.ApplicationInsights.Extensibility;
+using Mono.Cecil;
 using MonoMod.RuntimeDetour;
-using NCLauncherW;
-using NCLauncherW.Views;
-using NCLog;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Xml.Serialization;
 using static MoreLinq.Extensions.PrependExtension;
@@ -20,13 +19,30 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
 {
   public class XmlSerializerContract : XmlSerializerImplementation
   {
+    static readonly string EntryAssemblySimpleName;
+    static readonly Dictionary<string, string> AppArgs;
+
     static XmlSerializerContract()
     {
       AppDomain.CurrentDomain.AssemblyLoad += (sender, args) =>
         NativeMethods.OutputDebugString("Assembly loaded: " + args.LoadedAssembly.FullName);
-
       AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
-      RegisterRuntimeDetours();
+
+      EntryAssemblySimpleName = Assembly.GetEntryAssembly().GetSimpleName();
+      string typeName = null;
+      if ( EntryAssemblySimpleName == "NCLauncher2" )
+        typeName = "NCLauncherW.AppArgs, NCLauncher2";
+      else if ( EntryAssemblySimpleName == "SelfUpdater" )
+        typeName = "SelfUpdater.Settings.AppArgs, SelfUpdater";
+
+      if ( typeName != null ) {
+        AppArgs = Type.GetType(typeName)?
+                      .GetProperty("Instance", BindingFlags.Static | BindingFlags.Public)?
+                      .GetValue(null)?
+                      .GetPropertyValues<string>();
+        if ( AppArgs != null )
+          RegisterRuntimeDetours();
+      }
     }
 
     public override XmlSerializationReader Reader => null;
@@ -37,7 +53,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
     public override bool CanSerialize(Type type) => false;
     public override XmlSerializer GetSerializer(Type type) => null;
 
-    static void RegisterRuntimeDetours()
+    private static void RegisterRuntimeDetours()
     {
       /* Disable Application Insights telemetry
        * Important note: Exactly one event will be tracked before this hook is able to disable it,
@@ -49,29 +65,18 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
            <DisableTelemetry>true</DisableTelemetry>
          </ApplicationInsights>
       */
-      _ = new Hook(typeof(TelemetryConfiguration).GetProperty(nameof(TelemetryConfiguration.DisableTelemetry))
-                                                 .GetGetMethod(),
-        new Func<Func<TelemetryConfiguration, bool>, TelemetryConfiguration, bool>((fn, @this) => true));
+      _ = new Hook(Type.GetType("Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration, Microsoft.ApplicationInsights")
+                       .GetProperty("DisableTelemetry")
+                       .GetGetMethod(),
+        new Func<Func<object, bool>, object, bool>((fn, @this) => true));
 
-      /* Fixes issue where if you click on the password field without filling in the email address field,
-       * it will be focused instead of the password field. 
-       */
-      var from = typeof(SignInWindow).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-                                     .FirstOrDefault(x => x.ReturnType == typeof(void)
-                                                       && x.GetParameters()
-                                                           .Select(y => y.ParameterType)
-                                                           .SequenceEqual(new[] { typeof(UIElement), typeof(bool) }));
-      if ( from != null ) {
-        _ = new Hook(from,
-          new Action<Action<SignInWindow, UIElement, bool>, SignInWindow, UIElement, bool>((fn, @this, A_1, A_2) => { }));
-      }
       /* Forward command line arguments that probably aren't for NC Launcher 2, to the game specified by 
        * the GameID launcher argument.
        */
       _ = new Hook(typeof(GameInfo).GetProperty(nameof(GameInfo.ExeArgument))
                                    .GetGetMethod(),
         new Func<Func<GameInfo, string>, GameInfo, string>((fn, @this) =>
-            string.Equals(@this.GameId, AppArgs.Instance.GameId, StringComparison.OrdinalIgnoreCase)
+            AppArgs.TryGetValue("GameId", out string value) && string.Equals(@this.GameId, value, StringComparison.OrdinalIgnoreCase)
               ? string.Join(" ", Environment.GetCommandLineArgs()
                                             .Skip(1)
                                             .Where(x => !string.IsNullOrEmpty(x)
@@ -91,23 +96,56 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
 
       /* Send unencrypted log messages to OutputDebugString 
        */
-      _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Debug)),
-        new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
+      _ = new Hook(Type.GetType("NCLog.Logger, NCLog")
+                       .GetMethod("Debug"),
+        new Action<Action<object, string>, object, string>((fn, @this, message) => {
           NativeMethods.OutputDebugString("DEBUG - " + message);
           fn(@this, message);
         }));
 
-      _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Info)),
-        new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
+      _ = new Hook(Type.GetType("NCLog.Logger, NCLog")
+                       .GetMethod("Info"),
+        new Action<Action<object, string>, object, string>((fn, @this, message) => {
           NativeMethods.OutputDebugString("INFO - " + message);
           fn(@this, message);
         }));
 
-      _ = new Hook(typeof(Logger).GetMethod(nameof(Logger.Error), new[] { typeof(string) }),
-        new Action<Action<Logger, string>, Logger, string>((fn, @this, message) => {
+      _ = new Hook(Type.GetType("NCLog.Logger, NCLog")
+                       .GetMethod("Error", new[] { typeof(string) }),
+        new Action<Action<object, string>, object, string>((fn, @this, message) => {
           NativeMethods.OutputDebugString("ERROR - " + message);
           fn(@this, message);
         }));
+
+      if ( EntryAssemblySimpleName == "NCLauncher2" ) {
+        /* Fixes issue where if you click on the password field without filling in the email address field,
+         * it will be focused instead of the password field. 
+         */
+        var from = Type.GetType("NCLauncherW.Views.SignInWindow, NCLauncher2")
+                       .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+                       .FirstOrDefault(x => x.ReturnType == typeof(void)
+                                         && x.GetParameters()
+                                             .Select(y => y.ParameterType)
+                                             .SequenceEqual(new[] { typeof(UIElement), typeof(bool) }));
+        if ( from != null ) {
+          _ = new Hook(from,
+            new Action<Action<object, UIElement, bool>, object, UIElement, bool>((fn, @this, A_1, A_2) => { }));
+        };
+      } else if ( EntryAssemblySimpleName == "SelfUpdater" ) {
+
+      }
+    }
+
+    private static string GenerateAssemblyId(AssemblyDefinition assemblyDef)
+    {
+      var sb = new StringBuilder();
+      foreach ( var mvid in assemblyDef.Modules
+                                       .Select(x => x.Mvid.ToString())
+                                       .OrderBy(x => x) ) {
+        sb.Append(mvid);
+        sb.Append(',');
+      }
+      return sb.ToString();
     }
 
     private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
@@ -116,17 +154,13 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
       var stream = Assembly.GetExecutingAssembly()
                            .GetManifestResourceStream(assemblyName.Name + ".dll.deflate");
       if ( stream != null ) {
-        try {
-          using ( var binaryReader = new BinaryReader(stream) )
-          using ( var deflateStream = new DeflateStream(stream, CompressionMode.Decompress) )
-          using ( var memoryStream = new MemoryStream(binaryReader.ReadInt32()) ) {
-            deflateStream.CopyTo(memoryStream);
-            var assembly = Assembly.Load(memoryStream.GetBuffer());
-            if ( assembly != null )
-              return assembly;
-          }
-        } finally {
-          stream.Dispose();
+        using ( var binaryReader = new BinaryReader(stream) )
+        using ( var deflateStream = new DeflateStream(stream, CompressionMode.Decompress) )
+        using ( var memoryStream = new MemoryStream(binaryReader.ReadInt32()) ) {
+          deflateStream.CopyTo(memoryStream);
+          var assembly = Assembly.Load(memoryStream.GetBuffer());
+          if ( assembly != null )
+            return assembly;
         }
       }
       NativeMethods.OutputDebugString("Assembly not resolved: " + args.Name);
