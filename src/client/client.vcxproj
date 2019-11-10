@@ -114,6 +114,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/Zc:strictStrings- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -154,6 +155,7 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/Zc:strictStrings- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -195,6 +197,7 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/Zc:strictStrings- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -240,6 +243,7 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalOptions>/Zc:strictStrings- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(ProjectDir)stub\$(TargetName).lib;%(AdditionalDependencies)</AdditionalDependencies>

@@ -1,11 +1,48 @@
 #pragma once
 
-extern decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
-NTSTATUS NTAPI NtSetInformationThread_hook(
-    HANDLE ThreadHandle,
-    THREADINFOCLASS ThreadInformationClass,
-    PVOID ThreadInformation,
-    ULONG ThreadInformationLength);
+extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
+NTSTATUS NTAPI LdrGetDllHandle_hook(
+  PWSTR DllPath,
+  PULONG DllCharacteristics,
+  PUNICODE_STRING DllName,
+  PVOID *DllHandle);
+
+extern decltype(&LdrLoadDll) g_pfnLdrLoadDll;
+NTSTATUS NTAPI LdrLoadDll_hook(
+  PWSTR DllPath,
+  PULONG DllCharacteristics,
+  PUNICODE_STRING DllName,
+  PVOID *DllHandle);
+
+extern decltype(&NtCreateFile) g_pfnNtCreateFile;
+NTSTATUS NTAPI NtCreateFile_hook(
+  PHANDLE FileHandle,
+  ACCESS_MASK DesiredAccess,
+  POBJECT_ATTRIBUTES ObjectAttributes,
+  PIO_STATUS_BLOCK IoStatusBlock,
+  PLARGE_INTEGER AllocationSize,
+  ULONG FileAttributes,
+  ULONG ShareAccess,
+  ULONG CreateDisposition,
+  ULONG CreateOptions,
+  PVOID EaBuffer,
+  ULONG EaLength);
+
+extern decltype(&NtCreateMutant) g_pfnNtCreateMutant;
+NTSTATUS NTAPI NtCreateMutant_hook(
+  PHANDLE MutantHandle,
+  ACCESS_MASK DesiredAccess,
+  POBJECT_ATTRIBUTES ObjectAttributes,
+  BOOLEAN InitialOwner);
+
+
+extern decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
+NTSTATUS NTAPI NtProtectVirtualMemory_hook(
+  HANDLE ProcessHandle,
+  PVOID *BaseAddress,
+  PSIZE_T RegionSize,
+  ULONG NewProtect,
+  PULONG OldProtect);
 
 extern decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
 NTSTATUS NTAPI NtQuerySystemInformation_hook(
@@ -22,40 +59,12 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
     ULONG ProcessInformationLength,
     PULONG ReturnLength);
 
-extern decltype(&NtCreateFile) g_pfnNtCreateFile;
-NTSTATUS NTAPI NtCreateFile_hook(
-    PHANDLE FileHandle,
-    ACCESS_MASK DesiredAccess,
-    POBJECT_ATTRIBUTES ObjectAttributes,
-    PIO_STATUS_BLOCK IoStatusBlock,
-    PLARGE_INTEGER AllocationSize,
-    ULONG FileAttributes,
-    ULONG ShareAccess,
-    ULONG CreateDisposition,
-    ULONG CreateOptions,
-    PVOID EaBuffer,
-    ULONG EaLength);
-
-extern decltype(&NtCreateMutant) g_pfnNtCreateMutant;
-NTSTATUS NTAPI NtCreateMutant_hook(
-    PHANDLE MutantHandle,
-    ACCESS_MASK DesiredAccess,
-    POBJECT_ATTRIBUTES ObjectAttributes,
-    BOOLEAN InitialOwner);
-
-extern decltype(&LdrLoadDll) g_pfnLdrLoadDll;
-NTSTATUS NTAPI LdrLoadDll_hook(
-    PWSTR DllPath,
-    PULONG DllCharacteristics,
-    PUNICODE_STRING DllName,
-    PVOID *DllHandle);
-
-extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
-NTSTATUS NTAPI LdrGetDllHandle_hook(
-    PWSTR DllPath,
-    PULONG DllCharacteristics,
-    PUNICODE_STRING DllName,
-    PVOID *DllHandle);
+extern decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
+NTSTATUS NTAPI NtSetInformationThread_hook(
+  HANDLE ThreadHandle,
+  THREADINFOCLASS ThreadInformationClass,
+  PVOID ThreadInformation,
+  ULONG ThreadInformationLength);
 
 extern HWND(WINAPI *g_pfnNtUserFindWindowEx)(HWND, HWND, PUNICODE_STRING, PUNICODE_STRING, DWORD);
 HWND WINAPI NtUserFindWindowEx_hook(

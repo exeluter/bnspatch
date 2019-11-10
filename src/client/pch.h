@@ -2,6 +2,7 @@
 
 #define STRICT
 #define NOMINMAX
+#define PHNT_VERSION PHNT_THRESHOLD
 #include <phnt/phnt_windows.h>
 #include <phnt/phnt.h>
 #pragma comment( lib, "ntdll.lib" )
@@ -14,16 +15,16 @@
 
 EXTERN_C const IMAGE_DOS_HEADER __ImageBase;
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <strsafe.h>
-#include <stdint.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstdint>
 
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
 #include <wil/token_helpers.h>
 
 #include <string>
+using namespace std::string_literals;
 #include <string_view>
 using namespace std::string_view_literals;
 
@@ -48,7 +49,7 @@ namespace fs = std::filesystem;
 #ifdef _DEBUG
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #else
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_OFF
 #endif
 #define SPDLOG_WCHAR_TO_UTF8_SUPPORT
 #include <spdlog/spdlog.h>
