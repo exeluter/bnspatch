@@ -2,43 +2,7 @@
 #include "hooks.h"
 #include "srw_exclusive_lock.h"
 #include "dllname.h"
-
-namespace wdm
-{
-  std::wstring_view to_wstring_view(const PUNICODE_STRING String)
-  {
-    if ( !String )
-      return L"(null)"sv;
-
-    return { String->Buffer, String->Length / sizeof(WCHAR) };
-  }
-
-  std::string_view to_string_view(const PANSI_STRING String)
-  {
-    if ( !String )
-      return "(null)"sv;
-    
-    return { String->Buffer, String->Length / sizeof(CHAR) };
-  }
-
-  std::wstring to_wstring(const POBJECT_ATTRIBUTES ObjectAttributes)
-  {
-    std::wstring s;
-
-    if ( !ObjectAttributes )
-      return L"(null)"s;
-
-    fmt::format_to(std::back_inserter(s), fmt(L"( {}, {}, {:#x}, {}, {}, {} )"),
-      ObjectAttributes->Length,
-      ObjectAttributes->RootDirectory,
-      ObjectAttributes->Attributes,
-      wdm::to_wstring_view(ObjectAttributes->ObjectName),
-      ObjectAttributes->SecurityDescriptor,
-      ObjectAttributes->SecurityQualityOfService);
-
-    return s;
-  }
-}
+#include "cvt.h"
 
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
@@ -306,8 +270,8 @@ HWND WINAPI NtUserFindWindowEx_hook(
     SPDLOG_INFO(fmt(L"{}, {}, {}, {}, {}"),
       fmt::ptr(hwndParent),
       fmt::ptr(hwndChild),
-      wdm::to_wstring_view(pstrClassName),
-      wdm::to_wstring_view(pstrWindowName),
+      cvt::to_wstring_view(pstrClassName),
+      cvt::to_wstring_view(pstrWindowName),
       dwType);
 
     if ( pstrClassName ) {
