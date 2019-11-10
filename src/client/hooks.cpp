@@ -95,13 +95,18 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   ULONG NewProtect,
   PULONG OldProtect)
 {
+  PROCESS_BASIC_INFORMATION ProcessInfo;
   UNICODE_STRING DllName = RTL_CONSTANT_STRING(RtlNtdllName);
   PVOID DllHandle;
   ANSI_STRING ProcedureName;
   PVOID ProcedureAddress;
 
   if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
+    && (ProcessHandle == NtCurrentProcess()
+      || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+        && NtCurrentTeb()->ClientId.UniqueProcess == ProcessInfo.UniqueProcessId))
     && NT_SUCCESS(LdrGetDllHandle((PWSTR)1, nullptr, &DllName, &DllHandle)) ) {
+
     for ( const auto &SourceString : { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
       RtlInitAnsiString(&ProcedureName, SourceString);
       if ( NT_SUCCESS(LdrGetProcedureAddress(DllHandle, &ProcedureName, 0, &ProcedureAddress))
