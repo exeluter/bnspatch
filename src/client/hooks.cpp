@@ -98,6 +98,8 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   PROCESS_BASIC_INFORMATION ProcessInfo;
   UNICODE_STRING DllName = RTL_CONSTANT_STRING(RtlNtdllName);
   PVOID DllHandle;
+  SYSTEM_BASIC_INFORMATION SystemInfo;
+  ULONG_PTR StartingAddress;
   ANSI_STRING ProcedureName;
   PVOID ProcedureAddress;
 
@@ -105,12 +107,15 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
     && (ProcessHandle == NtCurrentProcess()
       || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && NtCurrentTeb()->ClientId.UniqueProcess == ProcessInfo.UniqueProcessId))
-    && NT_SUCCESS(LdrGetDllHandle((PWSTR)1, nullptr, &DllName, &DllHandle)) ) {
+    && NT_SUCCESS(LdrGetDllHandle((PWSTR)1, nullptr, &DllName, &DllHandle))
+    && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
+
+    StartingAddress = (ULONG_PTR)*BaseAddress & ~(SystemInfo.PageSize - 1);
 
     for ( const auto &SourceString : { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
       RtlInitAnsiString(&ProcedureName, SourceString);
       if ( NT_SUCCESS(LdrGetProcedureAddress(DllHandle, &ProcedureName, 0, &ProcedureAddress))
-        && *BaseAddress == ProcedureAddress )
+        && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~(SystemInfo.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }
   }
