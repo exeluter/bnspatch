@@ -138,8 +138,6 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
   std::unique_lock<wdm::srw_exclusive_lock_t> lock_guard(lock, std::try_to_lock);
   NTSTATUS Status;
   PROCESS_BASIC_INFORMATION ProcessInfo;
-  ULONG Length;
-  DWORD ProcessId;
 
   if ( lock_guard.owns_lock() ) {
     SPDLOG_INFO(fmt("{}, {}, {}, {}, {}"),
@@ -149,21 +147,11 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
       ProcessInformationLength,
       fmt::ptr(ReturnLength));
 
-    if ( (ProcessInformationClass != ProcessBasicInformation && ProcessHandle == NtCurrentProcess())
-      || (NT_SUCCESS(Status = g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), &Length))
+    if ( ProcessHandle == NtCurrentProcess()
+      || (NT_SUCCESS(Status = g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
 
       switch ( ProcessInformationClass ) {
-      case ProcessBasicInformation:
-        if ( ProcessInformationLength != sizeof(PROCESS_BASIC_INFORMATION) )
-          return STATUS_INFO_LENGTH_MISMATCH;
-        *(PPROCESS_BASIC_INFORMATION)ProcessInformation = ProcessInfo;
-        GetWindowThreadProcessId(GetShellWindow(), &ProcessId);
-        ((PPROCESS_BASIC_INFORMATION)ProcessInformation)->InheritedFromUniqueProcessId = ULongToHandle(ProcessId);
-        if ( ReturnLength )
-          *ReturnLength = Length;
-        return Status;
-
       case ProcessDebugPort:
         if ( ProcessInformationLength != sizeof(DWORD_PTR) )
           return STATUS_INFO_LENGTH_MISMATCH;
