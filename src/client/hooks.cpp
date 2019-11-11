@@ -110,7 +110,11 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
     && NT_SUCCESS(LdrGetDllHandle((PWSTR)1, nullptr, &DllName, &DllHandle))
     && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
-    StartingAddress = (ULONG_PTR)*BaseAddress & ~(SystemInfo.PageSize - 1);
+    __try {
+      StartingAddress = (ULONG_PTR)*BaseAddress & ~(SystemInfo.PageSize - 1);
+    } __except ( EXCEPTION_EXECUTE_HANDLER ) {
+      return GetExceptionCode();
+    }
 
     for ( const auto &SourceString : { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
       RtlInitAnsiString(&ProcedureName, SourceString);
