@@ -66,10 +66,7 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
   PVOID ThreadInformation,
   ULONG ThreadInformationLength);
 
-extern HWND(WINAPI *g_pfnNtUserFindWindowEx)(HWND, HWND, PUNICODE_STRING, PUNICODE_STRING, DWORD);
-HWND WINAPI NtUserFindWindowEx_hook(
-    HWND hwndParent,
-    HWND hwndChild,
-    PUNICODE_STRING pstrClassName,
-    PUNICODE_STRING pstrWindowName,
-    DWORD dwType);
+extern decltype(&FindWindowA) g_pfnFindWindowA;
+HWND WINAPI FindWindowA_hook(
+  LPCSTR lpClassName,
+  LPCSTR lpWindowName);

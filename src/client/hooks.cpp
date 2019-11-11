@@ -256,45 +256,34 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
     ThreadInformationLength);
 }
 
-HWND(WINAPI *g_pfnNtUserFindWindowEx)(HWND, HWND, PUNICODE_STRING, PUNICODE_STRING, DWORD);
-HWND WINAPI NtUserFindWindowEx_hook(
-  HWND hwndParent,
-  HWND hwndChild,
-  PUNICODE_STRING pstrClassName,
-  PUNICODE_STRING pstrWindowName,
-  DWORD dwType)
+decltype(&FindWindowA) g_pfnFindWindowA;
+HWND WINAPI FindWindowA_hook(
+  LPCSTR lpClassName,
+  LPCSTR lpWindowName)
 {
   thread_local wdm::srw_exclusive_lock_t lock;
   std::unique_lock<wdm::srw_exclusive_lock_t> lock_guard(lock, std::try_to_lock);
-  UNICODE_STRING DestinationString;
 
   if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt(L"{}, {}, {}, {}, {}"),
-      fmt::ptr(hwndParent),
-      fmt::ptr(hwndChild),
-      cvt::to_wstring_view(pstrClassName),
-      cvt::to_wstring_view(pstrWindowName),
-      dwType);
+    SPDLOG_INFO(fmt(L"{}, {}"), lpClassName, lpWindowName);
 
-    if ( pstrClassName ) {
-      for ( const auto &SourceString : {
-        L"OLLYDBG", L"GBDYLLO", L"pediy06",
-        L"FilemonClass", L"PROCMON_WINDOW_CLASS", L"RegmonClass", L"18467-41" } ) {
-        RtlInitUnicodeString(&DestinationString, SourceString);
-        if ( RtlEqualUnicodeString(pstrClassName, &DestinationString, FALSE) )
+    if ( lpClassName ) {
+      for ( const auto &String : {
+        "OLLYDBG", "GBDYLLO", "pediy06",
+        "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
+        if ( !_stricmp(lpClassName, String) )
           return nullptr;
       }
     }
-    if ( pstrWindowName ) {
-      for ( const auto &SourceString : {
-        L"File Monitor - Sysinternals: www.sysinternals.com",
-        L"Process Monitor - Sysinternals: www.sysinternals.com",
-        L"Registry Monitor - Sysinternals: www.sysinternals.com" } ) {
-        RtlInitUnicodeString(&DestinationString, SourceString);
-        if ( RtlEqualUnicodeString(pstrWindowName, &DestinationString, FALSE) )
+    if ( lpWindowName ) {
+      for ( const auto &String : {
+        "File Monitor - Sysinternals: www.sysinternals.com",
+        "Process Monitor - Sysinternals: www.sysinternals.com",
+        "Registry Monitor - Sysinternals: www.sysinternals.com" } ) {
+        if ( !strcmp(lpWindowName, String) )
           return nullptr;
       }
     }
   }
-  return g_pfnNtUserFindWindowEx(hwndParent, hwndChild, pstrClassName, pstrWindowName, dwType);
+  return g_pfnFindWindowA(lpClassName, lpWindowName);
 }

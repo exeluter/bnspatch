@@ -76,11 +76,11 @@ extern "C" BOOL WINAPI DllMain(
 #endif
       }
 
-      if ( auto h = GetModuleHandleW(L"win32u.dll") ) {
-        g_pfnNtUserFindWindowEx = (decltype(g_pfnNtUserFindWindowEx))GetProcAddress(h, "NtUserFindWindowEx");
-        SPDLOG_INFO(fmt("win32u!NtUserFindWindowEx: {}"), (PVOID)g_pfnNtUserFindWindowEx);
-        if ( g_pfnNtUserFindWindowEx )
-          DetourAttach(&(PVOID &)g_pfnNtUserFindWindowEx, NtUserFindWindowEx_hook);
+      if ( auto h = GetModuleHandleW(L"user32.dll") ) {
+        g_pfnFindWindowA = (decltype(g_pfnFindWindowA))GetProcAddress(h, "FindWindowA");
+        SPDLOG_INFO(fmt("user32!FindWindowA: {}"), (PVOID)g_pfnFindWindowA);
+        if ( g_pfnFindWindowA )
+          DetourAttach(&(PVOID &)g_pfnFindWindowA, FindWindowA_hook);
       }
       DetourTransactionCommit();
       break;
