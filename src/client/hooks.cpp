@@ -106,7 +106,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
     && (ProcessHandle == NtCurrentProcess()
       || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-        && NtCurrentTeb()->ClientId.UniqueProcess == ProcessInfo.UniqueProcessId))
+        && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
     && NT_SUCCESS(LdrGetDllHandle((PWSTR)1, nullptr, &DllName, &DllHandle))
     && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
@@ -147,7 +147,7 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
 
     if ( (ProcessInformationClass != ProcessBasicInformation && ProcessHandle == NtCurrentProcess())
       || (NT_SUCCESS(Status = g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), &Length))
-        && NtCurrentTeb()->ClientId.UniqueProcess == ProcessInfo.UniqueProcessId) ) {
+        && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
 
       switch ( ProcessInformationClass ) {
       case ProcessBasicInformation:
@@ -252,7 +252,7 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
         return STATUS_INFO_LENGTH_MISMATCH;
       if ( ThreadHandle == NtCurrentThread()
         || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &ThreadInfo, sizeof(THREAD_BASIC_INFORMATION), nullptr))
-          && NtCurrentTeb()->ClientId.UniqueProcess == ThreadInfo.ClientId.UniqueProcess) )
+          && ThreadInfo.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) )
         return STATUS_SUCCESS;
       break;
     }
