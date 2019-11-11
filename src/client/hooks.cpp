@@ -111,7 +111,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
     && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
-      StartingAddress = (ULONG_PTR)*BaseAddress & ~(SystemInfo.PageSize - 1);
+      StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
     } __except ( EXCEPTION_EXECUTE_HANDLER ) {
       return GetExceptionCode();
     }
@@ -119,7 +119,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
     for ( const auto &SourceString : { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
       RtlInitAnsiString(&ProcedureName, SourceString);
       if ( NT_SUCCESS(LdrGetProcedureAddress(DllHandle, &ProcedureName, 0, &ProcedureAddress))
-        && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~(SystemInfo.PageSize - 1)) )
+        && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }
   }
