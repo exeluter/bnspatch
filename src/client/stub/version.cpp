@@ -75,7 +75,7 @@ DLLEXPORT BOOL APIENTRY GetFileVersionInfoA(
     DWORD dwLen,
     LPVOID lpData)
 {
-    return FALSE;
+    return 0;
 }
 
 DLLEXPORT BOOL APIENTRY GetFileVersionInfoW(
@@ -84,7 +84,7 @@ DLLEXPORT BOOL APIENTRY GetFileVersionInfoW(
     DWORD dwLen,
     LPVOID lpData)
 {
-    return FALSE;
+    return 0;
 }
 
 DLLEXPORT DWORD APIENTRY GetFileVersionInfoSizeExA(
@@ -110,7 +110,7 @@ DLLEXPORT BOOL APIENTRY GetFileVersionInfoExA(
     DWORD dwLen,
     LPVOID lpData)
 {
-    return FALSE;
+    return 0;
 }
 
 DLLEXPORT BOOL APIENTRY GetFileVersionInfoExW(
@@ -120,7 +120,7 @@ DLLEXPORT BOOL APIENTRY GetFileVersionInfoExW(
     DWORD dwLen,
     LPVOID lpData)
 {
-    return FALSE;
+    return 0;
 }
 
 DLLEXPORT BOOL APIENTRY GetFileVersionInfoByHandle(
@@ -129,7 +129,7 @@ DLLEXPORT BOOL APIENTRY GetFileVersionInfoByHandle(
     LPVOID *lplpBuffer,
     PUINT puLen)
 {
-    return FALSE;
+    return 0;
 }
 
 DLLEXPORT DWORD APIENTRY VerLanguageNameA(
@@ -154,7 +154,7 @@ DLLEXPORT BOOL APIENTRY VerQueryValueA(
     LPVOID *lplpBuffer,
     PUINT puLen)
 {
-    return FALSE;
+    return 0;
 }
 
 DLLEXPORT BOOL APIENTRY VerQueryValueW(
@@ -163,7 +163,7 @@ DLLEXPORT BOOL APIENTRY VerQueryValueW(
     LPVOID *lplpBuffer,
     PUINT puLen)
 {
-    return FALSE;
+    return 0;
 }
 
 EXTERN_C_END
