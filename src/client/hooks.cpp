@@ -265,7 +265,7 @@ HWND WINAPI FindWindowA_hook(
   std::unique_lock<wdm::srw_exclusive_lock_t> lock_guard(lock, std::try_to_lock);
 
   if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt(L"{}, {}"), lpClassName, lpWindowName);
+    SPDLOG_INFO(fmt("{}, {}"), lpClassName, lpWindowName);
 
     if ( lpClassName ) {
       for ( const auto &String : {
