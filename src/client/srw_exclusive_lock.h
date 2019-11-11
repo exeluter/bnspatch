@@ -5,10 +5,10 @@
 
 namespace wdm
 {
-  class srw_exclusive_lock_t : RTL_SRWLOCK
+  class srw_exclusive_lock : RTL_SRWLOCK
   {
   public:
-    srw_exclusive_lock_t() noexcept
+    srw_exclusive_lock() noexcept
     {
       RtlInitializeSRWLock(this);
     }

@@ -11,11 +11,21 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
+  thread_local wdm::srw_exclusive_lock lock;
+  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"kmon.dll");
 
-  if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
-    DllHandle = nullptr;
-    return STATUS_DLL_NOT_FOUND;
+  if ( lock_guard.owns_lock() ) {
+    SPDLOG_INFO(fmt(L"{}, {}, {}, {}"),
+      fmt::ptr(DllPath),
+      fmt::ptr(DllCharacteristics),
+      cvt::to_wstring_view(DllName),
+      fmt::ptr(DllHandle));
+
+    if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
+      DllHandle = nullptr;
+      return STATUS_DLL_NOT_FOUND;
+    }
   }
   return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
@@ -27,15 +37,25 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
+  thread_local wdm::srw_exclusive_lock lock;
+  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
 #ifdef _WIN64
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"aegisty64.bin");
 #else
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"aegisty.bin");
 #endif
 
-  if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
-    *DllHandle = nullptr;
-    return STATUS_DLL_NOT_FOUND;
+  if ( lock_guard.owns_lock() ) {
+    SPDLOG_INFO(fmt(L"{}, {}, {}, {}"),
+      fmt::ptr(DllPath),
+      fmt::ptr(DllCharacteristics),
+      cvt::to_wstring_view(DllName),
+      fmt::ptr(DllHandle));
+
+    if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
+      *DllHandle = nullptr;
+      return STATUS_DLL_NOT_FOUND;
+    }
   }
   return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);;
 }
@@ -76,13 +96,22 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   BOOLEAN InitialOwner)
 {
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"BnSGameClient");
+  thread_local wdm::srw_exclusive_lock lock;
+  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
 
-  if ( ObjectAttributes && ObjectAttributes->ObjectName
-    && RtlEqualUnicodeString(ObjectAttributes->ObjectName, &String, FALSE) ) {
+  if ( lock_guard.owns_lock() ) {
+    SPDLOG_INFO(fmt(L"{}, {:#x}, {}, {}"),
+      fmt::ptr(MutantHandle),
+      DesiredAccess,
+      cvt::to_wstring(ObjectAttributes),
+      InitialOwner);
+    if ( ObjectAttributes && ObjectAttributes->ObjectName
+      && RtlEqualUnicodeString(ObjectAttributes->ObjectName, &String, FALSE) ) {
 
-    ObjectAttributes->ObjectName = nullptr;
-    ObjectAttributes->Attributes &= ~OBJ_OPENIF;
-    ObjectAttributes->RootDirectory = nullptr;
+      ObjectAttributes->ObjectName = nullptr;
+      ObjectAttributes->Attributes &= ~OBJ_OPENIF;
+      ObjectAttributes->RootDirectory = nullptr;
+    }
   }
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
@@ -103,12 +132,14 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   ANSI_STRING ProcedureName;
   PVOID ProcedureAddress;
 
+  // Do not call any functions that cause heap allocation here! It will cause a deadlock.
+
   if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
     && (ProcessHandle == NtCurrentProcess()
-      || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+      || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-    && NT_SUCCESS(LdrGetDllHandle((PWSTR)1, nullptr, &DllName, &DllHandle))
-    && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
+    && NT_SUCCESS(g_pfnLdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
+    && NT_SUCCESS(g_pfnNtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
       StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
@@ -134,8 +165,8 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
   ULONG ProcessInformationLength,
   PULONG ReturnLength)
 {
-  thread_local wdm::srw_exclusive_lock_t lock;
-  std::unique_lock<wdm::srw_exclusive_lock_t> lock_guard(lock, std::try_to_lock);
+  thread_local wdm::srw_exclusive_lock lock;
+  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
   NTSTATUS Status;
   PROCESS_BASIC_INFORMATION ProcessInfo;
 
@@ -185,8 +216,8 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
   ULONG SystemInformationLength,
   PULONG ReturnLength)
 {
-  thread_local wdm::srw_exclusive_lock_t lock;
-  std::unique_lock<wdm::srw_exclusive_lock_t> lock_guard(lock, std::try_to_lock);
+  thread_local wdm::srw_exclusive_lock lock;
+  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
   PSYSTEM_KERNEL_DEBUGGER_INFORMATION KernelDebuggerInformation;
 
   if ( lock_guard.owns_lock() ) {
@@ -227,8 +258,8 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
   PVOID ThreadInformation,
   ULONG ThreadInformationLength)
 {
-  thread_local wdm::srw_exclusive_lock_t lock;
-  std::unique_lock<wdm::srw_exclusive_lock_t> lock_guard(lock, std::try_to_lock);
+  thread_local wdm::srw_exclusive_lock lock;
+  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
   THREAD_BASIC_INFORMATION ThreadInfo;
 
   if ( lock_guard.owns_lock() ) {
@@ -261,8 +292,8 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpClassName,
   LPCSTR lpWindowName)
 {
-  thread_local wdm::srw_exclusive_lock_t lock;
-  std::unique_lock<wdm::srw_exclusive_lock_t> lock_guard(lock, std::try_to_lock);
+  thread_local wdm::srw_exclusive_lock lock;
+  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
 
   if ( lock_guard.owns_lock() ) {
     SPDLOG_INFO(fmt("{}, {}"), lpClassName, lpWindowName);
