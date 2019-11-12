@@ -33,11 +33,12 @@ extern "C" BOOL WINAPI DllMain(
       DetourUpdateThread(GetCurrentThread());
 
       if ( auto h = GetModuleHandleW(L"ntdll.dll") ) {
+#ifdef _M_IX86
         g_pfnLdrGetDllHandle = (decltype(g_pfnLdrGetDllHandle))GetProcAddress(h, "LdrGetDllHandle");
         SPDLOG_INFO(fmt("ntdll!LdrGetDllHandle: {}"), (PVOID)g_pfnLdrGetDllHandle);
         if ( g_pfnLdrGetDllHandle )
           DetourAttach(&(PVOID &)g_pfnLdrGetDllHandle, LdrGetDllHandle_hook);
-
+#endif
         g_pfnLdrLoadDll = (decltype(g_pfnLdrLoadDll))GetProcAddress(h, "LdrLoadDll");
         SPDLOG_INFO(fmt("ntdll!LdrLoadDll: {}"), (PVOID)g_pfnLdrLoadDll);
         if ( g_pfnLdrLoadDll )
@@ -63,7 +64,6 @@ extern "C" BOOL WINAPI DllMain(
         if ( g_pfnNtQuerySystemInformation )
           DetourAttach(&(PVOID &)g_pfnNtQuerySystemInformation, NtQuerySystemInformation_hook);
       }
-
       if ( auto h = GetModuleHandleW(L"user32.dll") ) {
         g_pfnFindWindowA = (decltype(g_pfnFindWindowA))GetProcAddress(h, "FindWindowA");
         SPDLOG_INFO(fmt("user32!FindWindowA: {}"), (PVOID)g_pfnFindWindowA);

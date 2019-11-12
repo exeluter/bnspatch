@@ -330,11 +330,13 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="scl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cvt.h" />
     <ClInclude Include="dllname.h" />
     <ClInclude Include="hooks.h" />
+    <ClInclude Include="scl.h" />
     <ClInclude Include="srw_exclusive_lock.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

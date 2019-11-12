@@ -45,6 +45,9 @@
     <ClCompile Include="..\..\include\detours\modules.cpp">
       <Filter>Source Files\detours</Filter>
     </ClCompile>
+    <ClCompile Include="scl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -60,6 +63,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cvt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

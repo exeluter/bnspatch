@@ -4,6 +4,7 @@
 #include "dllname.h"
 #include "cvt.h"
 
+#ifdef _M_IX86
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,
@@ -11,16 +12,15 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-#ifdef _M_IX86
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"kmon.dll");
 
   if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
-#endif
   return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
+#endif
 
 decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
@@ -107,8 +107,8 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
     && (ProcessHandle == NtCurrentProcess()
       || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-    && NT_SUCCESS(g_pfnLdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
-    && NT_SUCCESS(g_pfnNtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
+    && NT_SUCCESS(LdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
+    && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
       StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);

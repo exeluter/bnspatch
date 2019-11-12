@@ -1,11 +1,13 @@
 #pragma once
 
+#ifdef _M_IX86
 extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,
   PULONG DllCharacteristics,
   PUNICODE_STRING DllName,
   PVOID *DllHandle);
+#endif
 
 extern decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
