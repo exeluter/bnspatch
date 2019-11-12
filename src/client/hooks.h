@@ -1,13 +1,11 @@
 #pragma once
 
-#ifdef _M_IX86
 extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,
   PULONG DllCharacteristics,
   PUNICODE_STRING DllName,
   PVOID *DllHandle);
-#endif
 
 extern decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
@@ -52,21 +50,6 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
     PVOID SystemInformation,
     ULONG SystemInformationLength,
     PULONG ReturnLength);
-
-extern decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
-NTSTATUS NTAPI NtQueryInformationProcess_hook(
-    HANDLE ProcessHandle,
-    PROCESSINFOCLASS ProcessInformationClass,
-    PVOID ProcessInformation,
-    ULONG ProcessInformationLength,
-    PULONG ReturnLength);
-
-extern decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
-NTSTATUS NTAPI NtSetInformationThread_hook(
-  HANDLE ThreadHandle,
-  THREADINFOCLASS ThreadInformationClass,
-  PVOID ThreadInformation,
-  ULONG ThreadInformationLength);
 
 extern decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(

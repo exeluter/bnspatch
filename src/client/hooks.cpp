@@ -4,7 +4,6 @@
 #include "dllname.h"
 #include "cvt.h"
 
-#ifdef _M_IX86
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,
@@ -12,15 +11,16 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
+#ifdef _M_IX86
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"kmon.dll");
 
   if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
+#endif
   return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
-#endif
 
 decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
@@ -81,7 +81,6 @@ NTSTATUS NTAPI NtCreateMutant_hook(
 
   if ( ObjectAttributes && ObjectAttributes->ObjectName
     && RtlEqualUnicodeString(ObjectAttributes->ObjectName, &String, FALSE) ) {
-
     ObjectAttributes->ObjectName = nullptr;
     ObjectAttributes->Attributes &= ~OBJ_OPENIF;
     ObjectAttributes->RootDirectory = nullptr;
@@ -102,16 +101,13 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   PVOID DllHandle;
   SYSTEM_BASIC_INFORMATION SystemInfo;
   ULONG_PTR StartingAddress;
-  ANSI_STRING ProcedureName;
   PVOID ProcedureAddress;
-
-  // Do not call any functions that cause heap allocation here! It will deadlock.
 
   if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
     && (ProcessHandle == NtCurrentProcess()
-      || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+      || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-    && NT_SUCCESS(LdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
+    && NT_SUCCESS(g_pfnLdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
     && NT_SUCCESS(g_pfnNtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
@@ -120,66 +116,15 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
       return GetExceptionCode();
     }
 
-    for ( const auto &SourceString : { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
-      RtlInitAnsiString(&ProcedureName, SourceString);
+    for ( auto &ProcedureName : std::array {
+      ANSI_STRING RTL_CONSTANT_STRING("DbgBreakPoint"),
+      ANSI_STRING RTL_CONSTANT_STRING("DbgUiRemoteBreakin") } ) {
       if ( NT_SUCCESS(LdrGetProcedureAddress(DllHandle, &ProcedureName, 0, &ProcedureAddress))
         && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }
   }
   return g_pfnNtProtectVirtualMemory(ProcessHandle, BaseAddress, RegionSize, NewProtect, OldProtect);
-}
-
-decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
-NTSTATUS NTAPI NtQueryInformationProcess_hook(
-  HANDLE ProcessHandle,
-  PROCESSINFOCLASS ProcessInformationClass,
-  PVOID ProcessInformation,
-  ULONG ProcessInformationLength,
-  PULONG ReturnLength)
-{
-  thread_local wdm::srw_exclusive_lock lock;
-  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
-  NTSTATUS Status;
-  PROCESS_BASIC_INFORMATION ProcessInfo;
-
-  if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt("{}, {}, {}, {}, {}"),
-      ProcessHandle,
-      magic_enum::enum_name(ProcessInformationClass),
-      ProcessInformation,
-      ProcessInformationLength,
-      fmt::ptr(ReturnLength));
-
-    if ( ProcessHandle == NtCurrentProcess()
-      || (NT_SUCCESS(Status = g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-        && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
-
-      switch ( ProcessInformationClass ) {
-      case ProcessDebugPort:
-        if ( ProcessInformationLength != sizeof(DWORD_PTR) )
-          return STATUS_INFO_LENGTH_MISMATCH;
-        *(PDWORD_PTR)ProcessInformation = 0;
-        if ( ReturnLength )
-          *ReturnLength = sizeof(DWORD_PTR);
-        return STATUS_SUCCESS;
-
-      case ProcessDebugObjectHandle:
-        if ( ProcessInformationLength != sizeof(HANDLE) )
-          return STATUS_INFO_LENGTH_MISMATCH;
-        *(PHANDLE)ProcessInformation = nullptr;
-        if ( ReturnLength )
-          *ReturnLength = sizeof(HANDLE);
-        return STATUS_PORT_NOT_SET;
-      }
-    }
-  }
-  return g_pfnNtQueryInformationProcess(
-    ProcessHandle,
-    ProcessInformationClass,
-    ProcessInformation,
-    ProcessInformationLength,
-    ReturnLength);
 }
 
 decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
@@ -189,34 +134,25 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
   ULONG SystemInformationLength,
   PULONG ReturnLength)
 {
-  thread_local wdm::srw_exclusive_lock lock;
-  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
   PSYSTEM_KERNEL_DEBUGGER_INFORMATION KernelDebuggerInformation;
 
-  if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt("{}, {}, {}, {}"),
-      magic_enum::enum_name(SystemInformationClass),
-      SystemInformation,
-      SystemInformationLength,
-      fmt::ptr(ReturnLength));
+  switch ( SystemInformationClass ) {
+  case SystemProcessInformation:
+  case SystemModuleInformation:
+  case SystemModuleInformationEx:
+    return STATUS_ACCESS_DENIED;
 
-    switch ( SystemInformationClass ) {
-    case SystemProcessInformation:
-    case SystemModuleInformation:
-    case SystemModuleInformationEx:
-      return STATUS_ACCESS_DENIED;
-    case SystemKernelDebuggerInformation:
-      if ( SystemInformationLength < sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION) )
-        return STATUS_INFO_LENGTH_MISMATCH;
-      KernelDebuggerInformation =
-        (PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation;
-      KernelDebuggerInformation->KernelDebuggerEnabled = FALSE;
-      KernelDebuggerInformation->KernelDebuggerNotPresent = TRUE;
+  case SystemKernelDebuggerInformation:
+    if ( SystemInformationLength < sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION) )
+      return STATUS_INFO_LENGTH_MISMATCH;
+    KernelDebuggerInformation =
+      (PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation;
+    KernelDebuggerInformation->KernelDebuggerEnabled = FALSE;
+    KernelDebuggerInformation->KernelDebuggerNotPresent = TRUE;
 
-      if ( ReturnLength )
-        *ReturnLength = sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION);
-      return STATUS_SUCCESS;
-    }
+    if ( ReturnLength )
+      *ReturnLength = sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION);
+    return STATUS_SUCCESS;
   }
   return g_pfnNtQuerySystemInformation(
     SystemInformationClass,
@@ -225,71 +161,28 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
     ReturnLength);
 }
 
-decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
-NTSTATUS NTAPI NtSetInformationThread_hook(
-  HANDLE ThreadHandle,
-  THREADINFOCLASS ThreadInformationClass,
-  PVOID ThreadInformation,
-  ULONG ThreadInformationLength)
-{
-  thread_local wdm::srw_exclusive_lock lock;
-  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
-  THREAD_BASIC_INFORMATION ThreadInfo;
-
-  if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt("{}, {}, {}, {}"),
-      ThreadHandle,
-      magic_enum::enum_name(ThreadInformationClass),
-      ThreadInformation,
-      ThreadInformationLength);
-
-    switch ( ThreadInformationClass ) {
-    case ThreadHideFromDebugger:
-      if ( ThreadInformationLength != 0 )
-        return STATUS_INFO_LENGTH_MISMATCH;
-      if ( ThreadHandle == NtCurrentThread()
-        || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &ThreadInfo, sizeof(THREAD_BASIC_INFORMATION), nullptr))
-          && ThreadInfo.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) )
-        return STATUS_SUCCESS;
-      break;
-    }
-  }
-  return g_pfnNtSetInformationThread(
-    ThreadHandle,
-    ThreadInformationClass,
-    ThreadInformation,
-    ThreadInformationLength);
-}
-
 decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(
   LPCSTR lpClassName,
   LPCSTR lpWindowName)
 {
-  thread_local wdm::srw_exclusive_lock lock;
-  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
-
-  if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt("{}, {}"), lpClassName, lpWindowName);
-
-    if ( lpClassName ) {
-      for ( const auto &String : {
+  if ( lpClassName ) {
+    for ( const auto &String : {
 #ifdef _M_IX86
-        "OLLYDBG", "GBDYLLO", "pediy06",
+      "OLLYDBG", "GBDYLLO", "pediy06",
 #endif
-        "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
-        if ( !_stricmp(lpClassName, String) )
-          return nullptr;
-      }
+      "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
+      if ( !_stricmp(lpClassName, String) )
+        return nullptr;
     }
-    if ( lpWindowName ) {
-      for ( const auto &String : {
-        "File Monitor - Sysinternals: www.sysinternals.com",
-        "Process Monitor - Sysinternals: www.sysinternals.com",
-        "Registry Monitor - Sysinternals: www.sysinternals.com" } ) {
-        if ( !strcmp(lpWindowName, String) )
-          return nullptr;
-      }
+  }
+  if ( lpWindowName ) {
+    for ( const auto &String : {
+      "File Monitor - Sysinternals: www.sysinternals.com",
+      "Process Monitor - Sysinternals: www.sysinternals.com",
+      "Registry Monitor - Sysinternals: www.sysinternals.com" } ) {
+      if ( !strcmp(lpWindowName, String) )
+        return nullptr;
     }
   }
   return g_pfnFindWindowA(lpClassName, lpWindowName);

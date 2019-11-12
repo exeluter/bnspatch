@@ -13,8 +13,6 @@
 #endif
 #pragma comment( lib, "delayimp.lib" )
 
-EXTERN_C const IMAGE_DOS_HEADER __ImageBase;
-
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>

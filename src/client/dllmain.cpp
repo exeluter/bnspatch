@@ -28,18 +28,14 @@ extern "C" BOOL WINAPI DllMain(
       spdlog::set_default_logger(msvc_logger);
 #endif
 
-      NtCurrentPeb()->BeingDebugged = FALSE;
-
       DetourTransactionBegin();
       DetourUpdateThread(GetCurrentThread());
 
       if ( auto h = GetModuleHandleW(L"ntdll.dll") ) {
-#ifdef _M_IX86
         g_pfnLdrGetDllHandle = (decltype(g_pfnLdrGetDllHandle))GetProcAddress(h, "LdrGetDllHandle");
         SPDLOG_INFO(fmt("ntdll!LdrGetDllHandle: {}"), (PVOID)g_pfnLdrGetDllHandle);
         if ( g_pfnLdrGetDllHandle )
           DetourAttach(&(PVOID &)g_pfnLdrGetDllHandle, LdrGetDllHandle_hook);
-#endif
 
         g_pfnLdrLoadDll = (decltype(g_pfnLdrLoadDll))GetProcAddress(h, "LdrLoadDll");
         SPDLOG_INFO(fmt("ntdll!LdrLoadDll: {}"), (PVOID)g_pfnLdrLoadDll);
@@ -61,20 +57,10 @@ extern "C" BOOL WINAPI DllMain(
         if ( g_pfnNtProtectVirtualMemory )
           DetourAttach(&(PVOID &)g_pfnNtProtectVirtualMemory, NtProtectVirtualMemory_hook);
 
-        g_pfnNtQueryInformationProcess = (decltype(g_pfnNtQueryInformationProcess))GetProcAddress(h, "NtQueryInformationProcess");
-        SPDLOG_INFO(fmt("ntdll!NtQueryInformationProcess: {}"), (PVOID)g_pfnNtQueryInformationProcess);
-        if ( g_pfnNtQueryInformationProcess )
-          DetourAttach(&(PVOID &)g_pfnNtQueryInformationProcess, NtQueryInformationProcess_hook);
-
         g_pfnNtQuerySystemInformation = (decltype(g_pfnNtQuerySystemInformation))GetProcAddress(h, "NtQuerySystemInformation");
         SPDLOG_INFO(fmt("ntdll!NtQuerySystemInformation: {}"), (PVOID)g_pfnNtQuerySystemInformation);
         if ( g_pfnNtQuerySystemInformation )
           DetourAttach(&(PVOID &)g_pfnNtQuerySystemInformation, NtQuerySystemInformation_hook);
-
-        g_pfnNtSetInformationThread = (decltype(g_pfnNtSetInformationThread))GetProcAddress(h, "NtSetInformationThread");
-        SPDLOG_INFO(fmt("ntdll!NtSetInformationThread: {}"), (PVOID)g_pfnNtSetInformationThread);
-        if ( g_pfnNtSetInformationThread )
-          DetourAttach(&(PVOID &)g_pfnNtSetInformationThread, NtSetInformationThread_hook);
       }
 
       if ( auto h = GetModuleHandleW(L"user32.dll") ) {
@@ -104,7 +90,32 @@ const PfnDliHook __pfnDliNotifyHook2 = [](
   case dliStartProcessing:
     break;
   case dliNotePreLoadLibrary:
-    if ( (DllName = GetDllName(&__ImageBase))
+    if ( NtCurrentPeb()->BeingDebugged ) {
+#ifdef _M_X64
+      auto str = fmt::format(
+        fmt(L"\"InjectorCLIx64.exe\" pid:{:#x} \"HookLibraryx64.dll\" nowait"), 
+        GetCurrentProcessId());
+#else
+      auto str = fmt::format(
+        fmt(L"\"InjectorCLIx86.exe\" pid:{:#x} \"HookLibraryx86.dll\" nowait"), 
+        GetCurrentProcessId());
+#endif
+      STARTUPINFO StartupInfo = { sizeof(STARTUPINFO) };
+      wil::unique_process_information ProcessInfo;
+      if ( CreateProcessW(
+        nullptr,
+        str.data(),
+        nullptr,
+        nullptr,
+        FALSE,
+        CREATE_NO_WINDOW,
+        nullptr, 
+        nullptr, 
+        &StartupInfo, 
+        &ProcessInfo) )
+        wil::handle_wait(ProcessInfo.hProcess);
+    }
+    if ( (DllName = GetDllName(wil::GetModuleInstanceHandle()))
       && !_stricmp(pdli->szDll, DllName)
       && SUCCEEDED(wil::GetSystemDirectoryW(result)) ) {
 
