@@ -2,6 +2,7 @@
 #include "dllname.h"
 //#include "modulever.h"
 #include "hooks.h"
+#include "scl.h"
 
 extern "C" BOOL WINAPI DllMain(
   HINSTANCE hInstance,
@@ -90,31 +91,9 @@ const PfnDliHook __pfnDliNotifyHook2 = [](
   case dliStartProcessing:
     break;
   case dliNotePreLoadLibrary:
-    if ( NtCurrentPeb()->BeingDebugged ) {
-#ifdef _M_X64
-      auto str = fmt::format(
-        fmt(L"\"InjectorCLIx64.exe\" pid:{:#x} \"HookLibraryx64.dll\" nowait"), 
-        GetCurrentProcessId());
-#else
-      auto str = fmt::format(
-        fmt(L"\"InjectorCLIx86.exe\" pid:{:#x} \"HookLibraryx86.dll\" nowait"), 
-        GetCurrentProcessId());
-#endif
-      STARTUPINFO StartupInfo = { sizeof(STARTUPINFO) };
-      wil::unique_process_information ProcessInfo;
-      if ( CreateProcessW(
-        nullptr,
-        str.data(),
-        nullptr,
-        nullptr,
-        FALSE,
-        CREATE_NO_WINDOW,
-        nullptr, 
-        nullptr, 
-        &StartupInfo, 
-        &ProcessInfo) )
-        wil::handle_wait(ProcessInfo.hProcess);
-    }
+    if ( NtCurrentPeb()->BeingDebugged )
+      scl::RunInjectorCLI(GetCurrentProcessId());
+
     if ( (DllName = GetDllName(wil::GetModuleInstanceHandle()))
       && !_stricmp(pdli->szDll, DllName)
       && SUCCEEDED(wil::GetSystemDirectoryW(result)) ) {
