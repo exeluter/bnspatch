@@ -4,6 +4,7 @@
 #include "dllname.h"
 #include "cvt.h"
 
+#ifdef _M_IX86
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,
@@ -11,24 +12,15 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  thread_local wdm::srw_exclusive_lock lock;
-  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"kmon.dll");
 
-  if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt(L"{}, {}, {}, {}"),
-      fmt::ptr(DllPath),
-      fmt::ptr(DllCharacteristics),
-      cvt::to_wstring_view(DllName),
-      fmt::ptr(DllHandle));
-
-    if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
-      DllHandle = nullptr;
-      return STATUS_DLL_NOT_FOUND;
-    }
+  if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
+    DllHandle = nullptr;
+    return STATUS_DLL_NOT_FOUND;
   }
   return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
+#endif
 
 decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
@@ -37,25 +29,15 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  thread_local wdm::srw_exclusive_lock lock;
-  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
-#ifdef _WIN64
+#ifdef _M_X64
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"aegisty64.bin");
 #else
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"aegisty.bin");
 #endif
 
-  if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt(L"{}, {}, {}, {}"),
-      fmt::ptr(DllPath),
-      fmt::ptr(DllCharacteristics),
-      cvt::to_wstring_view(DllName),
-      fmt::ptr(DllHandle));
-
-    if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
-      *DllHandle = nullptr;
-      return STATUS_DLL_NOT_FOUND;
-    }
+  if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
+    *DllHandle = nullptr;
+    return STATUS_DLL_NOT_FOUND;
   }
   return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);;
 }
@@ -96,22 +78,13 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   BOOLEAN InitialOwner)
 {
   UNICODE_STRING String = RTL_CONSTANT_STRING(L"BnSGameClient");
-  thread_local wdm::srw_exclusive_lock lock;
-  std::unique_lock<wdm::srw_exclusive_lock> lock_guard(lock, std::try_to_lock);
 
-  if ( lock_guard.owns_lock() ) {
-    SPDLOG_INFO(fmt(L"{}, {:#x}, {}, {}"),
-      fmt::ptr(MutantHandle),
-      DesiredAccess,
-      cvt::to_wstring(ObjectAttributes),
-      InitialOwner);
-    if ( ObjectAttributes && ObjectAttributes->ObjectName
-      && RtlEqualUnicodeString(ObjectAttributes->ObjectName, &String, FALSE) ) {
+  if ( ObjectAttributes && ObjectAttributes->ObjectName
+    && RtlEqualUnicodeString(ObjectAttributes->ObjectName, &String, FALSE) ) {
 
-      ObjectAttributes->ObjectName = nullptr;
-      ObjectAttributes->Attributes &= ~OBJ_OPENIF;
-      ObjectAttributes->RootDirectory = nullptr;
-    }
+    ObjectAttributes->ObjectName = nullptr;
+    ObjectAttributes->Attributes &= ~OBJ_OPENIF;
+    ObjectAttributes->RootDirectory = nullptr;
   }
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
@@ -132,13 +105,13 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   ANSI_STRING ProcedureName;
   PVOID ProcedureAddress;
 
-  // Do not call any functions that cause heap allocation here! It will cause a deadlock.
+  // Do not call any functions that cause heap allocation here! It will deadlock.
 
   if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
     && (ProcessHandle == NtCurrentProcess()
       || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-    && NT_SUCCESS(g_pfnLdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
+    && NT_SUCCESS(LdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
     && NT_SUCCESS(g_pfnNtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
@@ -228,9 +201,10 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
       fmt::ptr(ReturnLength));
 
     switch ( SystemInformationClass ) {
+    case SystemProcessInformation:
     case SystemModuleInformation:
+    case SystemModuleInformationEx:
       return STATUS_ACCESS_DENIED;
-
     case SystemKernelDebuggerInformation:
       if ( SystemInformationLength < sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION) )
         return STATUS_INFO_LENGTH_MISMATCH;
@@ -300,7 +274,9 @@ HWND WINAPI FindWindowA_hook(
 
     if ( lpClassName ) {
       for ( const auto &String : {
+#ifdef _M_IX86
         "OLLYDBG", "GBDYLLO", "pediy06",
+#endif
         "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
         if ( !_stricmp(lpClassName, String) )
           return nullptr;

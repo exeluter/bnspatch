@@ -34,10 +34,12 @@ extern "C" BOOL WINAPI DllMain(
       DetourUpdateThread(GetCurrentThread());
 
       if ( auto h = GetModuleHandleW(L"ntdll.dll") ) {
+#ifdef _M_IX86
         g_pfnLdrGetDllHandle = (decltype(g_pfnLdrGetDllHandle))GetProcAddress(h, "LdrGetDllHandle");
         SPDLOG_INFO(fmt("ntdll!LdrGetDllHandle: {}"), (PVOID)g_pfnLdrGetDllHandle);
         if ( g_pfnLdrGetDllHandle )
           DetourAttach(&(PVOID &)g_pfnLdrGetDllHandle, LdrGetDllHandle_hook);
+#endif
 
         g_pfnLdrLoadDll = (decltype(g_pfnLdrLoadDll))GetProcAddress(h, "LdrLoadDll");
         SPDLOG_INFO(fmt("ntdll!LdrLoadDll: {}"), (PVOID)g_pfnLdrLoadDll);
@@ -58,22 +60,21 @@ extern "C" BOOL WINAPI DllMain(
         SPDLOG_INFO(fmt("ntdll!NtProtectVirtualMemory: {}"), (PVOID)g_pfnNtProtectVirtualMemory);
         if ( g_pfnNtProtectVirtualMemory )
           DetourAttach(&(PVOID &)g_pfnNtProtectVirtualMemory, NtProtectVirtualMemory_hook);
-#ifdef _WIN64
+
         g_pfnNtQueryInformationProcess = (decltype(g_pfnNtQueryInformationProcess))GetProcAddress(h, "NtQueryInformationProcess");
         SPDLOG_INFO(fmt("ntdll!NtQueryInformationProcess: {}"), (PVOID)g_pfnNtQueryInformationProcess);
         if ( g_pfnNtQueryInformationProcess )
           DetourAttach(&(PVOID &)g_pfnNtQueryInformationProcess, NtQueryInformationProcess_hook);
-#endif
+
         g_pfnNtQuerySystemInformation = (decltype(g_pfnNtQuerySystemInformation))GetProcAddress(h, "NtQuerySystemInformation");
         SPDLOG_INFO(fmt("ntdll!NtQuerySystemInformation: {}"), (PVOID)g_pfnNtQuerySystemInformation);
         if ( g_pfnNtQuerySystemInformation )
           DetourAttach(&(PVOID &)g_pfnNtQuerySystemInformation, NtQuerySystemInformation_hook);
-#ifdef _WIN64
+
         g_pfnNtSetInformationThread = (decltype(g_pfnNtSetInformationThread))GetProcAddress(h, "NtSetInformationThread");
         SPDLOG_INFO(fmt("ntdll!NtSetInformationThread: {}"), (PVOID)g_pfnNtSetInformationThread);
         if ( g_pfnNtSetInformationThread )
           DetourAttach(&(PVOID &)g_pfnNtSetInformationThread, NtSetInformationThread_hook);
-#endif
       }
 
       if ( auto h = GetModuleHandleW(L"user32.dll") ) {
