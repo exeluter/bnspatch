@@ -1,5 +1,4 @@
-
 namespace scl
 {
-  bool RunInjectorCLI(DWORD dwProcessId);
+  bool RunInjectorCLI(DWORD targetPid);
 }

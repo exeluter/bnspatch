@@ -9,12 +9,12 @@
 # define SCYLLAHIDE_HOOK_LIBRARY L"HookLibraryx86.dll"
 #endif
 
-bool scl::RunInjectorCLI(DWORD dwProcessId)
+bool scl::RunInjectorCLI(DWORD targetPid)
 {
   auto str = fmt::format(
     fmt(L"\"{}\" pid:{:#x} \"{}\" nowait"),
     SCYLLAHIDE_INJECTOR_CLI,
-    dwProcessId,
+    targetPid,
     SCYLLAHIDE_HOOK_LIBRARY);
 
   STARTUPINFO StartupInfo = { sizeof(STARTUPINFO) };
