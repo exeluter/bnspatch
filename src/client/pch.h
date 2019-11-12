@@ -53,7 +53,3 @@ namespace fs = std::filesystem;
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/fmt/bin_to_hex.h>
-
-#define MAGIC_ENUM_RANGE_MIN 0
-#define MAGIC_ENUM_RANGE_MAX 256
-#include <magic_enum/magic_enum.hpp>

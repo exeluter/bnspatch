@@ -59,9 +59,6 @@
     <ClInclude Include="hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="srw_exclusive_lock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cvt.h">
       <Filter>Header Files</Filter>
     </ClInclude>

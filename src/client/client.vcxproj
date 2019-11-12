@@ -337,7 +337,6 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
     <ClInclude Include="dllname.h" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="scl.h" />
-    <ClInclude Include="srw_exclusive_lock.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
