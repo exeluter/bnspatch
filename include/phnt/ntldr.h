@@ -507,8 +507,8 @@ LdrQueryModuleServiceTags(
 typedef struct _LDR_DLL_LOADED_NOTIFICATION_DATA
 {
     ULONG Flags;
-    PUNICODE_STRING FullDllName;
-    PUNICODE_STRING BaseDllName;
+    PCUNICODE_STRING FullDllName;
+    PCUNICODE_STRING BaseDllName;
     PVOID DllBase;
     ULONG SizeOfImage;
 } LDR_DLL_LOADED_NOTIFICATION_DATA, *PLDR_DLL_LOADED_NOTIFICATION_DATA;
@@ -528,9 +528,11 @@ typedef union _LDR_DLL_NOTIFICATION_DATA
     LDR_DLL_UNLOADED_NOTIFICATION_DATA Unloaded;
 } LDR_DLL_NOTIFICATION_DATA, *PLDR_DLL_NOTIFICATION_DATA;
 
+typedef CONST LDR_DLL_NOTIFICATION_DATA *PCLDR_DLL_NOTIFICATION_DATA;
+
 typedef VOID (NTAPI *PLDR_DLL_NOTIFICATION_FUNCTION)(
     _In_ ULONG NotificationReason,
-    _In_ PLDR_DLL_NOTIFICATION_DATA NotificationData,
+    _In_ PCLDR_DLL_NOTIFICATION_DATA NotificationData,
     _In_opt_ PVOID Context
     );
 
@@ -542,7 +544,7 @@ NTAPI
 LdrRegisterDllNotification(
     _In_ ULONG Flags,
     _In_ PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction,
-    _In_ PVOID Context,
+    _In_opt_ PVOID Context,
     _Out_ PVOID *Cookie
     );
 
