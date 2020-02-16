@@ -1,113 +1,90 @@
 #include "pch.h"
-#include "dllname.h"
 //#include "modulever.h"
 #include "hooks.h"
-#include "scl.h"
+#include "pe/module.h"
+#include "pe/export_directory.h"
+#include "ntapi.h"
 
-extern "C" BOOL WINAPI DllMain(
-  HINSTANCE hInstance,
-  DWORD     fdwReason,
-  LPVOID    lpvReserved)
+template <size_t Size>
+inline void AttachMultipleDetours(
+  const wchar_t *module_name,
+  const std::array<std::tuple<const char *, void **, void *>, Size> &detours)
 {
-  //PCNZWCH ProductName;
-  //PCNZWCH OriginalFilename;
-
-  switch ( fdwReason ) {
-  case DLL_PROCESS_ATTACH:
-    DisableThreadLibraryCalls(hInstance);
-    //if ( GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\ProductName", &(LPCVOID &)ProductName) >= 0
-    //    && !wcscmp(ProductName, L"Blade & Soul")
-    //    && GetModuleVersionInfo(nullptr, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)OriginalFilename) >= 0
-    //    && !wcscmp(OriginalFilename, L"Client.exe") )
-    {
-#ifdef _DEBUG
-      auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-      auto msvc_logger = std::make_shared<spdlog::logger>("msvc_logger", sink);
-      if ( GetAsyncKeyState(VK_CONTROL) & 0x8000 )
-        msvc_logger->set_level(spdlog::level::debug);
-      msvc_logger->set_pattern("[%l] %!: %v");
-      spdlog::set_default_logger(msvc_logger);
-#endif
-
-      DetourTransactionBegin();
-      DetourUpdateThread(GetCurrentThread());
-
-      if ( auto h = GetModuleHandleW(L"ntdll.dll") ) {
-#ifdef _M_IX86
-        g_pfnLdrGetDllHandle = (decltype(g_pfnLdrGetDllHandle))GetProcAddress(h, "LdrGetDllHandle");
-        SPDLOG_INFO(fmt("ntdll!LdrGetDllHandle: {}"), (PVOID)g_pfnLdrGetDllHandle);
-        if ( g_pfnLdrGetDllHandle )
-          DetourAttach(&(PVOID &)g_pfnLdrGetDllHandle, LdrGetDllHandle_hook);
-#endif
-        g_pfnLdrLoadDll = (decltype(g_pfnLdrLoadDll))GetProcAddress(h, "LdrLoadDll");
-        SPDLOG_INFO(fmt("ntdll!LdrLoadDll: {}"), (PVOID)g_pfnLdrLoadDll);
-        if ( g_pfnLdrLoadDll )
-          DetourAttach(&(PVOID &)g_pfnLdrLoadDll, LdrLoadDll_hook);
-
-        g_pfnNtCreateFile = (decltype(g_pfnNtCreateFile))GetProcAddress(h, "NtCreateFile");
-        SPDLOG_INFO(fmt("ntdll!NtCreateFile: {}"), (PVOID)g_pfnNtCreateFile);
-        if ( g_pfnNtCreateFile )
-          DetourAttach(&(PVOID &)g_pfnNtCreateFile, NtCreateFile_hook);
-
-        g_pfnNtCreateMutant = (decltype(g_pfnNtCreateMutant))GetProcAddress(h, "NtCreateMutant");
-        SPDLOG_INFO(fmt("ntdll!NtCreateMutant: {}"), (PVOID)g_pfnNtCreateMutant);
-        if ( g_pfnNtCreateMutant )
-          DetourAttach(&(PVOID &)g_pfnNtCreateMutant, NtCreateMutant_hook);
-
-        g_pfnNtProtectVirtualMemory = (decltype(g_pfnNtProtectVirtualMemory))GetProcAddress(h, "NtProtectVirtualMemory");
-        SPDLOG_INFO(fmt("ntdll!NtProtectVirtualMemory: {}"), (PVOID)g_pfnNtProtectVirtualMemory);
-        if ( g_pfnNtProtectVirtualMemory )
-          DetourAttach(&(PVOID &)g_pfnNtProtectVirtualMemory, NtProtectVirtualMemory_hook);
-
-        g_pfnNtQuerySystemInformation = (decltype(g_pfnNtQuerySystemInformation))GetProcAddress(h, "NtQuerySystemInformation");
-        SPDLOG_INFO(fmt("ntdll!NtQuerySystemInformation: {}"), (PVOID)g_pfnNtQuerySystemInformation);
-        if ( g_pfnNtQuerySystemInformation )
-          DetourAttach(&(PVOID &)g_pfnNtQuerySystemInformation, NtQuerySystemInformation_hook);
-      }
-      if ( auto h = GetModuleHandleW(L"user32.dll") ) {
-        g_pfnFindWindowA = (decltype(g_pfnFindWindowA))GetProcAddress(h, "FindWindowA");
-        SPDLOG_INFO(fmt("user32!FindWindowA: {}"), (PVOID)g_pfnFindWindowA);
-        if ( g_pfnFindWindowA )
-          DetourAttach(&(PVOID &)g_pfnFindWindowA, FindWindowA_hook);
-      }
-      DetourTransactionCommit();
-      break;
+  if ( const auto module = pe::get_module(module_name) ) {
+    for ( const auto &det : detours ) {
+      if ( *std::get<1>(det) = module->find_function(std::get<0>(det)) )
+        DetourAttach(std::get<1>(det), std::get<2>(det));
     }
-  case DLL_PROCESS_DETACH:
-    break;
+  }
+}
+
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
+{
+  switch ( fdwReason ) {
+    case DLL_PROCESS_ATTACH: {
+      if ( pe::get_module()->base_name() == L"Client.exe" ) {
+        NtCurrentPeb()->BeingDebugged = FALSE;
+
+        auto sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+        auto logger = std::make_shared<spdlog::logger>("msvc_logger", sink);
+        if ( GetAsyncKeyState(VK_CONTROL) & 0x8000 )
+          logger->set_level(spdlog::level::debug);
+        logger->set_pattern("[%l] %!: %v");
+        spdlog::set_default_logger(logger);
+
+        // Register Dll Notification
+        if ( const auto module = pe::get_module(L"ntdll.dll") ) {
+          if ( const auto pfn = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
+            module->find_function("LdrRegisterDllNotification")) ) {
+            pfn(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
+          }
+        }
+
+        // Attach Detours
+        DetourTransactionBegin();
+        DetourUpdateThread(NtCurrentThread());
+        AttachMultipleDetours(L"ntdll.dll",
+          std::array {
+            std::make_tuple("LdrLoadDll", &(void *&)g_pfnLdrLoadDll, (void *)&LdrLoadDll_hook),
+            std::make_tuple("NtCreateFile", &(void *&)g_pfnNtCreateFile, (void *)&NtCreateFile_hook),
+            std::make_tuple("NtCreateMutant", &(void *&)g_pfnNtCreateMutant, (void *)&NtCreateMutant_hook),
+            std::make_tuple("NtProtectVirtualMemory", &(void *&)g_pfnNtProtectVirtualMemory, (void *)&NtProtectVirtualMemory_hook),
+            std::make_tuple("NtQueryInformationProcess", &(void *&)g_pfnNtQueryInformationProcess, (void *)&NtQueryInformationProcess_hook),
+            std::make_tuple("NtQuerySystemInformation", &(void *&)g_pfnNtQuerySystemInformation, (void *)&NtQuerySystemInformation_hook)
+          });
+        AttachMultipleDetours(L"user32.dll",
+          std::array {
+            std::make_tuple("FindWindowA", &(PVOID &)g_pfnFindWindowA, (PVOID)&FindWindowA_hook)
+          });
+        DetourTransactionCommit();
+        break;
+      }
+    }
   }
   return TRUE;
 }
 
-ExternC
-const PfnDliHook __pfnDliNotifyHook2 = [](
-  unsigned       dliNotify,
-  PDelayLoadInfo pdli) -> FARPROC
-{
-  PCSTR DllName;
+ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC {
   std::wstring result;
 
   switch ( dliNotify ) {
-  case dliStartProcessing:
-    break;
-  case dliNotePreLoadLibrary:
-    if ( NtCurrentPeb()->BeingDebugged )
-      scl::RunInjectorCLI(GetCurrentProcessId());
+    case dliStartProcessing:
+      break;
+    case dliNotePreLoadLibrary:
+      if ( !_stricmp(pe::get_instance_module()->export_directory()->name(), pdli->szDll)
+        && SUCCEEDED(wil::GetSystemDirectoryW(result)) ) {
 
-    if ( (DllName = GetDllName(wil::GetModuleInstanceHandle()))
-      && !_stricmp(pdli->szDll, DllName)
-      && SUCCEEDED(wil::GetSystemDirectoryW(result)) ) {
-
-      auto Path = fs::path(result);
-      Path /= pdli->szDll;
-      return (FARPROC)LoadLibraryExW(Path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
-    }
-    break;
-  case dliNotePreGetProcAddress:
-  case dliFailLoadLib:
-  case dliFailGetProc:
-  case dliNoteEndProcessing:
-    break;
+        auto path = fs::path(result);
+        path /= pdli->szDll;
+        return reinterpret_cast<FARPROC>(
+          LoadLibraryExW(path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH));
+      }
+      break;
+    case dliNotePreGetProcAddress:
+    case dliFailLoadLib:
+    case dliFailGetProc:
+    case dliNoteEndProcessing:
+      break;
   }
   return nullptr;
 };

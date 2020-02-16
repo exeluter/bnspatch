@@ -1,8 +1,10 @@
 #pragma once
 
 #define STRICT
+#define WIN32_LEAN_AND_MEAN
+#define NOGDI
+#define NODRAWTEXT
 #define NOMINMAX
-#define PHNT_VERSION PHNT_THRESHOLD
 #include <phnt/phnt_windows.h>
 #include <phnt/phnt.h>
 #pragma comment( lib, "ntdll.lib" )
@@ -17,6 +19,7 @@
 #include <cstdio>
 #include <cstdint>
 
+#define RESULT_DIAGNOSTICS_LEVEL 2
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
 #include <wil/token_helpers.h>
@@ -35,21 +38,27 @@ namespace fs = std::filesystem;
 #include <wil/resource.h>
 
 #include <gsl/gsl>
+namespace std { using gsl::span; }
 
 #define DETOURS_INTERNAL
 #include <detours/detours.h>
 
 #define FMT_HEADER_ONLY
-#define FMT_STRING_ALIAS 1
 #include <fmt/format.h>
+#include <fmt/chrono.h>
 
 #define SPDLOG_FMT_EXTERNAL
 #ifdef _DEBUG
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
 #else
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_OFF
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
 #endif
 #define SPDLOG_WCHAR_TO_UTF8_SUPPORT
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/fmt/bin_to_hex.h>
+
+static inline ptrdiff_t make_offset(const void *Base, const void *Pointer)
+{
+  return ((ptrdiff_t)(((uintptr_t)(Pointer)) - ((uintptr_t)(Base))));
+}

@@ -1,26 +1,96 @@
 #include "pch.h"
 #include "hooks.h"
-#include "srw_exclusive_lock.h"
-#include "dllname.h"
-#include "cvt.h"
+#include "pe/module.h"
+#include "pe/segment.h"
+#include "searchers.h"
+#include "Unreal.h"
+#include "ntapi.h"
+#include "locks.h"
+#include <imgui/imgui.h>
 
-#ifdef _M_IX86
-decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
-NTSTATUS NTAPI LdrGetDllHandle_hook(
-  PWSTR DllPath,
-  PULONG DllCharacteristics,
-  PUNICODE_STRING DllName,
-  PVOID *DllHandle)
+void *g_pvDllNotificationCookie;
+VOID CALLBACK DllNotification(
+  ULONG                       NotificationReason,
+  PCLDR_DLL_NOTIFICATION_DATA NotificationData,
+  PVOID                       Context)
 {
-  UNICODE_STRING String = RTL_CONSTANT_STRING(L"kmon.dll");
+  static  thread_local_lock lock;
+  std::unique_lock< thread_local_lock> u(lock, std::try_to_lock);
+  if ( !u.owns_lock() )
+    return;
 
-  if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
-    DllHandle = nullptr;
-    return STATUS_DLL_NOT_FOUND;
+  switch ( NotificationReason ) {
+    case LDR_DLL_NOTIFICATION_REASON_LOADED: {
+      const auto Module = reinterpret_cast<const pe::module *>(NotificationData->Loaded.DllBase);
+      const auto BaseDllName = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
+      
+      if ( BaseDllName->iequals(L"bsengine_Shipping64.dll") ) {
+        if ( const auto segment = Module->segment(".text") ) {
+          const auto data = segment->to_bytes();
+          std::chrono::duration<double, std::milli> timer;
+
+          if ( const auto &it = std::search(data.begin(), data.end(),
+             pattern_searcher("48 8B 05 ?? ?? ?? ?? 48 63 C9", &timer)); it != data.end() ) {
+            UObject::GObjObjects = (TArray<UObject *> *)(&it[7] + *(int32_t *)&it[3]);
+          }
+
+          if ( const auto &it = std::search(data.begin(), data.end(),
+             pattern_searcher("48 8B 0D ?? ?? ?? ?? 48 89 04 D1", &timer)); it != data.end() ) {
+            FName::Names = (TArray<FNameEntry *> *)(&it[7] + *(int32_t *)&it[3]);
+          }
+
+          if ( const auto &it = std::search(data.begin(), data.end(),
+             pattern_searcher("48 8B 05 ?? ?? ?? ?? C1 E2 12", &timer)); it != data.end() ) {
+            GEngine = (UEngine *)(&it[7] + *(int32_t *)&it[3]);
+          }
+
+          if ( const auto &it = std::search(data.begin(), data.end(),
+             pattern_searcher("4C 8B CF 4C 8B C6 48 8B D5 48 8B CB E8", &timer)); it != data.end() ) {
+
+            g_pfnProcessEvent = (decltype(g_pfnProcessEvent))(&it[0x11] + *(int32_t *)&it[0xd]);
+            DetourTransactionBegin();
+            DetourUpdateThread(NtCurrentThread());
+            DetourAttach(&(void *&)g_pfnProcessEvent, &ProcessEvent_hook);
+            DetourTransactionCommit();
+          }
+
+          uint8_t *ptr = reinterpret_cast<uint8_t *>(Module->handle() + 0x7baad5);
+          uint8_t before[] { 0x44, 0x0f, 0x29, 0x64, 0x24, 0x50 };
+          uint8_t after[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+          if ( !memcmp(ptr, before, std::size(before)) ) {
+            DWORD OldProtect;
+            if ( VirtualProtect(ptr, std::size(after), PAGE_EXECUTE_READWRITE, &OldProtect) ) {
+              memcpy(ptr, after, std::size(after));
+              VirtualProtect(ptr, std::size(after), OldProtect, &OldProtect);
+            }
+          }
+        }
+      } else if ( BaseDllName->iequals(L"XmlReader_cl64.dll") ) {
+      }
+      break;
+    } case LDR_DLL_NOTIFICATION_REASON_UNLOADED: {
+      break;
+    }
   }
-  return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
-#endif
+
+void(*g_pfnProcessEvent)(UObject *, UFunction *, void *, void *);
+void ProcessEvent_hook(UObject *Object, UFunction *Function, void *Parms, void *Result)
+{
+  //if ( ObjectNameEquals(Function, std::array { 21, 2756, 6152 }) ) { // Engine.AnimatedCamera.ApplyCameraModifiers
+  //  auto Params = (ACamera_ApplyCameraModifiers_Params *)Parms;
+  //  Params->OutPOV.FOV = 105.0f;
+  //} else if ( ObjectNameEquals(Function, std::array { 21, 162, 6194 }) ) { // Engine.Camera.eventSetFOV
+  //  auto Params = (ACamera_eventSetFOV_Params *)Parms;
+  //  Params->NewFOV = 105.0f;
+  //} else if ( ObjectNameEquals(Function, std::array { 21, 2810, 6323 }) ) { // Engine.PlayerController.SetIgnoreLookInput
+  //  return;
+  //} else if ( ObjectNameEquals(Function, std::array { 6030, 6043, 337 }) ) { // T1Game.T1PlayerController.PlayerTick
+  //}
+  g_pfnProcessEvent(Object, Function, Parms, Result);
+}
+
 
 decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
@@ -29,17 +99,16 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-#ifdef _M_X64
-  UNICODE_STRING String = RTL_CONSTANT_STRING(L"aegisty64.bin");
-#else
-  UNICODE_STRING String = RTL_CONSTANT_STRING(L"aegisty.bin");
-#endif
+  static thread_local_lock lock;
+  std::unique_lock<thread_local_lock> u(lock, std::try_to_lock);
 
-  if ( RtlEqualUnicodeString(DllName, &String, TRUE) ) {
+  if ( u.owns_lock()
+    && static_cast<ntapi::ustring_span *>(DllName)->iequals(L"aegisty64.bin") ) {
+
     *DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
-  return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);;
+  return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
 
 decltype(&NtCreateFile) g_pfnNtCreateFile;
@@ -77,10 +146,10 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner)
 {
-  UNICODE_STRING String = RTL_CONSTANT_STRING(L"BnSGameClient");
+  if ( ObjectAttributes
+    && ObjectAttributes->ObjectName
+    && static_cast<ntapi::ustring_span *>(ObjectAttributes->ObjectName)->starts_with(L"BnSGameClient") ) {
 
-  if ( ObjectAttributes && ObjectAttributes->ObjectName
-    && RtlEqualUnicodeString(ObjectAttributes->ObjectName, &String, FALSE) ) {
     ObjectAttributes->ObjectName = nullptr;
     ObjectAttributes->Attributes &= ~OBJ_OPENIF;
     ObjectAttributes->RootDirectory = nullptr;
@@ -97,34 +166,70 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   PULONG OldProtect)
 {
   PROCESS_BASIC_INFORMATION ProcessInfo;
-  UNICODE_STRING DllName = RTL_CONSTANT_STRING(RtlNtdllName);
-  PVOID DllHandle;
   SYSTEM_BASIC_INFORMATION SystemInfo;
   ULONG_PTR StartingAddress;
-  PVOID ProcedureAddress;
 
   if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
     && (ProcessHandle == NtCurrentProcess()
       || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-    && NT_SUCCESS(LdrGetDllHandle(nullptr, nullptr, &DllName, &DllHandle))
     && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
-    __try {
-      StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
-    } __except ( EXCEPTION_EXECUTE_HANDLER ) {
-      return GetExceptionCode();
-    }
+    if ( const auto DllHandle = pe::get_module(L"ntdll.dll") ) {
+      __try {
+        StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
+      } __except ( EXCEPTION_EXECUTE_HANDLER ) {
+        return GetExceptionCode();
+      }
 
-    for ( auto &ProcedureName : std::array {
-      ANSI_STRING RTL_CONSTANT_STRING("DbgBreakPoint"),
-      ANSI_STRING RTL_CONSTANT_STRING("DbgUiRemoteBreakin") } ) {
-      if ( NT_SUCCESS(LdrGetProcedureAddress(DllHandle, &ProcedureName, 0, &ProcedureAddress))
-        && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
-        return STATUS_INVALID_PARAMETER_2;
+      for ( const auto &Name : std::array { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
+        if ( const auto ProcedureAddress = DllHandle->find_function(Name);
+          ProcedureAddress && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
+          return STATUS_INVALID_PARAMETER_2;
+      }
     }
   }
   return g_pfnNtProtectVirtualMemory(ProcessHandle, BaseAddress, RegionSize, NewProtect, OldProtect);
+}
+
+decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
+NTSTATUS NTAPI NtQueryInformationProcess_hook(
+  HANDLE ProcessHandle,
+  PROCESSINFOCLASS ProcessInformationClass,
+  PVOID ProcessInformation,
+  ULONG ProcessInformationLength,
+  PULONG ReturnLength)
+{
+  PROCESS_BASIC_INFORMATION ProcessInfo;
+
+  if ( ProcessHandle == NtCurrentProcess()
+    || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+      && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+
+    switch ( ProcessInformationClass ) {
+      case ProcessDebugPort:
+        if ( ProcessInformationLength != sizeof(DWORD_PTR) )
+          return STATUS_INFO_LENGTH_MISMATCH;
+        *(PDWORD_PTR)ProcessInformation = 0;
+        if ( ReturnLength )
+          *ReturnLength = sizeof(DWORD_PTR);
+        return STATUS_SUCCESS;
+
+      case ProcessDebugObjectHandle:
+        if ( ProcessInformationLength != sizeof(HANDLE) )
+          return STATUS_INFO_LENGTH_MISMATCH;
+        *(PHANDLE)ProcessInformation = nullptr;
+        if ( ReturnLength )
+          *ReturnLength = sizeof(HANDLE);
+        return STATUS_PORT_NOT_SET;
+    }
+  }
+  return g_pfnNtQueryInformationProcess(
+    ProcessHandle,
+    ProcessInformationClass,
+    ProcessInformation,
+    ProcessInformationLength,
+    ReturnLength);
 }
 
 decltype(&NtQuerySystemInformation) g_pfnNtQuerySystemInformation;
@@ -134,25 +239,24 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
   ULONG SystemInformationLength,
   PULONG ReturnLength)
 {
-  PSYSTEM_KERNEL_DEBUGGER_INFORMATION KernelDebuggerInformation;
-
   switch ( SystemInformationClass ) {
-  case SystemProcessInformation:
-  case SystemModuleInformation:
-  case SystemModuleInformationEx:
-    return STATUS_ACCESS_DENIED;
+    case SystemProcessInformation:
+    case SystemModuleInformation:
+    case SystemModuleInformationEx:
+      return STATUS_ACCESS_DENIED;
 
-  case SystemKernelDebuggerInformation:
-    if ( SystemInformationLength < sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION) )
-      return STATUS_INFO_LENGTH_MISMATCH;
-    KernelDebuggerInformation =
-      (PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation;
-    KernelDebuggerInformation->KernelDebuggerEnabled = FALSE;
-    KernelDebuggerInformation->KernelDebuggerNotPresent = TRUE;
+    case SystemKernelDebuggerInformation: {
+      if ( SystemInformationLength < sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION) )
+        return STATUS_INFO_LENGTH_MISMATCH;
 
-    if ( ReturnLength )
-      *ReturnLength = sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION);
-    return STATUS_SUCCESS;
+      auto KernelDebuggerInformation = (PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation;
+      KernelDebuggerInformation->KernelDebuggerEnabled = FALSE;
+      KernelDebuggerInformation->KernelDebuggerNotPresent = TRUE;
+
+      if ( ReturnLength )
+        *ReturnLength = sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION);
+      return STATUS_SUCCESS;
+    }
   }
   return g_pfnNtQuerySystemInformation(
     SystemInformationClass,
@@ -168,9 +272,6 @@ HWND WINAPI FindWindowA_hook(
 {
   if ( lpClassName ) {
     for ( const auto &String : {
-#ifdef _M_IX86
-      "OLLYDBG", "GBDYLLO", "pediy06",
-#endif
       "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
       if ( !_stricmp(lpClassName, String) )
         return nullptr;
