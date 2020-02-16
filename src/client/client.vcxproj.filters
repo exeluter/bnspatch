@@ -16,6 +16,15 @@
     <Filter Include="Source Files\detours">
       <UniqueIdentifier>{d0734afb-55ec-4929-9fc2-446c86cc0ae2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\imgui">
+      <UniqueIdentifier>{f3acde30-2608-4e8b-bef0-530bd5e3d7e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ntapi">
+      <UniqueIdentifier>{a898d681-4d2f-4ca5-b906-bcffa5da16c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\pe">
+      <UniqueIdentifier>{ee941e2e-087a-4876-a6d7-3024cbcc092d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -25,9 +34,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hooks.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="dllname.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\include\detours\creatwth.cpp">
@@ -45,25 +51,57 @@
     <ClCompile Include="..\..\include\detours\modules.cpp">
       <Filter>Source Files\detours</Filter>
     </ClCompile>
-    <ClCompile Include="scl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dllname.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cvt.h">
+    <ClInclude Include="xmlreader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="scl.h">
+    <ClInclude Include="pe\module.h">
+      <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="pe\resource_directory.h">
+      <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="pe\segment.h">
+      <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="pe\export_directory.h">
+      <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="pe\import_directory.h">
+      <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="pe\traits.h">
+      <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="Unreal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="pe\pe.h">
+      <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="searchers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="locks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ntapi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ntapi\string_span">
+      <Filter>Header Files\ntapi</Filter>
+    </None>
+    <None Include="ntapi\string">
+      <Filter>Header Files\ntapi</Filter>
+    </None>
   </ItemGroup>
 </Project>
