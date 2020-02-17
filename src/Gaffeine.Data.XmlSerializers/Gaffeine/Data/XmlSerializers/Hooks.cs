@@ -47,13 +47,12 @@ namespace Gaffeine.Data.XmlSerializers
     [MonoModHook("Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration, Microsoft.ApplicationInsights",
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    public static bool get_DisableTelemetry(
-      Func<object, bool> @delegate, object @this) => true;
+    public static bool get_DisableTelemetry(Func<object, bool> @delegate,
+      object @this) => true;
 
     [MonoModHook(typeof(GameInfo),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static string get_ExeArgument(
-      Func<GameInfo, string> @delegate,
+    public static string get_ExeArgument(Func<GameInfo, string> @delegate,
       GameInfo @this)
     {
       var args = Environment.GetCommandLineArgs().Skip(1);
@@ -71,8 +70,7 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook("Gaffeine.Controls.Helpers.ShortcutHelper, Gaffeine.Controls",
       BindingFlags = BindingFlags.Static | BindingFlags.Public)]
-    public static bool MakeGameShortcut(
-      Func<Game, bool> @delegate,
+    public static bool MakeGameShortcut(Func<Game, bool> @delegate,
       Game game)
     {
       string path = Path.Combine(
@@ -84,10 +82,8 @@ namespace Gaffeine.Data.XmlSerializers
     [MonoModHook(typeof(LanguagePackageFiles),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    public static bool Exists(
-      Func<LanguagePackageFiles, string, bool> @delegate,
-      LanguagePackageFiles @this,
-      string fileName)
+    public static bool Exists(Func<LanguagePackageFiles, string, bool> @delegate,
+      LanguagePackageFiles @this, string fileName)
     {
       return !string.IsNullOrEmpty(fileName)
         && @this.Exists(x => fileName.Contains(x.FileName, StringComparison.OrdinalIgnoreCase));
@@ -98,11 +94,8 @@ namespace Gaffeine.Data.XmlSerializers
       BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic)]
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
     [SuppressMessage("Style", "IDE1006:Naming Styles")]
-    public static void ca8de357b76a2339a41ee639eb04cc454(
-      Action<object, UIElement, bool> @delegate,
-      object @this,
-      UIElement A_1,
-      bool A_2)
+    public static void ca8de357b76a2339a41ee639eb04cc454(Action<object, UIElement, bool> @delegate,
+      object @this, UIElement A_1, bool A_2)
     {
     }
   }
