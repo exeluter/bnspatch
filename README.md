@@ -50,12 +50,12 @@ No. Each component works individually and may be used together or separately.
 TL;DR: No.
 
 Long version: BnS Buddy's developer, instead of using his influence to foster a
-healthy development community for Blade & Soul, has negative knee-jerk reactions
-to any alternative to his program and really likes to spread FUD around to
-discourage people from using them, using spooky terms like "injection"
+healthy development community for Blade & Soul, has a negative knee-jerk reaction
+to alternatives for to his program and really likes to spread FUD around to
+discourage people from using them, by using spooky terms like "injection"
 [[link][12], [link][13]].
 
-While bnspatch does make use of a DLL hijacking to do its magic, this exact method
+While bnspatch does make use of DLL hijacking to do its magic, this exact method
 is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
 well, previously).
 
