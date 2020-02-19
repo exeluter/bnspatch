@@ -21,12 +21,12 @@ VOID CALLBACK DllNotification(
 
   switch ( NotificationReason ) {
     case LDR_DLL_NOTIFICATION_REASON_LOADED: {
-      const auto Module = reinterpret_cast<const pe::module *>(NotificationData->Loaded.DllBase);
+      const auto Module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
       const auto BaseDllName = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
       
       if ( BaseDllName->iequals(L"bsengine_Shipping64.dll") ) {
         if ( const auto segment = Module->segment(".text") ) {
-          const auto data = segment->to_bytes();
+          const auto data = segment->as_bytes();
           std::chrono::duration<double, std::milli> timer;
 
           if ( const auto &it = std::search(data.begin(), data.end(),
@@ -54,9 +54,10 @@ VOID CALLBACK DllNotification(
             DetourTransactionCommit();
           }
 
-          uint8_t *ptr = reinterpret_cast<uint8_t *>(Module->handle() + 0x7baad5);
-          uint8_t before[] { 0x44, 0x0f, 0x29, 0x64, 0x24, 0x50 };
-          uint8_t after[] { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+          // offset taken from bmeale's helobns fps boost option
+          uint8_t *ptr = reinterpret_cast<uint8_t *>(Module) + 0x7baad5;
+          const uint8_t before[] { 0x44, 0x0f, 0x29, 0x64, 0x24, 0x50 }; // movaps xmmword ptr ss:rsp+50],xmm12
+          const uint8_t after[] { 0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00 };  // nop word ptr ds:[rax+rax],ax
 
           if ( !memcmp(ptr, before, std::size(before)) ) {
             DWORD OldProtect;
@@ -175,7 +176,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
     && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
-    if ( const auto DllHandle = pe::get_module(L"ntdll.dll") ) {
+    if ( const auto module = pe::get_module(L"ntdll.dll") ) {
       __try {
         StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
       } __except ( EXCEPTION_EXECUTE_HANDLER ) {
@@ -183,7 +184,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
       }
 
       for ( const auto &Name : std::array { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
-        if ( const auto ProcedureAddress = DllHandle->find_function(Name);
+        if ( const auto ProcedureAddress = module->find_function(Name);
           ProcedureAddress && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
           return STATUS_INVALID_PARAMETER_2;
       }
