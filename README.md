@@ -46,7 +46,7 @@ Yes it does! In fact, I highly recommend using it.
 #### Q: Do I have to use all of the components for bnspatch to work?
 No. Each component works individually and may be used together or separately.
 
-#### Q: Isn't BnS Buddy more safe to use than this?
+#### Q: Isn't this unsafe compared to BnS Buddy?
 TL;DR: No.
 
 Long version: For some reason, BnS Buddy's developer gets really insecure
