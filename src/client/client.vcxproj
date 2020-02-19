@@ -66,7 +66,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <UseFullPaths>false</UseFullPaths>
       <ErrorReporting>None</ErrorReporting>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -113,7 +113,7 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
       <UseFullPaths>false</UseFullPaths>
       <ErrorReporting>None</ErrorReporting>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -153,23 +153,23 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\include\detours\creatwth.cpp">
+    <ClCompile Include="include\detours\creatwth.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\detours.cpp">
+    <ClCompile Include="include\detours\detours.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\disasm.cpp">
+    <ClCompile Include="include\detours\disasm.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\image.cpp">
+    <ClCompile Include="include\detours\image.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\modules.cpp">
+    <ClCompile Include="include\detours\modules.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

@@ -19,11 +19,6 @@
 #include <cstdio>
 #include <cstdint>
 
-#define RESULT_DIAGNOSTICS_LEVEL 2
-#include <wil/stl.h>
-#include <wil/win32_helpers.h>
-#include <wil/token_helpers.h>
-
 #include <string>
 using namespace std::string_literals;
 #include <string_view>
@@ -35,10 +30,7 @@ using namespace std::string_view_literals;
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include <wil/resource.h>
-
 #include <gsl/gsl>
-namespace std { using gsl::span; }
 
 #define DETOURS_INTERNAL
 #include <detours/detours.h>
