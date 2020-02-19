@@ -9,4 +9,4 @@
     <level value="DEBUG"/>
     <appender-ref ref="OutputDebugStringAppender"/>
   </root>
-</log4net> 
+</log4net>

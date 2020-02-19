@@ -82,25 +82,25 @@
     <Compile Include="Microsoft.Xml.Serialization.GeneratedAssembly\XmlSerializerContract.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources\ApplicationInsights.config">
+    <EmbeddedResource Include="Resources\ApplicationInsights.config">
       <LogicalName>ApplicationInsights.config</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources\Mono.Cecil.dll.deflate">
+    <EmbeddedResource Include="Resources\Mono.Cecil.dll.deflate">
       <LogicalName>Mono.Cecil.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources\MonoMod.RuntimeDetour.dll.deflate">
+    <EmbeddedResource Include="Resources\MonoMod.RuntimeDetour.dll.deflate">
       <LogicalName>MonoMod.RuntimeDetour.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources\MonoMod.Utils.dll.deflate">
+    <EmbeddedResource Include="Resources\MonoMod.Utils.dll.deflate">
       <LogicalName>MonoMod.Utils.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Properties\Resources\MoreLinq.dll.deflate">
+    <EmbeddedResource Include="Resources\MoreLinq.dll.deflate">
       <LogicalName>MoreLinq.dll.deflate</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Condition=" '$(Configuration)' == 'Debug' " Include="Resources\NCLog.Debug.xml">
       <LogicalName>NCLog.xml</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Condition=" '$(Configuration)' == 'Release' " Include="Properties\Resources\NCLog.Release.xml">
+    <EmbeddedResource Condition=" '$(Configuration)' == 'Release' " Include="Resources\NCLog.Release.xml">
       <LogicalName>NCLog.xml</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
