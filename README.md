@@ -53,8 +53,9 @@ Long version: For some reason, BnS Buddy's developer gets really insecure
 when alternatives to his program show up and [really][12] [likes to][13] spread FUD
 around to discourage people from using them, using scary buzzwords like "injection".
 
-While bnspatch does make use of a `winmm.dll` proxy, this exact method is also used by
-the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as well, previously).
+While bnspatch does make use of a DLL hijacking to do its magic, this exact method
+is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
+well, previously).
 
 In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
 BnS Buddy is. I don't expect the developer to understand any of this though, since
