@@ -43,15 +43,15 @@ may need a little manual configuration.
 #### Q: Does this work with [**d912pxy**][3]?
 Yes it does! In fact, I highly recommend using it.
 
-#### Q: Do I have to use all of the components for bnspatch to work?
+#### Q: Do I have to use all of the components for this to work?
 No. Each component works individually and may be used together or separately.
 
 #### Q: Isn't this unsafe compared to BnS Buddy?
 TL;DR: No.
 
-Long version: For some reason, BnS Buddy's developer gets really insecure
-when alternatives to his program show up and [really][12] [likes to][13] spread FUD
-around to discourage people from using them, using scary buzzwords like "injection".
+Long version: For some reason, BnS Buddy's developer gets insecure when alternatives
+to his program show up and [really][12] [likes to][13] spread FUD around to
+discourage people from using them, using spooky terms like "injection".
 
 While bnspatch does make use of a DLL hijacking to do its magic, this exact method
 is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
@@ -59,8 +59,8 @@ well, previously).
 
 In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
 BnS Buddy is. I don't expect the developer to understand any of this though, since
-they literally copy-pasted both of those features from others, without giving any
-credit [[dead link][14] ([mirror][15]), [link][16]].
+they literally copy-pasted both of those features from other people, without giving
+any credit [[dead link][14] ([mirror][15]), [link][16]].
 
 ## Acknowledgements
 - [gabime/**spdlog**][4] (MIT license)
