@@ -1,13 +1,19 @@
 ﻿using Gaffeine.Data.Models;
 using Gaffeine.Data.Models.Update;
+using GameUpdateService.Updaters.US4Updater.US4UpdateMode;
+using Mono.Cecil;
 using MoreLinq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Windows;
+using System.Xml.Serialization;
+using CustomAttributeNamedArgument = Mono.Cecil.CustomAttributeNamedArgument;
 using FileInfo = Gaffeine.Data.Models.Update.FileInfo;
 
 namespace Gaffeine.Data.XmlSerializers
@@ -44,6 +50,37 @@ namespace Gaffeine.Data.XmlSerializers
     //  return list;
     //}
 
+    [MonoModHook(typeof(US4UpdateModeBase),
+      BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic)]
+    public static void FileReplace(Action<US4UpdateModeBase, string, string> @delegate,
+      US4UpdateModeBase @this, string src, string dest)
+    {
+      if ( Guid.TryParse(@this._Game.AppId, out var AppId)
+        && AppId.Equals(new Guid(0x0D726F91, 0x202E, 0x4158, 0x9B, 0x9D, 0xCA, 0x0B, 0xF9, 0x44, 0x6B, 0x36))
+        && string.Equals(Path.GetFileName(dest), "Gaffeine.Data.dll", StringComparison.OrdinalIgnoreCase) ) {
+
+        var executingAssembly = Assembly.GetExecutingAssembly();
+        using ( var parentAssemblyDef = AssemblyDefinition.ReadAssembly(src) )
+        using ( var assemblyDef = AssemblyDefinition.ReadAssembly(executingAssembly.Location) ) {
+          if ( assemblyDef.HasCustomAttributes ) {
+            var item = assemblyDef.CustomAttributes.SingleOrDefault(x => x.AttributeType.FullName == "System.Xml.Serialization.XmlSerializerVersionAttribute");
+            assemblyDef.CustomAttributes.Remove(item);
+
+            assemblyDef.CustomAttributes.Add(new CustomAttribute(item.Constructor) {
+              Properties = {
+                new CustomAttributeNamedArgument("ParentAssemblyId",
+                  new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, parentAssemblyDef.GetAssemblyId())),
+                new CustomAttributeNamedArgument("Version",
+                  new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, "4.0.0.0"))
+              }
+            });
+            assemblyDef.Write(Path.Combine(Path.GetDirectoryName(dest), Path.GetFileName(executingAssembly.Location)));
+          }
+        }
+      }
+      @delegate(@this, src, dest);
+    }
+
     [MonoModHook("Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration, Microsoft.ApplicationInsights",
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
     [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
@@ -58,9 +95,6 @@ namespace Gaffeine.Data.XmlSerializers
       var args = Environment.GetCommandLineArgs().Skip(1);
 
       // To do: Find a better way to detect GameId arg and compare to current game
-      if ( !args.Contains(@this.GameId, StringComparer.OrdinalIgnoreCase) )
-        return @delegate(@this);
-
       return string.Join(" ", args.Where(x => !string.IsNullOrEmpty(x)
                                               && !x.StartsWith("nc-launcher2://")
                                               && !x.StartsWith("nc-launcher2beta://")

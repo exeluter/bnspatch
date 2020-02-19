@@ -39,10 +39,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Gaffeine.Data">
-      <HintPath>lib\NC Launcher 2\Gaffeine.Data.dll</HintPath>
+      <HintPath>lib\ncLauncherW\Gaffeine.Data.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="GameUpdateService">
+      <HintPath>lib\ncLauncherW\GameUpdateService.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="Mono.Cecil">
+      <HintPath>lib\Mono.Cecil\Mono.Cecil.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
       <HintPath>lib\MonoMod\MonoMod.RuntimeDetour.dll</HintPath>
       <Private>False</Private>
@@ -64,53 +72,56 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Gaffeine\Data\XmlSerializers\ModuleInitializer.cs" />
-    <Compile Include="System\Runtime\IgnoreAccessChecksTo.cs" />
-    <Compile Include="Gaffeine\Data\XmlSerializers\MonoModHookAttribute.cs" />
+    <Compile Include="Gaffeine.Data.XmlSerializers\ModuleInitializer.cs" />
+    <Compile Include="Mono.Cecil\AssemblyDefinitionExtensions.cs" />
+    <Compile Include="System\Runtime.CompilerServices\IgnoreAccessChecksTo.cs" />
+    <Compile Include="Gaffeine.Data.XmlSerializers\MonoModHookAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Gaffeine\Data\XmlSerializers\Hooks.cs" />
+    <Compile Include="Gaffeine.Data.XmlSerializers\Hooks.cs" />
     <Compile Include="System\StringExtensions.cs" />
-    <Compile Include="Microsoft\Xml\Serialization\GeneratedAssembly\XmlSerializerContract.cs" />
+    <Compile Include="Microsoft.Xml.Serialization.GeneratedAssembly\XmlSerializerContract.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\ApplicationInsights.config">
+    <EmbeddedResource Include="Properties\Resources\ApplicationInsights.config">
       <LogicalName>ApplicationInsights.config</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Mono.Cecil.dll.deflate">
+    <EmbeddedResource Include="Properties\Resources\Mono.Cecil.dll.deflate">
       <LogicalName>Mono.Cecil.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\MonoMod.RuntimeDetour.dll.deflate">
+    <EmbeddedResource Include="Properties\Resources\MonoMod.RuntimeDetour.dll.deflate">
       <LogicalName>MonoMod.RuntimeDetour.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\MonoMod.Utils.dll.deflate">
+    <EmbeddedResource Include="Properties\Resources\MonoMod.Utils.dll.deflate">
       <LogicalName>MonoMod.Utils.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\MoreLinq.dll.deflate">
+    <EmbeddedResource Include="Properties\Resources\MoreLinq.dll.deflate">
       <LogicalName>MoreLinq.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Condition=" '$(Configuration)' == 'Debug' " Include="Resources\NCLog.Debug.xml">
+    <EmbeddedResource Condition=" '$(Configuration)' == 'Debug' " Include="Properties\Resources\NCLog.Debug.xml">
       <LogicalName>NCLog.xml</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Condition=" '$(Configuration)' == 'Release' " Include="Resources\NCLog.Release.xml">
+    <EmbeddedResource Condition=" '$(Configuration)' == 'Release' " Include="Properties\Resources\NCLog.Release.xml">
       <LogicalName>NCLog.xml</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="System\Runtime\CompilerServices\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>if not exist "$(ProjectDir)lib\NC Launcher 2\Gaffeine.Data.dll" (
-    mkdir "$(ProjectDir)lib\NC Launcher 2"
-    set "MONOMOD_PUBLIC_EVERYTHING=1"
-    "$(ProjectDir)tools\MonoMod\MonoMod.exe" "$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\Gaffeine.Data.dll" "$(ProjectDir)lib\NC Launcher 2\Gaffeine.Data.dll"
+    <PreBuildEvent>set "MONOMOD_PUBLIC_EVERYTHING=1"
+mkdir "$(ProjectDir)lib\ncLauncherW" 2&gt;nul
+for %25%25f in (Gaffeine.Data.dll, GameUpdateService.dll) do (
+  if not exist "$(ProjectDir)lib\ncLauncherW\%25%25f" (
+    "$(ProjectDir)tools\MonoMod\MonoMod.exe" "$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\%25%25f" "$(ProjectDir)lib\ncLauncherW\%25%25f"
+  )
 )
+exit /b 0
 </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PostBuildEvent>if not defined CI (
   copy /Y "$(TargetPath)" "$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\"
 )
+exit /b 0
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

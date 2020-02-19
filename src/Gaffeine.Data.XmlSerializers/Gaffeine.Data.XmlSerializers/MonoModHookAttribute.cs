@@ -9,9 +9,7 @@ namespace Gaffeine.Data.XmlSerializers
   public class MonoModHookAttribute : Attribute
   {
     public Type Type { get; }
-
     public BindingFlags BindingFlags { get; set; } = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
-
     public bool IgnoreName { get; set; }
 
     public MonoModHookAttribute(Type type)
@@ -26,17 +24,21 @@ namespace Gaffeine.Data.XmlSerializers
 
     public bool TryHook(MethodInfo to, out object hook)
     {
+      hook = null;
+
+      if ( this.Type is null )
+        return false;
+
       var parameterTypes = to.GetParameters()
                              .Select(x => x.ParameterType)
-                             .SkipWhile((x, i) => i == 0
-                                                  && typeof(Delegate).IsAssignableFrom(x))
+                             .SkipWhile((x, i) => i == 0 && typeof(Delegate).IsAssignableFrom(x))
                              .SkipWhile((x, i) => i == 0
                                                   && !this.BindingFlags.HasFlag(BindingFlags.Static)
                                                   && x.IsAssignableFrom(this.Type))
                              .ToList();
 
-      var comparisonType = this.BindingFlags.HasFlag(BindingFlags.IgnoreCase) 
-                             ? StringComparison.OrdinalIgnoreCase 
+      var comparisonType = this.BindingFlags.HasFlag(BindingFlags.IgnoreCase)
+                             ? StringComparison.OrdinalIgnoreCase
                              : StringComparison.Ordinal;
 
       var from = this.Type.GetMethods(this.BindingFlags)
@@ -49,10 +51,8 @@ namespace Gaffeine.Data.XmlSerializers
                             return false;
                           });
 
-      if ( from is null ) {
-        hook = null;
+      if ( from is null )
         return false;
-      }
 
       hook = new Hook(from, to);
       return true;
