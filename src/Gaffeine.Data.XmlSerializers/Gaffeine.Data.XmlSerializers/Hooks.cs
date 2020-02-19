@@ -58,17 +58,19 @@ namespace Gaffeine.Data.XmlSerializers
         using ( var assemblyDef = AssemblyDefinition.ReadAssembly(executingAssembly.Location) ) {
           if ( assemblyDef.HasCustomAttributes ) {
             var item = assemblyDef.CustomAttributes.SingleOrDefault(x => x.AttributeType.FullName == "System.Xml.Serialization.XmlSerializerVersionAttribute");
-            assemblyDef.CustomAttributes.Remove(item);
+            if ( item != null ) {
+              assemblyDef.CustomAttributes.Remove(item);
 
-            assemblyDef.CustomAttributes.Add(new CustomAttribute(item.Constructor) {
-              Properties = {
-                new CustomAttributeNamedArgument("ParentAssemblyId",
-                  new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, parentAssemblyDef.GetAssemblyId())),
-                new CustomAttributeNamedArgument("Version",
-                  new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, "4.0.0.0"))
-              }
-            });
-            assemblyDef.Write(Path.Combine(Path.GetDirectoryName(dest), Path.GetFileName(executingAssembly.Location)));
+              assemblyDef.CustomAttributes.Add(new CustomAttribute(item.Constructor) {
+                Properties = {
+                  new CustomAttributeNamedArgument("ParentAssemblyId",
+                    new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, parentAssemblyDef.GetAssemblyId())),
+                  new CustomAttributeNamedArgument("Version",
+                    new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, "4.0.0.0"))
+                }
+              });
+              assemblyDef.Write(Path.Combine(Path.GetDirectoryName(dest), Path.GetFileName(executingAssembly.Location)));
+            }
           }
         }
       }
