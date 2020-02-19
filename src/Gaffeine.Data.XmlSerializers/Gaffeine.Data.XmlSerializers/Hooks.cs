@@ -1,20 +1,14 @@
 ﻿using Gaffeine.Data.Models;
-using Gaffeine.Data.Models.Update;
 using GameUpdateService.Updaters.US4Updater.US4UpdateMode;
 using Mono.Cecil;
 using MoreLinq;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Windows;
-using System.Xml.Serialization;
 using CustomAttributeNamedArgument = Mono.Cecil.CustomAttributeNamedArgument;
-using FileInfo = Gaffeine.Data.Models.Update.FileInfo;
 
 namespace Gaffeine.Data.XmlSerializers
 {
