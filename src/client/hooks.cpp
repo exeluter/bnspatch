@@ -53,19 +53,6 @@ VOID CALLBACK DllNotification(
             DetourAttach(&(void *&)g_pfnProcessEvent, &ProcessEvent_hook);
             DetourTransactionCommit();
           }
-
-          // offset taken from bmeale's helobns fps boost option
-          uint8_t *ptr = reinterpret_cast<uint8_t *>(Module) + 0x7baad5;
-          const uint8_t before[] { 0x44, 0x0f, 0x29, 0x64, 0x24, 0x50 }; // movaps xmmword ptr ss:rsp+50],xmm12
-          const uint8_t after[] { 0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00 };  // nop word ptr ds:[rax+rax],ax
-
-          if ( !memcmp(ptr, before, std::size(before)) ) {
-            DWORD OldProtect;
-            if ( VirtualProtect(ptr, std::size(after), PAGE_EXECUTE_READWRITE, &OldProtect) ) {
-              memcpy(ptr, after, std::size(after));
-              VirtualProtect(ptr, std::size(after), OldProtect, &OldProtect);
-            }
-          }
         }
       } else if ( BaseDllName->iequals(L"XmlReader_cl64.dll") ) {
       }
