@@ -35,8 +35,8 @@ may need a little manual configuration.
    the compressed data (32-bit unsigned) needs to be prepended to the beginning of the
    `.deflate` file.
 4. If you update the `MonoMod.Utils.dll` dependency, you need to modify it so that
-   `System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute` is `internal`
-   instead of `public`.
+   its `System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute` type is
+   `internal` instead of `public`.
 
 ## FAQ
 
