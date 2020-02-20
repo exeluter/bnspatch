@@ -62,15 +62,14 @@ namespace Gaffeine.Data.XmlSerializers
             for ( int i = 0; i < customAttributes.Count; ++i ) {
               if ( customAttributes[i].AttributeType.FullName == "System.Xml.Serialization.XmlSerializerVersionAttribute" ) {
                 var constructor = customAttributes[i].Constructor;
-                customAttributes.RemoveAt(i);
-                assemblyDef.CustomAttributes.Insert(i, new CustomAttribute(constructor) {
+                customAttributes[i] = new CustomAttribute(constructor) {
                   Properties = {
                     new CustomAttributeNamedArgument("ParentAssemblyId",
                       new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, parentAssemblyDef.GetAssemblyId())),
                     new CustomAttributeNamedArgument("Version",
                       new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, "4.0.0.0"))
                   }
-                });
+                };
                 assemblyDef.Write(Path.Combine(Path.GetDirectoryName(dest), Path.GetFileName(executingAssembly.Location)));
                 break;
               }
