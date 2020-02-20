@@ -3,7 +3,7 @@
 #include "pe/module.h"
 #include "pe/segment.h"
 #include "searchers.h"
-#include "Unreal.h"
+//#include "Unreal.h"
 #include "ntapi\string_span"
 #include "locks.h"
 #include <imgui/imgui.h>
@@ -24,38 +24,38 @@ VOID CALLBACK DllNotification(
       const auto Module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
       const auto BaseDllName = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
       
-      if ( BaseDllName->iequals(L"bsengine_Shipping64.dll") ) {
-        if ( const auto segment = Module->segment(".text") ) {
-          const auto data = segment->as_bytes();
-          std::chrono::duration<double, std::milli> timer;
+      //if ( BaseDllName->iequals(L"bsengine_Shipping64.dll") ) {
+      //  if ( const auto segment = Module->segment(".text") ) {
+      //    const auto data = segment->as_bytes();
+      //    std::chrono::duration<double, std::milli> timer;
 
-          if ( const auto &it = std::search(data.begin(), data.end(),
-             pattern_searcher("48 8B 05 ?? ?? ?? ?? 48 63 C9", &timer)); it != data.end() ) {
-            UObject::GObjObjects = (TArray<UObject *> *)(&it[7] + *(int32_t *)&it[3]);
-          }
+      //    if ( const auto &it = std::search(data.begin(), data.end(),
+      //       pattern_searcher("48 8B 05 ?? ?? ?? ?? 48 63 C9", &timer)); it != data.end() ) {
+      //      UObject::GObjObjects = (TArray<UObject *> *)(&it[7] + *(int32_t *)&it[3]);
+      //    }
 
-          if ( const auto &it = std::search(data.begin(), data.end(),
-             pattern_searcher("48 8B 0D ?? ?? ?? ?? 48 89 04 D1", &timer)); it != data.end() ) {
-            FName::Names = (TArray<FNameEntry *> *)(&it[7] + *(int32_t *)&it[3]);
-          }
+      //    if ( const auto &it = std::search(data.begin(), data.end(),
+      //       pattern_searcher("48 8B 0D ?? ?? ?? ?? 48 89 04 D1", &timer)); it != data.end() ) {
+      //      FName::Names = (TArray<FNameEntry *> *)(&it[7] + *(int32_t *)&it[3]);
+      //    }
 
-          if ( const auto &it = std::search(data.begin(), data.end(),
-             pattern_searcher("48 8B 05 ?? ?? ?? ?? C1 E2 12", &timer)); it != data.end() ) {
-            GEngine = (UEngine *)(&it[7] + *(int32_t *)&it[3]);
-          }
+      //    if ( const auto &it = std::search(data.begin(), data.end(),
+      //       pattern_searcher("48 8B 05 ?? ?? ?? ?? C1 E2 12", &timer)); it != data.end() ) {
+      //      GEngine = (UEngine *)(&it[7] + *(int32_t *)&it[3]);
+      //    }
 
-          if ( const auto &it = std::search(data.begin(), data.end(),
-             pattern_searcher("4C 8B CF 4C 8B C6 48 8B D5 48 8B CB E8", &timer)); it != data.end() ) {
+      //    if ( const auto &it = std::search(data.begin(), data.end(),
+      //       pattern_searcher("4C 8B CF 4C 8B C6 48 8B D5 48 8B CB E8", &timer)); it != data.end() ) {
 
-            g_pfnProcessEvent = (decltype(g_pfnProcessEvent))(&it[0x11] + *(int32_t *)&it[0xd]);
-            DetourTransactionBegin();
-            DetourUpdateThread(NtCurrentThread());
-            DetourAttach(&(void *&)g_pfnProcessEvent, &ProcessEvent_hook);
-            DetourTransactionCommit();
-          }
-        }
-      } else if ( BaseDllName->iequals(L"XmlReader_cl64.dll") ) {
-      }
+      //      g_pfnProcessEvent = (decltype(g_pfnProcessEvent))(&it[0x11] + *(int32_t *)&it[0xd]);
+      //      DetourTransactionBegin();
+      //      DetourUpdateThread(NtCurrentThread());
+      //      DetourAttach(&(void *&)g_pfnProcessEvent, &ProcessEvent_hook);
+      //      DetourTransactionCommit();
+      //    }
+      //  }
+      //} else if ( BaseDllName->iequals(L"XmlReader_cl64.dll") ) {
+      //}
       break;
     } case LDR_DLL_NOTIFICATION_REASON_UNLOADED: {
       break;
@@ -63,9 +63,9 @@ VOID CALLBACK DllNotification(
   }
 }
 
-void(*g_pfnProcessEvent)(UObject *, UFunction *, void *, void *);
-void ProcessEvent_hook(UObject *Object, UFunction *Function, void *Parms, void *Result)
-{
+//void(*g_pfnProcessEvent)(UObject *, UFunction *, void *, void *);
+//void ProcessEvent_hook(UObject *Object, UFunction *Function, void *Parms, void *Result)
+//{
   //if ( ObjectNameEquals(Function, std::array { 21, 2756, 6152 }) ) { // Engine.AnimatedCamera.ApplyCameraModifiers
   //  auto Params = (ACamera_ApplyCameraModifiers_Params *)Parms;
   //  Params->OutPOV.FOV = 105.0f;
@@ -76,8 +76,8 @@ void ProcessEvent_hook(UObject *Object, UFunction *Function, void *Parms, void *
   //  return;
   //} else if ( ObjectNameEquals(Function, std::array { 6030, 6043, 337 }) ) { // T1Game.T1PlayerController.PlayerTick
   //}
-  g_pfnProcessEvent(Object, Function, Parms, Result);
-}
+  //g_pfnProcessEvent(Object, Function, Parms, Result);
+//}
 
 
 decltype(&LdrLoadDll) g_pfnLdrLoadDll;

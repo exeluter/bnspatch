@@ -75,7 +75,7 @@
     <Compile Include="Gaffeine.Data.XmlSerializers\ModuleInitializer.cs" />
     <Compile Include="Mono.Cecil\AssemblyDefinitionExtensions.cs" />
     <Compile Include="System\Runtime.CompilerServices\IgnoreAccessChecksTo.cs" />
-    <Compile Include="Gaffeine.Data.XmlSerializers\MonoModHookAttribute.cs" />
+    <Compile Include="MonoMod.RuntimeDetour\MonoModHookAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Gaffeine.Data.XmlSerializers\Hooks.cs" />
     <Compile Include="System\StringExtensions.cs" />
