@@ -1,20 +1,47 @@
 ﻿using Gaffeine.Data.Models;
 using GameUpdateService.Updaters.US4Updater.US4UpdateMode;
 using Mono.Cecil;
+using MonoMod.RuntimeDetour;
 using MoreLinq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime;
 using System.Windows;
 using CustomAttributeNamedArgument = Mono.Cecil.CustomAttributeNamedArgument;
-using MonoMod.RuntimeDetour;
 
 namespace Gaffeine.Data.XmlSerializers
 {
   internal static class Hooks
   {
+    private static readonly Dictionary<string, string> AppArguments = new Dictionary<string, string>();
+    private static readonly List<string> GameArguments = new List<string>();
+
+    static Hooks()
+    {
+      foreach ( var s in Environment.GetCommandLineArgs().Skip(1) ) {
+        if ( string.IsNullOrEmpty(s) )
+          continue;
+
+        int n;
+        if ( Uri.TryCreate(s, UriKind.RelativeOrAbsolute, out var uri)
+          && (uri.Scheme == "nc-launcher2" || uri.Scheme == "nc-launcher2beta") ) {
+
+          var fields = UrlUtility.ParseQueryString(uri.Query);
+          foreach ( var key in fields.Cast<string>() ) {
+            if ( !AppArguments.ContainsKey(key) )
+              AppArguments.Add(key, fields[key]);
+          }
+        } else if ( s[0] == '/' && (n = s.IndexOf(':', 1)) != -1 ) {
+            AppArguments.Add(s.Substring(1, n - 1), s.Substring(n + 1, s.Length - n - 1));
+        } else {
+          GameArguments.Add(s);
+        }
+      }
+    }
     //[MonoModHook(typeof(FileInfoMap),
     //  BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)]
     //[SuppressMessage("Style", "IDE0060:Remove unused parameter")]
@@ -91,14 +118,10 @@ namespace Gaffeine.Data.XmlSerializers
     public static string get_ExeArgument(Func<GameInfo, string> @delegate,
       GameInfo @this)
     {
-      var args = Environment.GetCommandLineArgs().Skip(1);
+      if ( AppArguments.TryGetValue("GameID", out var id) && @this.GameId == id )
+        return string.Join(" ", GameArguments.Prepend(@delegate(@this)));
 
-      // To do: Find a better way to detect GameId arg and compare to current game
-      return string.Join(" ", args.Where(x => !string.IsNullOrEmpty(x)
-                                              && !x.StartsWith("nc-launcher2://")
-                                              && !x.StartsWith("nc-launcher2beta://")
-                                              && !(x.StartsWith("/") && x.Contains(":")))
-                                  .Prepend(@delegate(@this)));
+      return @delegate(@this);
     }
 
     [MonoModHook("Gaffeine.Controls.Helpers.ShortcutHelper, Gaffeine.Controls",

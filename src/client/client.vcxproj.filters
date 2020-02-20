@@ -36,20 +36,20 @@
     <ClCompile Include="hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\creatwth.cpp">
-      <Filter>Source Files\detours</Filter>
+    <ClCompile Include="include\detours\creatwth.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\detours.cpp">
-      <Filter>Source Files\detours</Filter>
+    <ClCompile Include="include\detours\detours.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\disasm.cpp">
-      <Filter>Source Files\detours</Filter>
+    <ClCompile Include="include\detours\disasm.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\image.cpp">
-      <Filter>Source Files\detours</Filter>
+    <ClCompile Include="include\detours\image.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\modules.cpp">
-      <Filter>Source Files\detours</Filter>
+    <ClCompile Include="include\detours\modules.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,9 +80,6 @@
     <ClInclude Include="pe\traits.h">
       <Filter>Header Files\pe</Filter>
     </ClInclude>
-    <ClInclude Include="Unreal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pe\pe.h">
       <Filter>Header Files\pe</Filter>
     </ClInclude>
@@ -93,6 +90,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ntapi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Unreal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
