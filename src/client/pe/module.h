@@ -2,9 +2,9 @@
 #include <phnt/phnt_windows.h>
 #include <phnt/phnt.h>
 #include <string>
-#include "../ntapi.h"
 #include "traits.h"
 #include "segment.h"
+#include "..\ntapi\string_span"
 
 namespace pe
 {

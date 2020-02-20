@@ -3,7 +3,7 @@
 #include "hooks.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"
-#include "ntapi.h"
+#include "SafeInt/SafeInt.hpp"
 
 template <size_t Size>
 inline void AttachMultipleDetours(
@@ -70,16 +70,18 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
   switch ( dliNotify ) {
     case dliStartProcessing:
       break;
-    case dliNotePreLoadLibrary:
-      if ( !_stricmp(pe::get_instance_module()->export_directory()->name(), pdli->szDll)
+    case dliNotePreLoadLibrary: {
+      if ( !_stricmp(pdli->szDll, pe::get_instance_module()->export_directory()->name())
         && GetSystemDirectoryW(buffer.data(), SafeInt(buffer.size())) ) {
 
-        auto path = fs::path(buffer.begin(), buffer.end());
+        auto path = fs::path(buffer.data());
         path /= pdli->szDll;
+
         return reinterpret_cast<FARPROC>(
           LoadLibraryExW(path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH));
       }
       break;
+    }
     case dliNotePreGetProcAddress:
     case dliFailLoadLib:
     case dliFailGetProc:

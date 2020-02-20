@@ -4,7 +4,7 @@
 #include "pe/segment.h"
 #include "searchers.h"
 #include "Unreal.h"
-#include "ntapi.h"
+#include "ntapi\string_span"
 #include "locks.h"
 #include <imgui/imgui.h>
 

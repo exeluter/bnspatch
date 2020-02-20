@@ -1,6 +1,7 @@
 #pragma once
 #include <phnt/phnt_windows.h>
 #include <phnt/phnt.h>
+#include "..\ntapi\string_span"
 
 namespace pe {
   class module;
