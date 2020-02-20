@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using CustomAttributeNamedArgument = Mono.Cecil.CustomAttributeNamedArgument;
+using MonoMod.RuntimeDetour;
 
 namespace Gaffeine.Data.XmlSerializers
 {
@@ -57,19 +58,22 @@ namespace Gaffeine.Data.XmlSerializers
         using ( var parentAssemblyDef = AssemblyDefinition.ReadAssembly(src) )
         using ( var assemblyDef = AssemblyDefinition.ReadAssembly(executingAssembly.Location) ) {
           if ( assemblyDef.HasCustomAttributes ) {
-            var item = assemblyDef.CustomAttributes.SingleOrDefault(x => x.AttributeType.FullName == "System.Xml.Serialization.XmlSerializerVersionAttribute");
-            if ( item != null ) {
-              assemblyDef.CustomAttributes.Remove(item);
-
-              assemblyDef.CustomAttributes.Add(new CustomAttribute(item.Constructor) {
-                Properties = {
-                  new CustomAttributeNamedArgument("ParentAssemblyId",
-                    new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, parentAssemblyDef.GetAssemblyId())),
-                  new CustomAttributeNamedArgument("Version",
-                    new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, "4.0.0.0"))
-                }
-              });
-              assemblyDef.Write(Path.Combine(Path.GetDirectoryName(dest), Path.GetFileName(executingAssembly.Location)));
+            var customAttributes = assemblyDef.CustomAttributes;
+            for ( int i = 0; i < customAttributes.Count; ++i ) {
+              if ( customAttributes[i].AttributeType.FullName == "System.Xml.Serialization.XmlSerializerVersionAttribute" ) {
+                var constructor = customAttributes[i].Constructor;
+                customAttributes.RemoveAt(i);
+                assemblyDef.CustomAttributes.Insert(i, new CustomAttribute(constructor) {
+                  Properties = {
+                    new CustomAttributeNamedArgument("ParentAssemblyId",
+                      new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, parentAssemblyDef.GetAssemblyId())),
+                    new CustomAttributeNamedArgument("Version",
+                      new CustomAttributeArgument(assemblyDef.MainModule.TypeSystem.String, "4.0.0.0"))
+                  }
+                });
+                assemblyDef.Write(Path.Combine(Path.GetDirectoryName(dest), Path.GetFileName(executingAssembly.Location)));
+                break;
+              }
             }
           }
         }
