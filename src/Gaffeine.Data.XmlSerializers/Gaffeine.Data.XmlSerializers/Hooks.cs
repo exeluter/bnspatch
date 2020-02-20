@@ -2,7 +2,6 @@
 using GameUpdateService.Updaters.US4Updater.US4UpdateMode;
 using Mono.Cecil;
 using MonoMod.RuntimeDetour;
-using MoreLinq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -119,7 +118,7 @@ namespace Gaffeine.Data.XmlSerializers
       GameInfo @this)
     {
       if ( AppArguments.TryGetValue("GameID", out var id) && @this.GameId == id )
-        return string.Join(" ", GameArguments.Prepend(@delegate(@this)));
+        return string.Join(" ", new[] { @delegate(@this) }.Concat(GameArguments));
 
       return @delegate(@this);
     }
