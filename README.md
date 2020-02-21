@@ -53,7 +53,7 @@ Long version: BnS Buddy's developer, instead of using his influence to foster a
 healthy development community for Blade & Soul, has a knee-jerk reaction whenever
 alternatives to his program are mentioned and really likes to spread FUD around to
 discourage people from using them, by using spooky terms like "injection"
-[[link][12], [link][13]].
+[[link][11], [link][12]].
 
 While bnspatch does make use of DLL hijacking to do its magic, this exact method
 is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
@@ -62,7 +62,7 @@ well, previously).
 In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
 BnS Buddy is. I don't expect the developer to understand any of this though, since
 they literally copy-pasted both of those features from other people, without giving
-any credit [[dead link][14] ([mirror][15]), [link][16]].
+any credit [[dead link][13] ([mirror][14]), [link][15]].
 
 ## Acknowledgements
 - [gabime/**spdlog**][4] (MIT license)
@@ -70,9 +70,8 @@ any credit [[dead link][14] ([mirror][15]), [link][16]].
 - [microsoft/**GSL**][6] (MIT license)
 - [ocornut/**imgui**][7] (MIT license)
 - [MonoMod/**MonoMod**][8] (MIT license)
-- [morelinq/**MoreLINQ**][9] (Apache-2.0 license)
-- [processhacker/**phnt**][10] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][11] (Apache-2.0 license)
+- [processhacker/**phnt**][9] (CC-BY-4.0 license)
+- [JustasMasiulis/**xorstr**][10] (Apache-2.0 license)
 
 [0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
@@ -83,11 +82,10 @@ any credit [[dead link][14] ([mirror][15]), [link][16]].
 [6]: https://github.com/microsoft/GSL
 [7]: https://github.com/ocornut/imgui
 [8]: https://github.com/MonoMod/MonoMod
-[9]: https://github.com/morelinq/MoreLINQ
-[10]: https://github.com/processhacker/phnt
-[11]: https://github.com/JustasMasiulis/xorstr
-[12]: https://archive.li/XFWdU
-[13]: https://i.imgur.com/rzFEY0F.png
-[14]: https://github.com/Evengard/bnsnogg
-[15]: https://github.com/zeffy/bnsnogg-mirror
-[16]: https://github.com/VirtualPuppet/XignCode3-bypass
+[9]: https://github.com/processhacker/phnt
+[10]: https://github.com/JustasMasiulis/xorstr
+[11]: https://archive.li/XFWdU
+[12]: https://i.imgur.com/rzFEY0F.png
+[13]: https://github.com/Evengard/bnsnogg
+[14]: https://github.com/zeffy/bnsnogg-mirror
+[15]: https://github.com/VirtualPuppet/XignCode3-bypass
