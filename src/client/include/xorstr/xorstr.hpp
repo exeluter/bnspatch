@@ -88,7 +88,7 @@ namespace jm {
 
             constexpr static std::size_t buffer_size = _buffer_size<sizeof(str)>();
             constexpr static std::size_t buffer_align =
-#ifndef JM_XORSTR_DISABLE_AVX_INTRINSICS
+#ifndef JM_XORSTR_DISABLE_AVX2_INTRINSICS
                 ((sizeof(str) > 16) ? 32 : 16);
 #else
                 16;
@@ -213,7 +213,7 @@ namespace jm {
 
             _copy();
 
-#ifndef JM_XORSTR_DISABLE_AVX_INTRINSICS
+#ifndef JM_XORSTR_DISABLE_AVX2_INTRINSICS
             _crypt_256(keys, std::make_index_sequence<T::buffer_size / 4>{});
             if constexpr(T::buffer_size % 4 != 0)
                 _crypt_128(keys, std::index_sequence<T::buffer_size / 2 - 1>{});

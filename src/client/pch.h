@@ -39,6 +39,7 @@ namespace fs = std::filesystem;
 #include <fmt/format.h>
 #include <fmt/chrono.h>
 
+#define JM_XORSTR_DISABLE_AVX2_INTRINSICS
 #include <xorstr/xorstr.hpp>
 
 static inline ptrdiff_t make_offset(const void *Base, const void *Pointer)
