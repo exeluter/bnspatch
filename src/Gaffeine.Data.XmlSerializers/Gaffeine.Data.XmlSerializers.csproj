@@ -68,15 +68,15 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Gaffeine.Data.XmlSerializers\ModuleInitializer.cs" />
-    <Compile Include="Mono.Cecil\AssemblyDefinitionExtensions.cs" />
-    <Compile Include="System\Runtime\UrlUtility.cs" />
-    <Compile Include="System\Runtime\CompilerServices\IgnoreAccessChecksTo.cs" />
-    <Compile Include="MonoMod.RuntimeDetour\MonoModHookAttribute.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Gaffeine.Data.XmlSerializers\Hooks.cs" />
-    <Compile Include="System\StringExtensions.cs" />
-    <Compile Include="Microsoft.Xml.Serialization.GeneratedAssembly\XmlSerializerContract.cs" />
+    <Compile Include="Gaffeine.Data.XmlSerializers\moduleinitializer.cs" />
+    <Compile Include="Mono.Cecil\assemblydefinitionextensions.cs" />
+    <Compile Include="System\Runtime\urlutility.cs" />
+    <Compile Include="System\Runtime\CompilerServices\ignoreaccesschecksto.cs" />
+    <Compile Include="MonoMod.RuntimeDetour\monomodhookattribute.cs" />
+    <Compile Include="Properties\assemblyinfo.cs" />
+    <Compile Include="Gaffeine.Data.XmlSerializers\hooks.cs" />
+    <Compile Include="System\stringextensions.cs" />
+    <Compile Include="Microsoft.Xml.Serialization.GeneratedAssembly\xmlserializercontract.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\ApplicationInsights.config">
