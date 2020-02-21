@@ -41,6 +41,7 @@ namespace Gaffeine.Data.XmlSerializers
         }
       }
     }
+
     //[MonoModHook(typeof(FileInfoMap),
     //  BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)]
     //[SuppressMessage("Style", "IDE0060:Remove unused parameter")]
