@@ -26,7 +26,7 @@ using namespace std::string_view_literals;
 
 #include <optional>
 #include <memory>
-#include <codecvt>
+#include <mutex>
 #include <filesystem>
 namespace fs = std::filesystem;
 
@@ -38,17 +38,6 @@ namespace fs = std::filesystem;
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 #include <fmt/chrono.h>
-
-#define SPDLOG_FMT_EXTERNAL
-#ifdef _DEBUG
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_DEBUG
-#else
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_INFO
-#endif
-#define SPDLOG_WCHAR_TO_UTF8_SUPPORT
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/msvc_sink.h>
-#include <spdlog/fmt/bin_to_hex.h>
 
 #include <xorstr/xorstr.hpp>
 

@@ -14,8 +14,8 @@ VOID CALLBACK DllNotification(
   PCLDR_DLL_NOTIFICATION_DATA NotificationData,
   PVOID                       Context)
 {
-  static  thread_local_lock lock;
-  std::unique_lock< thread_local_lock> u(lock, std::try_to_lock);
+  static thread_local_lock lock;
+  std::unique_lock<thread_local_lock> u(lock, std::try_to_lock);
   if ( !u.owns_lock() )
     return;
 
@@ -23,7 +23,7 @@ VOID CALLBACK DllNotification(
     case LDR_DLL_NOTIFICATION_REASON_LOADED: {
       const auto Module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
       const auto BaseDllName = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
-      
+
       //if ( BaseDllName->iequals(L"bsengine_Shipping64.dll") ) {
       //  if ( const auto segment = Module->segment(".text") ) {
       //    const auto data = segment->as_bytes();
