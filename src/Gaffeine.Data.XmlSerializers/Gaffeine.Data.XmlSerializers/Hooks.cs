@@ -16,8 +16,8 @@ namespace Gaffeine.Data.XmlSerializers
 {
   internal static class Hooks
   {
-    private static readonly Dictionary<string, string> AppArguments = new Dictionary<string, string>();
-    private static readonly List<string> GameArguments = new List<string>();
+    private static readonly Dictionary<string, string> _appArgs = new Dictionary<string, string>();
+    private static readonly List<string> _gameArgs = new List<string>();
 
     static Hooks()
     {
@@ -31,13 +31,13 @@ namespace Gaffeine.Data.XmlSerializers
 
           var fields = UrlUtility.ParseQueryString(uri.Query);
           foreach ( var key in fields.Cast<string>() ) {
-            if ( !AppArguments.ContainsKey(key) )
-              AppArguments.Add(key, fields[key]);
+            if ( !_appArgs.ContainsKey(key) )
+              _appArgs.Add(key, fields[key]);
           }
         } else if ( s[0] == '/' && (n = s.IndexOf(':', 1)) != -1 ) {
-            AppArguments.Add(s.Substring(1, n - 1), s.Substring(n + 1, s.Length - n - 1));
+            _appArgs.Add(s.Substring(1, n - 1), s.Substring(n + 1, s.Length - n - 1));
         } else {
-          GameArguments.Add(s);
+          _gameArgs.Add(s);
         }
       }
     }
@@ -117,8 +117,8 @@ namespace Gaffeine.Data.XmlSerializers
     public static string get_ExeArgument(Func<GameInfo, string> @delegate,
       GameInfo @this)
     {
-      if ( AppArguments.TryGetValue("GameID", out var id) && @this.GameId == id )
-        return string.Join(" ", new[] { @delegate(@this) }.Concat(GameArguments));
+      if ( _appArgs.TryGetValue("GameID", out var id) && @this.GameId == id )
+        return string.Join(" ", new[] { @delegate(@this) }.Concat(_gameArgs));
 
       return @delegate(@this);
     }
