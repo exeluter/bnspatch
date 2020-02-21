@@ -26,7 +26,7 @@ namespace Gaffeine.Data.XmlSerializers
           continue;
 
         int n;
-        if ( Uri.TryCreate(s, UriKind.RelativeOrAbsolute, out var uri)
+        if ( Uri.TryCreate(s, UriKind.Absolute, out var uri)
           && (uri.Scheme == "nc-launcher2" || uri.Scheme == "nc-launcher2beta") ) {
 
           var fields = UrlUtility.ParseQueryString(uri.Query);
