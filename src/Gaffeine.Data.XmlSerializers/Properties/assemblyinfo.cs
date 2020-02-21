@@ -9,7 +9,7 @@ using System.Xml.Serialization;
 [assembly: SecurityRules(SecurityRuleSet.Level1)]
 #endif
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: XmlSerializerVersion(ParentAssemblyId = "567131ee-5c2a-48a6-b619-48590a1bc931,", Version = "4.0.0.0")]   // NCW 2.2.0.570
+[assembly: XmlSerializerVersion(ParentAssemblyId = "567131ee-5c2a-48a6-b619-48590a1bc931,", Version = "4.0.0.0")]
 [assembly: IgnoresAccessChecksTo("Gaffeine.Data")]
 [assembly: IgnoresAccessChecksTo("GameUpdateService")]
 

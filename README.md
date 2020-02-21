@@ -23,8 +23,8 @@ Everything should build as-is except for `Gaffeine.Data.XmlSerializers.dll`, whi
 may need a little manual configuration.
 
 1. NC Launcher 2 must be installed.
-2. With each new version of NC Launcher 2, `ParentAssemblyId` in `AssemblyInfo.cs` must
-   be updated to match the MVID of `Gaffeine.Data.dll`, or nothing will work.
+2. With each new version of NC Launcher 2, [`assemblyinfo.cs`][0.2] must be updated
+   to match the MVID of `Gaffeine.Data.dll`, or nothing will work.
    You can find this value with dnSpy or CFF Explorer.
 3. Updating the embedded dependencies is a little tricky. They are deflated with
    `zopfli --deflate --i1000`, but any deflater will do. Afterwards the length of
@@ -36,7 +36,7 @@ may need a little manual configuration.
 
 ## FAQ
 
-#### Q: Does this work with [**d912pxy**][0.2]?
+#### Q: Does this work with [**d912pxy**][0.3]?
 Yes it does! In fact, I highly recommend using it.
 
 #### Q: Do I have to use all of the components for this to work?
@@ -49,7 +49,7 @@ Long version: BnS Buddy's developer, instead of using his influence to foster a
 healthy development community for Blade & Soul, has a knee-jerk reaction whenever
 alternatives to his program are mentioned and really likes to spread FUD around to
 discourage people from using them, by using spooky terms like "injection"
-[[link][0.3], [link][0.4]].
+[[link][0.4], [link][0.5]].
 
 While bnspatch does make use of DLL hijacking to do its magic, this exact method
 is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
@@ -58,7 +58,7 @@ well, previously).
 In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
 BnS Buddy is. I don't expect the developer to understand any of this though, since
 they literally copy-pasted both of those features from other people, without giving
-any credit [[dead link][0.5] ([mirror][0.6]), [link][0.7]].
+any credit [[dead link][0.6] ([mirror][0.7]), [link][0.8]].
 
 ## Acknowledgements
 - [microsoft/**Detours**][1.0] (MIT license)
@@ -70,12 +70,13 @@ any credit [[dead link][0.5] ([mirror][0.6]), [link][0.7]].
 
 [0.0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [0.1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
-[0.2]: https://github.com/megai2/d912pxy
-[0.3]: https://archive.li/XFWdU
-[0.4]: https://i.imgur.com/rzFEY0F.png
-[0.5]: https://github.com/Evengard/bnsnogg
-[0.6]: https://github.com/zeffy/bnsnogg-mirror
-[0.7]: https://github.com/VirtualPuppet/XignCode3-bypass
+[0.2]: https://github.com/zeffy/bnspatch/blob/master/src/Gaffeine.Data.XmlSerializers/Properties/assemblyinfo.cs#L12
+[0.3]: https://github.com/megai2/d912pxy
+[0.4]: https://archive.li/XFWdU
+[0.5]: https://i.imgur.com/rzFEY0F.png
+[0.6]: https://github.com/Evengard/bnsnogg
+[0.7]: https://github.com/zeffy/bnsnogg-mirror
+[0.8]: https://github.com/VirtualPuppet/XignCode3-bypass
 [1.0]: https://github.com/microsoft/Detours
 [1.1]: https://github.com/microsoft/GSL
 [1.2]: https://github.com/ocornut/imgui
