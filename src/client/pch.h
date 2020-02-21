@@ -50,6 +50,8 @@ namespace fs = std::filesystem;
 #include <spdlog/sinks/msvc_sink.h>
 #include <spdlog/fmt/bin_to_hex.h>
 
+#include <xorstr/xorstr.hpp>
+
 static inline ptrdiff_t make_offset(const void *Base, const void *Pointer)
 {
   return ((ptrdiff_t)(((uintptr_t)(Pointer)) - ((uintptr_t)(Base))));

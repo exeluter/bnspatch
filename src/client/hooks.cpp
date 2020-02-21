@@ -91,7 +91,7 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   std::unique_lock<thread_local_lock> u(lock, std::try_to_lock);
 
   if ( u.owns_lock()
-    && static_cast<ntapi::ustring_span *>(DllName)->iequals(L"aegisty64.bin") ) {
+    && static_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"aegisty64.bin")) ) {
 
     *DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
@@ -136,7 +136,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
 {
   if ( ObjectAttributes
     && ObjectAttributes->ObjectName
-    && static_cast<ntapi::ustring_span *>(ObjectAttributes->ObjectName)->starts_with(L"BnSGameClient") ) {
+    && static_cast<ntapi::ustring_span *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
 
     ObjectAttributes->ObjectName = nullptr;
     ObjectAttributes->Attributes &= ~OBJ_OPENIF;
@@ -163,14 +163,14 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
     && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
-    if ( const auto module = pe::get_module(L"ntdll.dll") ) {
+    if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
       __try {
         StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
       } __except ( EXCEPTION_EXECUTE_HANDLER ) {
         return GetExceptionCode();
       }
 
-      for ( const auto &Name : std::array { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
+      for ( const auto &Name : std::array { xorstr_("DbgBreakPoint"), xorstr_("DbgUiRemoteBreakin") } ) {
         if ( const auto ProcedureAddress = module->find_function(Name);
           ProcedureAddress && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
           return STATUS_INVALID_PARAMETER_2;
@@ -260,16 +260,16 @@ HWND WINAPI FindWindowA_hook(
 {
   if ( lpClassName ) {
     for ( const auto &String : {
-      "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
+      xorstr_("FilemonClass"), xorstr_("PROCMON_WINDOW_CLASS"), xorstr_("RegmonClass"), xorstr_("18467-41") } ) {
       if ( !_stricmp(lpClassName, String) )
         return nullptr;
     }
   }
   if ( lpWindowName ) {
     for ( const auto &String : {
-      "File Monitor - Sysinternals: www.sysinternals.com",
-      "Process Monitor - Sysinternals: www.sysinternals.com",
-      "Registry Monitor - Sysinternals: www.sysinternals.com" } ) {
+      xorstr_("File Monitor - Sysinternals: www.sysinternals.com"),
+      xorstr_("Process Monitor - Sysinternals: www.sysinternals.com"),
+      xorstr_("Registry Monitor - Sysinternals: www.sysinternals.com") } ) {
       if ( !strcmp(lpWindowName, String) )
         return nullptr;
     }
