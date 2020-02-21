@@ -53,7 +53,7 @@ Long version: BnS Buddy's developer, instead of using his influence to foster a
 healthy development community for Blade & Soul, has a knee-jerk reaction whenever
 alternatives to his program are mentioned and really likes to spread FUD around to
 discourage people from using them, by using spooky terms like "injection"
-[[link][11], [link][12]].
+[[link][10], [link][11]].
 
 While bnspatch does make use of DLL hijacking to do its magic, this exact method
 is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
@@ -62,30 +62,29 @@ well, previously).
 In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
 BnS Buddy is. I don't expect the developer to understand any of this though, since
 they literally copy-pasted both of those features from other people, without giving
-any credit [[dead link][13] ([mirror][14]), [link][15]].
+any credit [[dead link][12] ([mirror][13]), [link][14]].
 
 ## Acknowledgements
-- [gabime/**spdlog**][4] (MIT license)
-- [microsoft/**Detours**][5] (MIT license)
-- [microsoft/**GSL**][6] (MIT license)
-- [ocornut/**imgui**][7] (MIT license)
-- [MonoMod/**MonoMod**][8] (MIT license)
-- [processhacker/**phnt**][9] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][10] (Apache-2.0 license)
+- [gabime/**spdlog**][3] (MIT license)
+- [microsoft/**Detours**][4] (MIT license)
+- [microsoft/**GSL**][5] (MIT license)
+- [ocornut/**imgui**][6] (MIT license)
+- [MonoMod/**MonoMod**][7] (MIT license)
+- [processhacker/**phnt**][8] (CC-BY-4.0 license)
+- [JustasMasiulis/**xorstr**][9] (Apache-2.0 license)
 
 [0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
 [2]: https://docs.unrealengine.com/udk/Three/CommandLineArguments.html
 [3]: https://github.com/megai2/d912pxy
-[4]: https://github.com/gabime/spdlog
-[5]: https://github.com/microsoft/Detours
-[6]: https://github.com/microsoft/GSL
-[7]: https://github.com/ocornut/imgui
-[8]: https://github.com/MonoMod/MonoMod
-[9]: https://github.com/processhacker/phnt
-[10]: https://github.com/JustasMasiulis/xorstr
-[11]: https://archive.li/XFWdU
-[12]: https://i.imgur.com/rzFEY0F.png
-[13]: https://github.com/Evengard/bnsnogg
-[14]: https://github.com/zeffy/bnsnogg-mirror
-[15]: https://github.com/VirtualPuppet/XignCode3-bypass
+[4]: https://github.com/microsoft/Detours
+[5]: https://github.com/microsoft/GSL
+[6]: https://github.com/ocornut/imgui
+[7]: https://github.com/MonoMod/MonoMod
+[8]: https://github.com/processhacker/phnt
+[9]: https://github.com/JustasMasiulis/xorstr
+[10]: https://archive.li/XFWdU
+[11]: https://i.imgur.com/rzFEY0F.png
+[12]: https://github.com/Evengard/bnsnogg
+[13]: https://github.com/zeffy/bnsnogg-mirror
+[14]: https://github.com/VirtualPuppet/XignCode3-bypass
