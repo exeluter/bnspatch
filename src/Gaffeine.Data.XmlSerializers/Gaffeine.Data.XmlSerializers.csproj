@@ -101,21 +101,15 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>set "MONOMOD_PUBLIC_EVERYTHING=1"
-mkdir "$(ProjectDir)lib\ncLauncherW" 2&gt;nul
-for %25%25f in (Gaffeine.Data.dll, GameUpdateService.dll) do (
-  if not exist "$(ProjectDir)lib\ncLauncherW\%25%25f" (
-    "$(ProjectDir)tools\MonoMod\MonoMod.exe" "$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\%25%25f" "$(ProjectDir)lib\ncLauncherW\%25%25f"
-  )
-)
-exit /b 0
+    <PreBuildEvent>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+set "MSBuildProjectDir=$(ProjectDir)"
+powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
 </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>if not defined CI (
-  copy /Y "$(TargetPath)" "$(MSBuildProgramFiles32)\NCSOFT\NC Launcher 2\"
-)
-exit /b 0
+    <PostBuildEvent>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+set "MSBuildTargetPath=$(TargetPath)"
+powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
