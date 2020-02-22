@@ -1,4 +1,4 @@
-function Get-NCLauncherDirectory {
+function Get-NCLauncherBaseDirectory {
     $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
         [Microsoft.Win32.RegistryHive]::LocalMachine,
         [Microsoft.Win32.RegistryView]::Registry32)
@@ -41,7 +41,7 @@ function Get-NCLauncherDirectory {
     return $null
 }
 
-$BaseDir = Get-NCLauncherDirectory
+$BaseDir = Get-NCLauncherBaseDirectory
 if ( $BaseDir ) {
     $env:MONOMOD_PUBLIC_EVERYTHING = '1'
     foreach ( $file in @('Gaffeine.Data.dll', 'GameUpdateService.dll') ) {

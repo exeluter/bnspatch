@@ -87,18 +87,19 @@
     </MASM>
     <PreBuildEvent />
     <PreBuildEvent>
-      <Command>cd "$(ProjectDir)stub\
-cl /c /nologo "$(TargetName).cpp" /WX
-if exist "$(TargetName)_$(PlatformTarget).def" (
-    link /lib /def:"$(TargetName)_$(PlatformTarget).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
-) else (
-    link /lib /def:"$(TargetName).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
-)</Command>
+      <Command>set "MSBuildProjectDir=$(ProjectDir)"
+set "MSBuildTargetName=$(TargetName)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
+powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
+</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>if not defined CI (
-  copy /Y "$(TargetPath)" "$(MSBuildProgramFiles32)\NCSOFT\BNS\bin64\"
-)</Command>
+      <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildProjectDir=$(ProjectDir)"
+set "MSBuildConfiguration=$(Configuration)"
+powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,18 +139,19 @@ if exist "$(TargetName)_$(PlatformTarget).def" (
     </MASM>
     <PreBuildEvent />
     <PreBuildEvent>
-      <Command>cd "$(ProjectDir)stub\
-cl /c /nologo "$(TargetName).cpp" /WX
-if exist "$(TargetName)_$(PlatformTarget).def" (
-    link /lib /def:"$(TargetName)_$(PlatformTarget).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
-) else (
-    link /lib /def:"$(TargetName).def" "$(TargetName).obj" /out:"$(TargetName).lib" /errorreport:none /machine:$(PlatformTarget) /nologo /WX
-)</Command>
+      <Command>set "MSBuildProjectDir=$(ProjectDir)"
+set "MSBuildTargetName=$(TargetName)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
+powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
+</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>if not defined CI (
-  copy /Y "$(TargetPath)" "$(MSBuildProgramFiles32)\NCSOFT\BNS\bin64\"
-)</Command>
+      <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildProjectDir=$(ProjectDir)"
+set "MSBuildConfiguration=$(Configuration)"
+powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
