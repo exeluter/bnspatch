@@ -29,13 +29,13 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
   switch ( fdwReason ) {
     case DLL_PROCESS_ATTACH: {
-      if ( pe::get_module()->base_name() == xorstr_(L"Client.exe") ) {
+      if ( pe::get_module()->base_name() == _xor_(L"Client.exe") ) {
         NtCurrentPeb()->BeingDebugged = FALSE;
 
         // Register Dll Notification
-        if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
+        if ( const auto module = pe::get_module(_xor_(L"ntdll.dll")) ) {
           if ( const auto pfn = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
-            module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
+            module->find_function(_xor_("LdrRegisterDllNotification"))) ) {
             pfn(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
           }
         }
@@ -43,18 +43,18 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
         // Attach Detours
         DetourTransactionBegin();
         DetourUpdateThread(NtCurrentThread());
-        AttachMultipleDetours(xorstr_(L"ntdll.dll"),
+        AttachMultipleDetours(_xor_(L"ntdll.dll"),
           std::array {
-            hook_t { xorstr_("LdrLoadDll"), &(void *&)g_pfnLdrLoadDll, (void *)&LdrLoadDll_hook },
-            hook_t { xorstr_("NtCreateFile"), &(void *&)g_pfnNtCreateFile, (void *)&NtCreateFile_hook },
-            hook_t { xorstr_("NtCreateMutant"), &(void *&)g_pfnNtCreateMutant, (void *)&NtCreateMutant_hook },
-            hook_t { xorstr_("NtProtectVirtualMemory"), &(void *&)g_pfnNtProtectVirtualMemory, (void *)&NtProtectVirtualMemory_hook },
-            hook_t { xorstr_("NtQueryInformationProcess"), &(void *&)g_pfnNtQueryInformationProcess, (void *)&NtQueryInformationProcess_hook },
-            hook_t { xorstr_("NtQuerySystemInformation"), &(void *&)g_pfnNtQuerySystemInformation, (void *)&NtQuerySystemInformation_hook },
+            hook_t { _xor_("LdrLoadDll"), &(void *&)g_pfnLdrLoadDll, (void *)&LdrLoadDll_hook },
+            hook_t { _xor_("NtCreateFile"), &(void *&)g_pfnNtCreateFile, (void *)&NtCreateFile_hook },
+            hook_t { _xor_("NtCreateMutant"), &(void *&)g_pfnNtCreateMutant, (void *)&NtCreateMutant_hook },
+            hook_t { _xor_("NtProtectVirtualMemory"), &(void *&)g_pfnNtProtectVirtualMemory, (void *)&NtProtectVirtualMemory_hook },
+            hook_t { _xor_("NtQueryInformationProcess"), &(void *&)g_pfnNtQueryInformationProcess, (void *)&NtQueryInformationProcess_hook },
+            hook_t { _xor_("NtQuerySystemInformation"), &(void *&)g_pfnNtQuerySystemInformation, (void *)&NtQuerySystemInformation_hook },
           });
-        AttachMultipleDetours(xorstr_(L"user32.dll"),
+        AttachMultipleDetours(_xor_(L"user32.dll"),
           std::array {
-            hook_t { xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, (PVOID)&FindWindowA_hook }
+            hook_t { _xor_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, (PVOID)&FindWindowA_hook }
           });
         DetourTransactionCommit();
         break;
