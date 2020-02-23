@@ -255,7 +255,6 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
     ReturnLength);
 }
 
-#pragma optimize( "", off )
 decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(
   LPCSTR lpClassName,
@@ -263,20 +262,19 @@ HWND WINAPI FindWindowA_hook(
 {
   if ( lpClassName ) {
     for ( const auto &String : {
-      xorstr_("FilemonClass"), xorstr_("PROCMON_WINDOW_CLASS"), xorstr_("RegmonClass"), xorstr_("18467-41") } ) {
+      "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
       if ( !_stricmp(lpClassName, String) )
         return nullptr;
     }
   }
   if ( lpWindowName ) {
     for ( const auto &String : {
-      xorstr_("File Monitor - Sysinternals: www.sysinternals.com"),
-      xorstr_("Process Monitor - Sysinternals: www.sysinternals.com"),
-      xorstr_("Registry Monitor - Sysinternals: www.sysinternals.com") } ) {
+      "File Monitor - Sysinternals: www.sysinternals.com",
+      "Process Monitor - Sysinternals: www.sysinternals.com",
+      "Registry Monitor - Sysinternals: www.sysinternals.com" } ) {
       if ( !strcmp(lpWindowName, String) )
         return nullptr;
     }
   }
   return g_pfnFindWindowA(lpClassName, lpWindowName);
 }
-#pragma optimize( "", on )
