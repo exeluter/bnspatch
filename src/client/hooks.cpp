@@ -145,7 +145,6 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
 
-#pragma optimize( "", off )
 decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
@@ -180,7 +179,6 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   }
   return g_pfnNtProtectVirtualMemory(ProcessHandle, BaseAddress, RegionSize, NewProtect, OldProtect);
 }
-#pragma optimize( "", on )
 
 decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
 NTSTATUS NTAPI NtQueryInformationProcess_hook(
@@ -261,8 +259,7 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
-    for ( const auto &String : {
-      "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
+    for ( const auto &String : { "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
       if ( !_stricmp(lpClassName, String) )
         return nullptr;
     }
