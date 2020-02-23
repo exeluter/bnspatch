@@ -171,7 +171,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
         return GetExceptionCode();
       }
 
-      for ( auto Name : { xorstr_("DbgBreakPoint"), xorstr_("DbgUiRemoteBreakin") } ) {
+      for ( auto Name : { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
         if ( const auto ProcedureAddress = module->find_function(Name);
           ProcedureAddress && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
           return STATUS_INVALID_PARAMETER_2;
