@@ -39,8 +39,8 @@ namespace fs = std::filesystem;
 #include <fmt/format.h>
 #include <fmt/chrono.h>
 
-#include <skCrypter/skCrypter.h>
-#define _xor_(str) (skCrypt(str).decrypt())
+#define JM_XORSTR_DISABLE_AVX_INTRINSICS
+#include <xorstr/xorstr.hpp>
 
 static inline ptrdiff_t make_offset(const void *Base, const void *Pointer)
 {

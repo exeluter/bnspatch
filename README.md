@@ -66,7 +66,7 @@ any credit [[dead link][0.6] ([mirror][0.7]), [link][0.8]].
 - [ocornut/**imgui**][1.2] (MIT license)
 - [MonoMod/**MonoMod**][1.3] (MIT license)
 - [processhacker/**phnt**][1.4] (CC-BY-4.0 license)
-- [skadro-official/**skCrypter**][1.5] (MIT license)
+- [JustasMasiulis/**xorstr**][1.5] (Apache-2.0 license)
 
 [0.0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [0.1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
@@ -82,4 +82,4 @@ any credit [[dead link][0.6] ([mirror][0.7]), [link][0.8]].
 [1.2]: https://github.com/ocornut/imgui
 [1.3]: https://github.com/MonoMod/MonoMod
 [1.4]: https://github.com/processhacker/phnt
-[1.5]: https://github.com/skadro-official/skCrypter
+[1.5]: https://github.com/JustasMasiulis/xorstr
