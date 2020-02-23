@@ -145,7 +145,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
 
-#pragma optimize( "g", off )
+#pragma optimize( "", off )
 decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
@@ -255,7 +255,7 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
     ReturnLength);
 }
 
-#pragma optimize( "g", off )
+#pragma optimize( "", off )
 decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(
   LPCSTR lpClassName,
