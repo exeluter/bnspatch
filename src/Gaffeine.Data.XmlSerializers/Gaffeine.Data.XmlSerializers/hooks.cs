@@ -16,32 +16,6 @@ namespace Gaffeine.Data.XmlSerializers
 {
   internal static class Hooks
   {
-    private static readonly Dictionary<string, string> _appArgs = new Dictionary<string, string>();
-    private static readonly List<string> _gameArgs = new List<string>();
-
-    static Hooks()
-    {
-      foreach ( var s in Environment.GetCommandLineArgs().Skip(1) ) {
-        if ( string.IsNullOrEmpty(s) )
-          continue;
-
-        int n;
-        if ( Uri.TryCreate(s, UriKind.Absolute, out var uri)
-          && (uri.Scheme == "nc-launcher2" || uri.Scheme == "nc-launcher2beta") ) {
-
-          var fields = UrlUtility.ParseQueryString(uri.Query);
-          foreach ( var key in fields.Cast<string>() ) {
-            if ( !_appArgs.ContainsKey(key) )
-              _appArgs.Add(key, fields[key]);
-          }
-        } else if ( s[0] == '/' && (n = s.IndexOf(':', 1)) != -1 ) {
-            _appArgs.Add(s.Substring(1, n - 1), s.Substring(n + 1, s.Length - n - 1));
-        } else {
-          _gameArgs.Add(s);
-        }
-      }
-    }
-
     //[MonoModHook(typeof(FileInfoMap),
     //  BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)]
     //[SuppressMessage("Style", "IDE0060:Remove unused parameter")]
@@ -118,13 +92,36 @@ namespace Gaffeine.Data.XmlSerializers
     public static string get_ExeArgument(Func<GameInfo, string> @delegate,
       GameInfo @this)
     {
-      if ( _appArgs.TryGetValue("GameID", out var id) && @this.GameId == id )
-        return string.Join(" ", new[] { @delegate(@this) }.Concat(_gameArgs));
+      var dict = new Dictionary<string, string>();
+      var list = new List<string>();
+
+      foreach ( var s in Environment.GetCommandLineArgs().Skip(1) ) {
+        if ( string.IsNullOrEmpty(s) )
+          continue;
+
+        int n;
+        if ( Uri.TryCreate(s, UriKind.Absolute, out var uri)
+          && (uri.Scheme == "nc-launcher2" || uri.Scheme == "nc-launcher2beta") ) {
+
+          var fields = UrlUtility.ParseQueryString(uri.Query);
+          foreach ( var key in fields.Cast<string>() ) {
+            if ( !dict.ContainsKey(key) )
+              dict.Add(key, fields[key]);
+          }
+        } else if ( s[0] == '/' && (n = s.IndexOf(':', 1)) != -1 ) {
+          dict.Add(s.Substring(1, n - 1), s.Substring(n + 1, s.Length - n - 1));
+        } else {
+          list.Add(s);
+        }
+      }
+
+      if ( dict.TryGetValue("GameID", out var id) && @this.GameId == id )
+        return string.Join(" ", new[] { @delegate(@this) }.Concat(list));
 
       return @delegate(@this);
     }
 
-    [MonoModHook(typeof(Game),
+    [MonoModHook(typeof(Gaffeine.Data.Models.XmlGames.Game),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
     public static string get_AllowMultiClient(Func<Game, string> @delegate,
       Game @this) => "1";
