@@ -4,9 +4,12 @@
 #include "pe/segment.h"
 #include "searchers.h"
 //#include "Unreal.h"
+//#include "Unreal.h"
 #include "ntapi/string_span"
 #include "locks.h"
 #include <imgui/imgui.h>
+#include <imgui/imgui_impl_win32.h>
+#include <imgui/imgui_impl_dx9.h>
 
 void *g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -283,7 +286,9 @@ LRESULT CALLBACK WndProc_hook(
   WPARAM wParam,
   LPARAM lParam)
 {
-  return g_pfnWndProc(hwnd, uMsg, wParam, lParam);
+  //if ( ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam) == ERROR_SUCCESS ) {
+  //}
+  return CallWindowProcW(g_pfnWndProc, hwnd, uMsg, wParam, lParam);
 }
 
 decltype(&CreateWindowExW) g_pfnCreateWindowExW;
