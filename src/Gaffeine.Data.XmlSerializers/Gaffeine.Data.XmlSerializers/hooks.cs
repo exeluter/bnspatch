@@ -124,6 +124,11 @@ namespace Gaffeine.Data.XmlSerializers
       return @delegate(@this);
     }
 
+    [MonoModHook(typeof(Game),
+      BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
+    public static string get_AllowMultiClient(Func<Game, string> @delegate,
+      Game @this) => "1";
+
     [MonoModHook("Gaffeine.Controls.Helpers.ShortcutHelper, Gaffeine.Controls",
       BindingFlags = BindingFlags.Static | BindingFlags.Public)]
     public static bool MakeGameShortcut(Func<Game, bool> @delegate,
