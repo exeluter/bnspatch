@@ -51,7 +51,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
           });
         AttachMultipleDetours(xorstr_(L"user32.dll"),
           std::array {
-            hook_t { xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook }
+            hook_t { xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook },
+            hook_t { xorstr_("CreateWindowExW"), &(PVOID &)g_pfnCreateWindowExW, &CreateWindowExW_hook }
           });
         DetourTransactionCommit();
         break;

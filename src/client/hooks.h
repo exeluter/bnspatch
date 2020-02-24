@@ -69,3 +69,18 @@ extern decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(
   LPCSTR lpClassName,
   LPCSTR lpWindowName);
+
+extern decltype(&CreateWindowExW) g_pfnCreateWindowExW;
+HWND WINAPI CreateWindowExW_hook(
+  DWORD dwExStyle,
+  LPCWSTR lpClassName,
+  LPCWSTR lpWindowName,
+  DWORD dwStyle,
+  int X,
+  int Y,
+  int nWidth,
+  int nHeight,
+  HWND hWndParent,
+  HMENU hMenu,
+  HINSTANCE hInstance,
+  LPVOID lpParam);

@@ -275,3 +275,52 @@ HWND WINAPI FindWindowA_hook(
   }
   return g_pfnFindWindowA(lpClassName, lpWindowName);
 }
+
+WNDPROC g_pfnWndProc;
+LRESULT CALLBACK WndProc_hook(
+  HWND hwnd,
+  UINT uMsg,
+  WPARAM wParam,
+  LPARAM lParam)
+{
+  return g_pfnWndProc(hwnd, uMsg, wParam, lParam);
+}
+
+decltype(&CreateWindowExW) g_pfnCreateWindowExW;
+HWND WINAPI CreateWindowExW_hook(
+  DWORD dwExStyle,
+  LPCWSTR lpClassName,
+  LPCWSTR lpWindowName,
+  DWORD dwStyle,
+  int X,
+  int Y,
+  int nWidth,
+  int nHeight,
+  HWND hWndParent,
+  HMENU hMenu,
+  HINSTANCE hInstance,
+  LPVOID lpParam)
+{
+  auto hWnd = g_pfnCreateWindowExW(
+    dwExStyle,
+    lpClassName,
+    lpWindowName,
+    dwStyle,
+    X,
+    Y,
+    nWidth,
+    nHeight,
+    hWndParent,
+    hMenu,
+    hInstance,
+    lpParam);
+
+  if ( hWnd
+    && HIWORD(lpClassName)
+    && !_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient")) ) {
+
+    g_pfnWndProc = reinterpret_cast<WNDPROC>(
+      SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc_hook)));
+  }
+  return hWnd;
+}
