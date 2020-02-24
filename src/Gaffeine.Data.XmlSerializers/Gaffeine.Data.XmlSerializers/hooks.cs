@@ -156,5 +156,30 @@ namespace Gaffeine.Data.XmlSerializers
       object @this, UIElement A_1, bool A_2)
     {
     }
+
+    [MonoModHook("NCLog.Logger, NCLog",
+      BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
+    public static void CleanUp(Action<object, string, string, string, DateTime> @delegate,
+      object @this, string logDirectory, string fileName, string extension, DateTime date)
+    {
+      if ( string.IsNullOrEmpty(logDirectory) )
+        throw new ArgumentException(nameof(logDirectory);
+      if ( string.IsNullOrEmpty(fileName) )
+        throw new ArgumentException(nameof(fileName));
+      if ( string.IsNullOrEmpty(extension) )
+        throw new ArgumentException(nameof(extension));
+
+      var directory = new DirectoryInfo(logDirectory);
+      if ( !directory.Exists )
+        return;
+
+      foreach ( var file in directory.GetFiles(fileName + "*" + extension)
+                                     .Where(x => x.LastWriteTime < date) ) {
+        try {
+          file.Delete();
+        } catch ( UnauthorizedAccessException ) {
+        }
+      }
+    }
   }
 }
