@@ -121,7 +121,7 @@ namespace Gaffeine.Data.XmlSerializers
       return @delegate(@this);
     }
 
-    [MonoModHook(typeof(Gaffeine.Data.Models.XmlGames.Game),
+    [MonoModHook(typeof(Game),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
     public static string get_AllowMultiClient(Func<Game, string> @delegate,
       Game @this) => "1";
