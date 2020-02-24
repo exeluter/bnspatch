@@ -83,7 +83,6 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook("Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration, Microsoft.ApplicationInsights",
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
     public static bool get_DisableTelemetry(Func<object, bool> @delegate,
       object @this) => true;
 
@@ -139,7 +138,6 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook(typeof(LanguagePackageFiles),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
     public static bool Exists(Func<LanguagePackageFiles, string, bool> @delegate,
       LanguagePackageFiles @this, string fileName)
     {
@@ -150,8 +148,6 @@ namespace Gaffeine.Data.XmlSerializers
     [MonoModHook("NCLauncherW.Views.SignInWindow, NCLauncher2",
       IgnoreName = true,
       BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic)]
-    [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    [SuppressMessage("Style", "IDE1006:Naming Styles")]
     public static void ca8de357b76a2339a41ee639eb04cc454(Action<object, UIElement, bool> @delegate,
       object @this, UIElement A_1, bool A_2)
     {
