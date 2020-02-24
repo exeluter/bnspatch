@@ -1,4 +1,4 @@
-// dear imgui, v1.75 WIP
+// dear imgui, v1.75
 // (widgets code)
 
 /*
@@ -33,6 +33,8 @@ Index of this file:
 #endif
 
 #include "imgui.h"
+#ifndef IMGUI_DISABLE
+
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
@@ -3271,7 +3273,24 @@ static bool STB_TEXTEDIT_INSERTCHARS(STB_TEXTEDIT_STRING* obj, int pos, const Im
 #define STB_TEXTEDIT_IMPLEMENTATION
 #include "imstb_textedit.h"
 
+// stb_textedit internally allows for a single undo record to do addition and deletion, but somehow, calling 
+// the stb_textedit_paste() function creates two separate records, so we perform it manually. (FIXME: Report to nothings/stb?) 
+static void stb_textedit_replace(STB_TEXTEDIT_STRING* str, STB_TexteditState* state, const STB_TEXTEDIT_CHARTYPE* text, int text_len)
+{
+    stb_text_makeundo_replace(str, state, 0, str->CurLenW, text_len);
+    ImStb::STB_TEXTEDIT_DELETECHARS(str, 0, str->CurLenW);
+    if (text_len <= 0)
+        return;
+    if (ImStb::STB_TEXTEDIT_INSERTCHARS(str, 0, text, text_len))
+    {
+        state->cursor = text_len;
+        state->has_preferred_x = 0;
+        return;
+    }
+    IM_ASSERT(0); // Failed to insert character, normally shouldn't happen because of how we currently use stb_textedit_replace()
 }
+
+} // namespace ImStb
 
 void ImGuiInputTextState::OnKeyPressed(int key)
 {
@@ -3458,14 +3477,23 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             EndGroup();
             return false;
         }
-        if (!BeginChildFrame(id, frame_bb.GetSize()))
+
+        // We reproduce the contents of BeginChildFrame() in order to provide 'label' so our window internal data are easier to read/debug.
+        PushStyleColor(ImGuiCol_ChildBg, style.Colors[ImGuiCol_FrameBg]);
+        PushStyleVar(ImGuiStyleVar_ChildRounding, style.FrameRounding);
+        PushStyleVar(ImGuiStyleVar_ChildBorderSize, style.FrameBorderSize);
+        PushStyleVar(ImGuiStyleVar_WindowPadding, style.FramePadding);
+        bool child_visible = BeginChildEx(label, id, frame_bb.GetSize(), true, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysUseWindowPadding);
+        PopStyleVar(3);
+        PopStyleColor();
+        if (!child_visible)
         {
-            EndChildFrame();
+            EndChild();
             EndGroup();
             return false;
         }
         draw_window = g.CurrentWindow; // Child window
-        draw_window->DC.NavLayerActiveMaskNext |= draw_window->DC.NavLayerCurrentMask; // This is to ensure that EndChild() will display a navigation highlight
+        draw_window->DC.NavLayerActiveMaskNext |= draw_window->DC.NavLayerCurrentMask; // This is to ensure that EndChild() will display a navigation highlight so we can "enter" into it.
         inner_size.x -= draw_window->ScrollbarSizes.x;
     }
     else
@@ -3817,13 +3845,22 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
             // Restore initial value. Only return true if restoring to the initial value changes the current buffer contents.
             if (!is_readonly && strcmp(buf, state->InitialTextA.Data) != 0)
             {
+                // Push records into the undo stack so we can CTRL+Z the revert operation itself
                 apply_new_text = state->InitialTextA.Data;
                 apply_new_text_length = state->InitialTextA.Size - 1;
+                ImVector<ImWchar> w_text;
+                if (apply_new_text_length > 0)
+                {
+                    w_text.resize(ImTextCountCharsFromUtf8(apply_new_text, apply_new_text + apply_new_text_length) + 1);
+                    ImTextStrFromUtf8(w_text.Data, w_text.Size, apply_new_text, apply_new_text + apply_new_text_length);
+                }
+                stb_textedit_replace(state, &state->Stb, w_text.Data, (apply_new_text_length > 0) ? (w_text.Size - 1) : 0);
             }
         }
 
         // When using 'ImGuiInputTextFlags_EnterReturnsTrue' as a special case we reapply the live buffer back to the input buffer before clearing ActiveId, even though strictly speaking it wasn't modified on this frame.
-        // If we didn't do that, code like InputInt() with ImGuiInputTextFlags_EnterReturnsTrue would fail. Also this allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage.
+        // If we didn't do that, code like InputInt() with ImGuiInputTextFlags_EnterReturnsTrue would fail. 
+        // This also allows the user to use InputText() with ImGuiInputTextFlags_EnterReturnsTrue without maintaining any user-side storage (please note that if you use this property along ImGuiInputTextFlags_CallbackResize you can end up with your temporary string object unnecessarily allocating once a frame, either store your string data, either if you don't then don't use ImGuiInputTextFlags_CallbackResize).
         bool apply_edit_back_to_user_buffer = !cancel_edit || (enter_pressed && (flags & ImGuiInputTextFlags_EnterReturnsTrue) != 0);
         if (apply_edit_back_to_user_buffer)
         {
@@ -3917,8 +3954,11 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         // Copy result to user buffer
         if (apply_new_text)
         {
+            // We cannot test for 'backup_current_text_length != apply_new_text_length' here because we have no guarantee that the size
+            // of our owned buffer matches the size of the string object held by the user, and by design we allow InputText() to be used
+            // without any storage on user's side.
             IM_ASSERT(apply_new_text_length >= 0);
-            if (backup_current_text_length != apply_new_text_length && is_resizable)
+            if (is_resizable)
             {
                 ImGuiInputTextCallbackData callback_data;
                 callback_data.EventFlag = ImGuiInputTextFlags_CallbackResize;
@@ -3933,6 +3973,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
                 apply_new_text_length = ImMin(callback_data.BufTextLen, buf_size - 1);
                 IM_ASSERT(apply_new_text_length <= buf_size);
             }
+            //IMGUI_DEBUG_LOG("InputText(\"%s\"): apply_new_text length %d\n", label, apply_new_text_length);
 
             // If the underlying buffer resize was denied or not carried to the next frame, apply_new_text_length+1 may be >= buf_size.
             ImStrncpy(buf, apply_new_text, ImMin(apply_new_text_length + 1, buf_size));
@@ -4151,7 +4192,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
     if (is_multiline)
     {
         Dummy(text_size + ImVec2(0.0f, g.FontSize)); // Always add room to scroll an extra line
-        EndChildFrame();
+        EndChild();
         EndGroup();
     }
 
@@ -7400,7 +7441,7 @@ void ImGui::PushColumnsBackground()
     ImGuiColumns* columns = window->DC.CurrentColumns;
     if (columns->Count == 1)
         return;
-    window->DrawList->ChannelsSetCurrent(0);
+    columns->Splitter.SetCurrentChannel(window->DrawList, 0);
     int cmd_size = window->DrawList->CmdBuffer.Size;
     PushClipRect(columns->HostClipRect.Min, columns->HostClipRect.Max, false);
     IM_UNUSED(cmd_size);
@@ -7413,7 +7454,7 @@ void ImGui::PopColumnsBackground()
     ImGuiColumns* columns = window->DC.CurrentColumns;
     if (columns->Count == 1)
         return;
-    window->DrawList->ChannelsSetCurrent(columns->Current + 1);
+    columns->Splitter.SetCurrentChannel(window->DrawList, columns->Current + 1);
     PopClipRect();
 }
 
@@ -7504,8 +7545,8 @@ void ImGui::BeginColumns(const char* str_id, int columns_count, ImGuiColumnsFlag
 
     if (columns->Count > 1)
     {
-        window->DrawList->ChannelsSplit(1 + columns->Count);
-        window->DrawList->ChannelsSetCurrent(1);
+        columns->Splitter.Split(window->DrawList, 1 + columns->Count);
+        columns->Splitter.SetCurrentChannel(window->DrawList, 1);
         PushColumnClipRect(0);
     }
 
@@ -7544,14 +7585,14 @@ void ImGui::NextColumn()
         // Columns 1+ ignore IndentX (by canceling it out)
         // FIXME-COLUMNS: Unnecessary, could be locked?
         window->DC.ColumnsOffset.x = GetColumnOffset(columns->Current) - window->DC.Indent.x + column_padding;
-        window->DrawList->ChannelsSetCurrent(columns->Current + 1);
+        columns->Splitter.SetCurrentChannel(window->DrawList, columns->Current + 1);
     }
     else
     {
         // New row/line
         // Column 0 honor IndentX
         window->DC.ColumnsOffset.x = ImMax(column_padding - window->WindowPadding.x, 0.0f);
-        window->DrawList->ChannelsSetCurrent(1);
+        columns->Splitter.SetCurrentChannel(window->DrawList, 1);
         columns->Current = 0;
         columns->LineMinY = columns->LineMaxY;
     }
@@ -7581,7 +7622,7 @@ void ImGui::EndColumns()
     if (columns->Count > 1)
     {
         PopClipRect();
-        window->DrawList->ChannelsMerge();
+        columns->Splitter.Merge(window->DrawList);
     }
 
     const ImGuiColumnsFlags flags = columns->Flags;
@@ -7665,3 +7706,5 @@ void ImGui::Columns(int columns_count, const char* id, bool border)
 }
 
 //-------------------------------------------------------------------------
+
+#endif // #ifndef IMGUI_DISABLE
