@@ -152,5 +152,12 @@ namespace Gaffeine.Data.XmlSerializers
       object @this, UIElement A_1, bool A_2)
     {
     }
+
+#if DEBUG
+    [MonoModHook("NCLog.RSAEncrytor, NCLog",
+      BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
+    public static string EncryptMessage(Func<object, string, string> @delegate,
+      object @this, string msg) => msg;
+#endif
   }
 }
