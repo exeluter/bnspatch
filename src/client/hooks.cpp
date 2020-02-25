@@ -173,7 +173,9 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
         return GetExceptionCode();
       }
 
-      for ( const auto &Name : { "DbgBreakPoint", "DbgUiRemoteBreakin" } ) {
+      auto xs1 = xorstr("DbgBreakPoint");
+      auto xs2 = xorstr("DbgUiRemoteBreakin");
+      for ( const auto &Name : { xs1.crypt_get(), xs2.crypt_get() } ) {
         if ( const auto ProcedureAddress = module->find_function(Name);
           ProcedureAddress && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
           return STATUS_INVALID_PARAMETER_2;
@@ -262,16 +264,20 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
-    for ( const auto &String : { "FilemonClass", "PROCMON_WINDOW_CLASS", "RegmonClass", "18467-41" } ) {
+    auto xs1 = xorstr("FilemonClass");
+    auto xs2 = xorstr("PROCMON_WINDOW_CLASS");
+    auto xs3 = xorstr("RegmonClass");
+    auto xs4 = xorstr("18467-41");
+    for ( const auto &String : { xs1.crypt_get(), xs2.crypt_get(), xs3.crypt_get(), xs4.crypt_get() } ) {
       if ( !_stricmp(lpClassName, String) )
         return nullptr;
     }
   }
   if ( lpWindowName ) {
-    for ( const auto &String : {
-      "File Monitor - Sysinternals: www.sysinternals.com",
-      "Process Monitor - Sysinternals: www.sysinternals.com",
-      "Registry Monitor - Sysinternals: www.sysinternals.com" } ) {
+    auto xs1 = xorstr("File Monitor - Sysinternals: www.sysinternals.com");
+    auto xs2 = xorstr("Process Monitor - Sysinternals: www.sysinternals.com");
+    auto xs3 = xorstr("Registry Monitor - Sysinternals: www.sysinternals.com");
+    for ( const auto &String : { xs1.crypt_get(), xs2.crypt_get(), xs3.crypt_get() } ) {
       if ( !strcmp(lpWindowName, String) )
         return nullptr;
     }
@@ -322,7 +328,8 @@ HWND WINAPI CreateWindowExW_hook(
 
   if ( hWnd
     && HIWORD(lpClassName)
-    && !_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient")) ) {
+    && (!_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient"))
+      || !_wcsicmp(lpClassName, xorstr_(L"UnrealWindow"))) ) {
 
     g_pfnWndProc = reinterpret_cast<WNDPROC>(
       SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc_hook)));

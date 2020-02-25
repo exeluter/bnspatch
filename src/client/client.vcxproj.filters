@@ -113,12 +113,12 @@
     <ClInclude Include="protect_memory.h">
       <Filter>Header Files\ntapi</Filter>
     </ClInclude>
+    <ClInclude Include="ntapi\critical_section.h">
+      <Filter>Header Files\ntapi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ntapi\string_span">
-      <Filter>Header Files\ntapi</Filter>
-    </None>
-    <None Include="ntapi\string">
       <Filter>Header Files\ntapi</Filter>
     </None>
   </ItemGroup>

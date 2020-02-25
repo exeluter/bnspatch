@@ -4,7 +4,6 @@ using Mono.Cecil;
 using MonoMod.RuntimeDetour;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -48,8 +47,8 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook(typeof(US4UpdateModeBase),
       BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic)]
-    public static void FileReplace(Action<US4UpdateModeBase, string, string> @delegate,
-      US4UpdateModeBase @this, string src, string dest)
+    public static void FileReplace(Action<US4UpdateModeBase, string, string> @delegate, US4UpdateModeBase @this,
+      string src, string dest)
     {
       if ( Guid.TryParse(@this._Game.AppId, out var AppId)
         && AppId.Equals(new Guid(0x0D726F91, 0x202E, 0x4158, 0x9B, 0x9D, 0xCA, 0x0B, 0xF9, 0x44, 0x6B, 0x36))
@@ -83,13 +82,11 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook("Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration, Microsoft.ApplicationInsights",
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static bool get_DisableTelemetry(Func<object, bool> @delegate,
-      object @this) => true;
+    public static bool get_DisableTelemetry(Func<object, bool> @delegate, object @this) => true;
 
     [MonoModHook(typeof(GameInfo),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static string get_ExeArgument(Func<GameInfo, string> @delegate,
-      GameInfo @this)
+    public static string get_ExeArgument(Func<GameInfo, string> @delegate, GameInfo @this)
     {
       var dict = new Dictionary<string, string>();
       var list = new List<string>();
@@ -122,12 +119,11 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook(typeof(Game),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static string get_AllowMultiClient(Func<Game, string> @delegate,
-      Game @this) => "1";
+    public static string get_AllowMultiClient(Func<Game, string> @delegate, Game @this) => "1";
 
     [MonoModHook("Gaffeine.Controls.Helpers.ShortcutHelper, Gaffeine.Controls",
       BindingFlags = BindingFlags.Static | BindingFlags.Public)]
-    public static bool MakeGameShortcut(Func<Game, bool> @delegate,
+    public static bool MakeGameShortcut(Func<Game, bool> @delegate, 
       Game game)
     {
       string path = Path.Combine(
@@ -138,8 +134,8 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook(typeof(LanguagePackageFiles),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static bool Exists(Func<LanguagePackageFiles, string, bool> @delegate,
-      LanguagePackageFiles @this, string fileName)
+    public static bool Exists(Func<LanguagePackageFiles, string, bool> @delegate, LanguagePackageFiles @this,
+      string fileName)
     {
       return !string.IsNullOrEmpty(fileName)
         && @this.Exists(x => fileName.Contains(x.FileName, StringComparison.OrdinalIgnoreCase));
@@ -156,8 +152,8 @@ namespace Gaffeine.Data.XmlSerializers
 #if DEBUG
     [MonoModHook("NCLog.RSAEncrytor, NCLog",
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static string EncryptMessage(Func<object, string, string> @delegate,
-      object @this, string msg) => msg;
+    public static string EncryptMessage(Func<object, string, string> @delegate, object @this,
+      string msg) => msg;
 #endif
   }
 }

@@ -149,7 +149,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;BNSR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <UseFullPaths>false</UseFullPaths>
@@ -247,7 +247,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;BNSR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <TreatWarningAsError>true</TreatWarningAsError>
       <DebugInformationFormat>None</DebugInformationFormat>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -365,6 +365,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ntapi\critical_section.h" />
     <ClInclude Include="pe\pe.h" />
     <ClInclude Include="pe\traits.h" />
     <ClInclude Include="pe\export_directory.h" />
@@ -382,7 +383,6 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
     <ClInclude Include="xmlreader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ntapi\string" />
     <None Include="ntapi\string_span" />
   </ItemGroup>
   <ItemGroup>

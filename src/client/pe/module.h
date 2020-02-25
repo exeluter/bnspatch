@@ -5,6 +5,7 @@
 #include "traits.h"
 #include "segment.h"
 #include "..\ntapi\string_span"
+#include "..\ntapi\critical_section.h"
 
 namespace pe
 {
@@ -40,76 +41,40 @@ namespace pe
       return reinterpret_cast<const T *>(reinterpret_cast<uintptr_t>(this) + rva);
     }
 
-  private:
-    inline const ntapi::ustring_span *try_base_name() const
-    {
-      PVOID Cookie = nullptr;
-      ntapi::ustring_span *u = nullptr;
-
-      __try {
-        (void)LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &Cookie);
-        const auto ModuleListHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
-
-        for ( auto Entry = ModuleListHead->Flink; Entry != ModuleListHead; Entry = Entry->Flink ) {
-          auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-
-          if ( Module->DllBase == this ) {
-            u = static_cast<ntapi::ustring_span *>(&Module->BaseDllName);
-            break;
-          }
-          Entry = Entry->Flink;
-        }
-      } __except ( EXCEPTION_EXECUTE_HANDLER ) {
-      }
-      (void)LdrUnlockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, Cookie);
-      return u;
-    }
-
-    inline const ntapi::ustring_span *try_full_name() const
-    {
-      PVOID Cookie = nullptr;
-      ntapi::ustring_span *u = nullptr;
-
-      __try {
-        (void)LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &Cookie);
-        const auto ModuleListHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
-
-        for ( auto Entry = ModuleListHead->Flink; Entry != ModuleListHead; Entry = Entry->Flink ) {
-          auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-
-          if ( Module->DllBase == this ) {
-            u = static_cast<ntapi::ustring_span *>(&Module->FullDllName);
-            break;
-          }
-          Entry = Entry->Flink;
-        }
-      } __except ( EXCEPTION_EXECUTE_HANDLER ) {
-      }
-      (void)LdrUnlockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, Cookie);
-      return u;
-    }
-
-  public:
     inline pe::ic_wstring base_name() const
     {
-      PVOID Cookie = nullptr;
-      pe::ic_wstring s;
+      ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
+      std::lock_guard<ntapi::critical_section> guard(crit);
 
-      if ( const auto u = try_base_name() )
-        s.assign(u->begin(), u->end());
+      const auto ModuleListHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
+      for ( auto Entry = ModuleListHead->Flink; Entry != ModuleListHead; Entry = Entry->Flink ) {
+        auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-      return s;
+        if ( Module->DllBase == this ) {
+          const auto name = static_cast<ntapi::ustring_span *>(&Module->BaseDllName);
+          return pe::ic_wstring(name->begin(), name->end());
+        }
+        Entry = Entry->Flink;
+      }
+      return {};
     }
 
     inline pe::ic_wstring full_name() const
     {
-      PVOID Cookie = nullptr;
-      pe::ic_wstring s;
+      ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
+      std::lock_guard<ntapi::critical_section> guard(crit);
 
-      if ( const auto u = try_full_name() )
-        s.assign(u->begin(), u->end());
+      const auto ModuleListHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
+      for ( auto Entry = ModuleListHead->Flink; Entry != ModuleListHead; Entry = Entry->Flink ) {
+        auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-      return s;
+        if ( Module->DllBase == this ) {
+          const auto name = static_cast<ntapi::ustring_span *>(&Module->FullDllName);
+          return pe::ic_wstring(name->begin(), name->end());
+        }
+        Entry = Entry->Flink;
+      }
+      return {};
     }
 
     inline IMAGE_NT_HEADERS *nt_header()
