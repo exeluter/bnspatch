@@ -43,13 +43,12 @@ Yes it does! In fact, I highly recommend using it.
 No. Each component works individually and may be used together or separately.
 
 #### Q: Isn't this unsafe compared to BnS Buddy?
-TL;DR: No.
+TL;DR: No. I've been using some variant of it since I started development in 2017,
+and have never been warned nor banned, and neither has anyone else who I shared it with.
 
-Long version: BnS Buddy's developer, instead of using his influence to foster a
-healthy development community for Blade & Soul, has a knee-jerk reaction whenever
-alternatives to his program are mentioned and really likes to spread FUD around to
-discourage people from using them, by using spooky terms like "injection"
-[[link][0.4], [link][0.5]].
+Long version: BnS Buddy's developer has spread FUD around to discourage others from
+using alternatives to BnS Buddy by using spooky terms like "injection", "bannable"
+and "exploit" [[link][0.4], [link][0.5]], but this is disingenuous.
 
 While bnspatch does make use of DLL hijacking to do its magic, this exact method
 is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
