@@ -57,7 +57,7 @@ well, previously).
 In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
 BnS Buddy is. I don't expect the developer to understand any of this though, since
 they literally copy-pasted both of those features from other people, without giving
-any credit ([)[~~dead link~~][0.6] [mirror][0.7], [link][0.8]).
+any credit ([~~dead link~~][0.6] [mirror][0.7], [link][0.8]).
 
 ## Acknowledgements
 - [microsoft/**Detours**][1.0] (MIT license)
