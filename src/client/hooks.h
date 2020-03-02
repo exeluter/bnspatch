@@ -65,6 +65,11 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
   ULONG SystemInformationLength,
   PULONG ReturnLength);
 
+extern decltype(&GetProcAddress) g_pfnGetProcAddress;
+FARPROC WINAPI GetProcAddress_hook(
+  HMODULE hModule,
+  LPCSTR lpProcName);
+
 extern decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(
   LPCSTR lpClassName,

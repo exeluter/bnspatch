@@ -74,9 +74,6 @@
     <ClInclude Include="hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="xmlreader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pe\module.h">
       <Filter>Header Files\pe</Filter>
     </ClInclude>
@@ -110,10 +107,13 @@
     <ClInclude Include="Unreal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="protect_memory.h">
+    <ClInclude Include="ntapi\critical_section.h">
       <Filter>Header Files\ntapi</Filter>
     </ClInclude>
-    <ClInclude Include="ntapi\critical_section.h">
+    <ClInclude Include="xmlreader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ntapi\protect_memory.h">
       <Filter>Header Files\ntapi</Filter>
     </ClInclude>
   </ItemGroup>

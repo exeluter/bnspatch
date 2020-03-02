@@ -54,7 +54,6 @@ namespace pe
           const auto name = static_cast<ntapi::ustring_span *>(&Module->BaseDllName);
           return pe::ic_wstring(name->begin(), name->end());
         }
-        Entry = Entry->Flink;
       }
       return {};
     }

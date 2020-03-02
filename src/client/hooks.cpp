@@ -3,13 +3,71 @@
 #include "pe/module.h"
 #include "pe/segment.h"
 #include "searchers.h"
-//#include "Unreal.h"
-//#include "Unreal.h"
 #include "ntapi/string_span"
 #include "locks.h"
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_win32.h>
 #include <imgui/imgui_impl_dx9.h>
+#include "xmlreader.h"
+
+//void process_element(XmlElement const *element, pugi::xml_node &parent)
+//{
+//  auto node = parent.append_child(element->Name());
+//  for ( int i = 0; i < element->AttributeCount(); ++i ) {
+//    auto attr = node.append_attribute(element->AttributeName(i));
+//    attr.set_value(element->Attribute(i));
+//  }
+//  for ( auto next = element->FirstChildElement(); next; next = next->NextElement() ) {
+//    process_element(next, node);
+//  }
+//}
+
+XmlDoc *(*g_pfnRead)(XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class XmlPieceReader *);
+XmlDoc *Read_hook(
+  XmlReader const *thisptr,
+  unsigned char const *data,
+  unsigned int size,
+  wchar_t const *fileName,
+  class XmlPieceReader *arg4)
+{
+  static fs::path folder;
+
+  if ( folder.empty() ) {
+    std::array<WCHAR, _MAX_DIR + 1> Publisher;
+    auto file = fs::absolute(xorstr_(L"local.ini"));
+    
+    if ( GetPrivateProfileStringW(xorstr_(L"Locale"), xorstr_(L"Publisher"), nullptr, Publisher.data(), SafeInt(Publisher.size()), file.c_str()) )
+      folder = fmt::format(xorstr_(L"..\\contents\\Local\\{}\\data"), Publisher.data());
+  }
+
+  if ( fileName ) {
+    auto file = folder / fileName;
+    if ( GetFileAttributesW(file.c_str()) != INVALID_FILE_ATTRIBUTES )
+      return thisptr->Read(file.c_str(), arg4);
+  }
+  return g_pfnRead(thisptr, data, size, fileName, arg4);
+}
+
+XmlReader *(*g_pfnCreateXmlReader)(void);
+XmlReader *CreateXmlReader_hook(void)
+{
+  auto xmlReader = g_pfnCreateXmlReader();
+  auto vftable = gsl::make_span(*reinterpret_cast<void ***>(xmlReader), 12);
+  auto vfcopy = new void *[vftable.size()];
+  std::copy(vftable.begin(), vftable.end(), vfcopy);
+  g_pfnRead = reinterpret_cast<decltype(g_pfnRead)>(
+    InterlockedExchangePointer(&vfcopy[7], &Read_hook));
+  *reinterpret_cast<void ***>(xmlReader) = vfcopy;
+  return xmlReader;
+}
+
+void(*g_pfnDestroyXmlReader)(XmlReader *);
+void DestroyXmlReader_hook(XmlReader *xmlReader)
+{
+  auto vfcopy = *reinterpret_cast<void ***>(xmlReader);
+  g_pfnDestroyXmlReader(xmlReader);
+  delete[] vfcopy;
+}
 
 void *g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -24,64 +82,34 @@ VOID CALLBACK DllNotification(
 
   switch ( NotificationReason ) {
     case LDR_DLL_NOTIFICATION_REASON_LOADED: {
-      const auto Module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
-      const auto BaseDllName = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
+      const auto module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
+      const auto base_name = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
 
-      //if ( BaseDllName->iequals(L"bsengine_Shipping64.dll") ) {
-      //  if ( const auto segment = Module->segment(".text") ) {
-      //    const auto data = segment->as_bytes();
-      //    std::chrono::duration<double, std::milli> timer;
-
-      //    if ( const auto &it = std::search(data.begin(), data.end(),
-      //       pattern_searcher("48 8B 05 ?? ?? ?? ?? 48 63 C9", &timer)); it != data.end() ) {
-      //      UObject::GObjObjects = (TArray<UObject *> *)(&it[7] + *(int32_t *)&it[3]);
-      //    }
-
-      //    if ( const auto &it = std::search(data.begin(), data.end(),
-      //       pattern_searcher("48 8B 0D ?? ?? ?? ?? 48 89 04 D1", &timer)); it != data.end() ) {
-      //      FName::Names = (TArray<FNameEntry *> *)(&it[7] + *(int32_t *)&it[3]);
-      //    }
-
-      //    if ( const auto &it = std::search(data.begin(), data.end(),
-      //       pattern_searcher("48 8B 05 ?? ?? ?? ?? C1 E2 12", &timer)); it != data.end() ) {
-      //      GEngine = (UEngine *)(&it[7] + *(int32_t *)&it[3]);
-      //    }
-
-      //    if ( const auto &it = std::search(data.begin(), data.end(),
-      //       pattern_searcher("4C 8B CF 4C 8B C6 48 8B D5 48 8B CB E8", &timer)); it != data.end() ) {
-
-      //      g_pfnProcessEvent = (decltype(g_pfnProcessEvent))(&it[0x11] + *(int32_t *)&it[0xd]);
-      //      DetourTransactionBegin();
-      //      DetourUpdateThread(NtCurrentThread());
-      //      DetourAttach(&(void *&)g_pfnProcessEvent, &ProcessEvent_hook);
-      //      DetourTransactionCommit();
-      //    }
-      //  }
-      //} else if ( BaseDllName->iequals(L"XmlReader_cl64.dll") ) {
-      //}
+      if ( base_name->iequals(xorstr_(L"XmlReader_cl64.dll")) || base_name->iequals(xorstr_(L"XmlReader2017_cl64.dll")) ) {
+        if ( auto GetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(
+          module->find_function(xorstr_("GetInterfaceVersion"))) ) {
+          switch ( _wtoi(GetInterfaceVersion()) ) {
+            case 14:
+            case 15:
+              DetourTransactionBegin();
+              DetourUpdateThread(NtCurrentThread());
+              if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
+                module->find_function(xorstr_("CreateXmlReader"))) )
+                DetourAttach(&(PVOID &)g_pfnCreateXmlReader, &CreateXmlReader_hook);
+              if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
+                module->find_function(xorstr_("DestroyXmlReader"))) )
+                DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
+              DetourTransactionCommit();
+              break;
+          }
+        }
+      }
       break;
     } case LDR_DLL_NOTIFICATION_REASON_UNLOADED: {
       break;
     }
   }
 }
-
-//void(*g_pfnProcessEvent)(UObject *, UFunction *, void *, void *);
-//void ProcessEvent_hook(UObject *Object, UFunction *Function, void *Parms, void *Result)
-//{
-  //if ( ObjectNameEquals(Function, std::array { 21, 2756, 6152 }) ) { // Engine.AnimatedCamera.ApplyCameraModifiers
-  //  auto Params = (ACamera_ApplyCameraModifiers_Params *)Parms;
-  //  Params->OutPOV.FOV = 105.0f;
-  //} else if ( ObjectNameEquals(Function, std::array { 21, 162, 6194 }) ) { // Engine.Camera.eventSetFOV
-  //  auto Params = (ACamera_eventSetFOV_Params *)Parms;
-  //  Params->NewFOV = 105.0f;
-  //} else if ( ObjectNameEquals(Function, std::array { 21, 2810, 6323 }) ) { // Engine.PlayerController.SetIgnoreLookInput
-  //  return;
-  //} else if ( ObjectNameEquals(Function, std::array { 6030, 6043, 337 }) ) { // T1Game.T1PlayerController.PlayerTick
-  //}
-  //g_pfnProcessEvent(Object, Function, Parms, Result);
-//}
-
 
 decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
@@ -283,6 +311,20 @@ HWND WINAPI FindWindowA_hook(
     }
   }
   return g_pfnFindWindowA(lpClassName, lpWindowName);
+}
+
+decltype(&GetProcAddress) g_pfnGetProcAddress;
+FARPROC WINAPI GetProcAddress_hook(
+  HMODULE hModule,
+  LPCSTR lpProcName)
+{
+  //auto name = reinterpret_cast<pe::module *>(hModule)->base_name();
+
+  //if ( (name == L"XmlReader_cl64.dll"|| name == L"XmlReader2017_cl64.dll") ) {
+  //  if ( !strcmp(lpProcName, "CreateXmlReader") )
+  //  return reinterpret_cast<FARPROC>(&CreateXmlReader_hook);
+  //}
+  return g_pfnGetProcAddress(hModule, lpProcName);
 }
 
 WNDPROC g_pfnWndProc;

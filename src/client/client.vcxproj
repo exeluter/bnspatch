@@ -366,6 +366,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ntapi\critical_section.h" />
+    <ClInclude Include="ntapi\protect_memory.h" />
     <ClInclude Include="pe\pe.h" />
     <ClInclude Include="pe\traits.h" />
     <ClInclude Include="pe\export_directory.h" />
@@ -373,7 +374,6 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
     <ClInclude Include="pe\module.h" />
     <ClInclude Include="pe\resource_directory.h" />
     <ClInclude Include="pe\segment.h" />
-    <ClInclude Include="protect_memory.h" />
     <ClInclude Include="searchers.h" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="locks.h" />

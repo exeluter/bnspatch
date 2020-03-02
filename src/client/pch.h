@@ -42,6 +42,11 @@ namespace fs = std::filesystem;
 #define JM_XORSTR_DISABLE_AVX_INTRINSICS
 #include <xorstr/xorstr.hpp>
 
+//#include <pugixml/pugixml.hpp>
+
+//#include <libdeflate/libdeflate.h>
+//#pragma comment( lib, "lib/libdeflatestatic.lib")
+
 static inline ptrdiff_t make_offset(const void *Base, const void *Pointer)
 {
   return ((ptrdiff_t)(((uintptr_t)(Pointer)) - ((uintptr_t)(Base))));
