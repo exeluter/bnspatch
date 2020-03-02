@@ -3,7 +3,7 @@ param (
     [string]$OutFile
 )
 
-& '..\tools\zopfli\zopfli.exe' --i1000 --deflate $InFile
+& '..\tools\zopfli\zopfli.exe' --deflate --i1000 $InFile
 $ostream = [System.IO.File]::Open("$OutFile", `
                                   [System.IO.FileMode]::Create, `
                                   [System.IO.FileAccess]::Write)
