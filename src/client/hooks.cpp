@@ -1,13 +1,8 @@
 #include "pch.h"
 #include "hooks.h"
 #include "pe/module.h"
-#include "pe/segment.h"
-#include "searchers.h"
 #include "ntapi/string_span"
 #include "locks.h"
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_win32.h>
-#include <imgui/imgui_impl_dx9.h>
 #include "xmlreader.h"
 
 XmlDoc *(*g_pfnRead)(XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class XmlPieceReader *);
@@ -21,7 +16,7 @@ XmlDoc *Read_hook(
   static fs::path folder;
 
   if ( folder.empty() ) {
-    std::array<WCHAR, _MAX_DIR + 1> Publisher;
+    std::array<WCHAR, _MAX_DIR> Publisher;
     auto file = fs::absolute(xorstr_(L"local.ini"));
     
     if ( GetPrivateProfileStringW(xorstr_(L"Locale"), xorstr_(L"Publisher"), nullptr, Publisher.data(), SafeInt(Publisher.size()), file.c_str()) )
