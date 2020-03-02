@@ -26,13 +26,12 @@ may need a little manual configuration.
 2. With each new version of NC Launcher 2, [`assemblyinfo.cs`][0.2] must be updated
    to match the MVID of `Gaffeine.Data.dll`, or nothing will work.
    You can find this value with dnSpy or CFF Explorer.
-3. Updating the embedded dependencies is a little tricky. They are deflated with
-   `zopfli --deflate --i1000`, but any deflater will do. Afterwards the length of
-   the compressed data (32-bit unsigned) needs to be prepended to the beginning of the
-   `.deflate` file.
+3. All dependencies are deflated with `zopfli --deflate --i1000`, and the length of
+   the compressed data (32-bit signed) is prepended to the beginning of the `.deflate`
+   file. You can use `scripts\pack-resource.ps1` to automate this process.
 4. If you update the `MonoMod.Utils.dll` dependency, you need to modify it so that
    its `System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute` type is
-   `internal` instead of `public`.
+   `internal` instead of `public`. This can be done easily with dnSpy.
 
 ## FAQ
 
