@@ -10,18 +10,6 @@
 #include <imgui/imgui_impl_dx9.h>
 #include "xmlreader.h"
 
-//void process_element(XmlElement const *element, pugi::xml_node &parent)
-//{
-//  auto node = parent.append_child(element->Name());
-//  for ( int i = 0; i < element->AttributeCount(); ++i ) {
-//    auto attr = node.append_attribute(element->AttributeName(i));
-//    attr.set_value(element->Attribute(i));
-//  }
-//  for ( auto next = element->FirstChildElement(); next; next = next->NextElement() ) {
-//    process_element(next, node);
-//  }
-//}
-
 XmlDoc *(*g_pfnRead)(XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class XmlPieceReader *);
 XmlDoc *Read_hook(
   XmlReader const *thisptr,
@@ -313,68 +301,54 @@ HWND WINAPI FindWindowA_hook(
   return g_pfnFindWindowA(lpClassName, lpWindowName);
 }
 
-decltype(&GetProcAddress) g_pfnGetProcAddress;
-FARPROC WINAPI GetProcAddress_hook(
-  HMODULE hModule,
-  LPCSTR lpProcName)
-{
-  //auto name = reinterpret_cast<pe::module *>(hModule)->base_name();
+//WNDPROC g_pfnWndProc;
+//LRESULT CALLBACK WndProc_hook(
+//  HWND hwnd,
+//  UINT uMsg,
+//  WPARAM wParam,
+//  LPARAM lParam)
+//{
+//  //if ( ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam) == ERROR_SUCCESS ) {
+//  //}
+//  return CallWindowProcW(g_pfnWndProc, hwnd, uMsg, wParam, lParam);
+//}
 
-  //if ( (name == L"XmlReader_cl64.dll"|| name == L"XmlReader2017_cl64.dll") ) {
-  //  if ( !strcmp(lpProcName, "CreateXmlReader") )
-  //  return reinterpret_cast<FARPROC>(&CreateXmlReader_hook);
-  //}
-  return g_pfnGetProcAddress(hModule, lpProcName);
-}
-
-WNDPROC g_pfnWndProc;
-LRESULT CALLBACK WndProc_hook(
-  HWND hwnd,
-  UINT uMsg,
-  WPARAM wParam,
-  LPARAM lParam)
-{
-  //if ( ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam) == ERROR_SUCCESS ) {
-  //}
-  return CallWindowProcW(g_pfnWndProc, hwnd, uMsg, wParam, lParam);
-}
-
-decltype(&CreateWindowExW) g_pfnCreateWindowExW;
-HWND WINAPI CreateWindowExW_hook(
-  DWORD dwExStyle,
-  LPCWSTR lpClassName,
-  LPCWSTR lpWindowName,
-  DWORD dwStyle,
-  int X,
-  int Y,
-  int nWidth,
-  int nHeight,
-  HWND hWndParent,
-  HMENU hMenu,
-  HINSTANCE hInstance,
-  LPVOID lpParam)
-{
-  auto hWnd = g_pfnCreateWindowExW(
-    dwExStyle,
-    lpClassName,
-    lpWindowName,
-    dwStyle,
-    X,
-    Y,
-    nWidth,
-    nHeight,
-    hWndParent,
-    hMenu,
-    hInstance,
-    lpParam);
-
-  if ( hWnd
-    && HIWORD(lpClassName)
-    && (!_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient"))
-      || !_wcsicmp(lpClassName, xorstr_(L"UnrealWindow"))) ) {
-
-    g_pfnWndProc = reinterpret_cast<WNDPROC>(
-      SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc_hook)));
-  }
-  return hWnd;
-}
+//decltype(&CreateWindowExW) g_pfnCreateWindowExW;
+//HWND WINAPI CreateWindowExW_hook(
+//  DWORD dwExStyle,
+//  LPCWSTR lpClassName,
+//  LPCWSTR lpWindowName,
+//  DWORD dwStyle,
+//  int X,
+//  int Y,
+//  int nWidth,
+//  int nHeight,
+//  HWND hWndParent,
+//  HMENU hMenu,
+//  HINSTANCE hInstance,
+//  LPVOID lpParam)
+//{
+//  auto hWnd = g_pfnCreateWindowExW(
+//    dwExStyle,
+//    lpClassName,
+//    lpWindowName,
+//    dwStyle,
+//    X,
+//    Y,
+//    nWidth,
+//    nHeight,
+//    hWndParent,
+//    hMenu,
+//    hInstance,
+//    lpParam);
+//
+//  //if ( hWnd
+//  //  && HIWORD(lpClassName)
+//  //  && (!_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient"))
+//  //    || !_wcsicmp(lpClassName, xorstr_(L"UnrealWindow"))) ) {
+//
+//  //  g_pfnWndProc = reinterpret_cast<WNDPROC>(
+//  //    SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc_hook)));
+//  //}
+//  return hWnd;
+//}

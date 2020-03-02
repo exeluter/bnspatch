@@ -64,12 +64,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
           DetourAttachApi(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
           DetourAttachApi(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
         }
-        if ( const auto module = pe::get_module(xorstr_(L"kernel32.dll")) ) {
-          DetourAttachApi(module, xorstr_("GetProcAddress"), &(PVOID &)g_pfnGetProcAddress, &GetProcAddress_hook);
-        }
         if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) ) {
           DetourAttachApi(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
-          DetourAttachApi(module, xorstr_("CreateWindowExW"), &(PVOID &)g_pfnCreateWindowExW, &CreateWindowExW_hook);
+          //DetourAttachApi(module, xorstr_("CreateWindowExW"), &(PVOID &)g_pfnCreateWindowExW, &CreateWindowExW_hook);
         }
         DetourTransactionCommit();
         break;
