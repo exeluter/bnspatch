@@ -1,7 +1,7 @@
 $directoryInfo = [System.IO.DirectoryInfo]::new('..\lib')
 foreach ( $assembly in $directoryInfo.EnumerateFiles('*.dll', [System.IO.SearchOption]::AllDirectories) ) {
     if ( $assembly.DirectoryName -ieq 'ncLauncherW' ) {
-        #continue
+        continue
     }
     $assembly.FullName
     & '..\tools\zopfli\zopfli.exe' --deflate --i1000 $assembly.FullName
