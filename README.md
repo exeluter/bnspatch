@@ -48,9 +48,10 @@ and have never been warned nor banned, and neither has anyone else who I shared 
 <details>
   <summary>Long version</summary> 
   
-  BnS Buddy's developer has spread FUD around to discourage others from
-  using alternatives to BnS Buddy by using spooky terms like ["injecting"][0.4],
-  ["bannable" and "exploit"][0.5], but this is disingenuous.
+  BnS Buddy's developer has been known to spread [FUD](https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt)
+  around in an effort to   discourage others from using alternatives to BnS Buddy,
+  by using spooky terms like ["injecting"][0.4], ["bannable" and "exploit"][0.5],
+  but it is unjustified.
 
   While bnspatch does make use of DLL hijacking to do its magic, this exact method
   is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
