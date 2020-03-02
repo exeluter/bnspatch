@@ -28,7 +28,7 @@ may need a little manual configuration.
    You can find this value with dnSpy or CFF Explorer.
 3. All dependencies are deflated with `zopfli --deflate --i1000`, and the length of
    the compressed data (32-bit signed) is prepended to the beginning of the `.deflate`
-   file. You can use `scripts\pack-resource.ps1` to automate this process.
+   file. You can use `scripts\pack-embedded-assemblies.ps1` to automate this process.
 4. If you update the `MonoMod.Utils.dll` dependency, you need to modify it so that
    its `System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute` type is
    `internal` instead of `public`. This can be done easily with dnSpy.
