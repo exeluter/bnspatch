@@ -45,18 +45,22 @@ No. Each component works individually and may be used together or separately.
 TL;DR: No. I've been using some variant of it since I started development in 2017,
 and have never been warned nor banned, and neither has anyone else who I shared it with.
 
-Long version: BnS Buddy's developer has spread FUD around to discourage others from
-using alternatives to BnS Buddy by using spooky terms like ["injecting"][0.4],
-["bannable" and "exploit"][0.5], but this is disingenuous.
+<details>
+  <summary>Long version</summary> 
+  
+  BnS Buddy's developer has spread FUD around to discourage others from
+  using alternatives to BnS Buddy by using spooky terms like ["injecting"][0.4],
+  ["bannable" and "exploit"][0.5], but this is disingenuous.
 
-While bnspatch does make use of DLL hijacking to do its magic, this exact method
-is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
-well, previously).
+  While bnspatch does make use of DLL hijacking to do its magic, this exact method
+  is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
+  well, previously).
 
-In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
-BnS Buddy is. I don't expect the developer to understand any of this though, since
-they literally copy-pasted both of those features from other people, without giving
-any credit ([~~dead link~~][0.6] [mirror][0.7], [link][0.8]).
+  In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
+  BnS Buddy is. I don't expect the developer to understand any of this though, since
+  they literally copy-pasted both of those features from other people, without giving
+  any credit ([~~dead link~~][0.6] [mirror][0.7], [link][0.8]).
+</details>
 
 ## Acknowledgements
 - [microsoft/**Detours**][1.0] (MIT license)
