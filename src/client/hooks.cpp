@@ -30,10 +30,18 @@ void process_patch_command_node(
         process_patch_command_node({ context_attr.previous_attribute(), context.parent() }, current.children());
       } else if ( !_wcsicmp(current.name(), L"next-attribute") ) {
         process_patch_command_node({ context_attr.next_attribute(), context.parent() }, current.children());
-      } else if ( !_wcsicmp(current.name(), L"insert-attribute-after") ) {
-        process_patch_command_node({ context_node.insert_attribute_after(current.attribute(L"name").value(), context_attr), context_node }, current.children());
       } else if ( !_wcsicmp(current.name(), L"insert-attribute-before") ) {
         process_patch_command_node({ context_node.insert_attribute_before(current.attribute(L"name").value(), context_attr), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"insert-attribute-after") ) {
+        process_patch_command_node({ context_node.insert_attribute_after(current.attribute(L"name").value(), context_attr), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"prepend-copy") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"append-copy") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"insert-copy-before") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"insert-copy-after") ) {
+        // not implemented
       }
     } else if ( auto context_node = context.node() ) {
       if ( !_wcsicmp(current.name(), L"select-node") ) {
