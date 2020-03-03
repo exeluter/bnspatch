@@ -25,7 +25,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
   switch ( fdwReason ) {
     case DLL_PROCESS_ATTACH: {
       auto name = pe::get_module()->base_name();
-      if ( name == xorstr_(L"Client.exe") || name == xorstr_(L"BNSR.exe") ) {
+#ifdef BNSR
+      if ( name == xorstr_(L"BNSR.exe") ) {
+#else
+      if ( name == xorstr_(L"Client.exe") ) {
+#endif
         NtCurrentPeb()->BeingDebugged = FALSE;
         if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
           if ( const auto pfn = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
