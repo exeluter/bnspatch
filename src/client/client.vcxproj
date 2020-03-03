@@ -295,6 +295,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FastWildCompare.cpp" />
     <ClCompile Include="include\detours\creatwth.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug-BNSR|x64'">NotUsing</PrecompiledHeader>
@@ -365,6 +366,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FastWildCompare.h" />
     <ClInclude Include="ntapi\critical_section.h" />
     <ClInclude Include="ntapi\protect_memory.h" />
     <ClInclude Include="pe\pe.h" />
@@ -387,6 +389,8 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="include\imgui\imgui.natvis" />
+    <Natvis Include="pugixml.natvis" />
+    <Natvis Include="pugixml_compact.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

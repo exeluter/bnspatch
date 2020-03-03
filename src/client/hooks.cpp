@@ -4,6 +4,150 @@
 #include "ntapi/string_span"
 #include "locks.h"
 #include "xmlreader.h"
+#include "FastWildCompare.h"
+#include <ShlObj.h>
+#include <KnownFolders.h>
+
+void process_patch_command_node(
+  pugi::xpath_node const &context,
+  pugi::xml_object_range<pugi::xml_node_iterator> const &children)
+{
+  using pugi::xml_document;
+  using pugi::xml_node;
+  using pugi::xml_node_iterator;
+  using pugi::xml_object_range;
+
+  for ( auto const &current : children ) {
+    if ( !_wcsicmp(current.name(), L"parent") ) {
+      process_patch_command_node(context.parent(), current.children());
+    } else if ( auto context_attr = context.attribute() ) {
+      auto context_node = context.parent();
+      if ( !_wcsicmp(current.name(), L"set-name") ) {
+        context_attr.set_name(current.attribute(L"name").value());
+      } else if ( !_wcsicmp(current.name(), L"set-value") ) {
+        context_attr.set_value(current.attribute(L"value").value());
+      } else if ( !_wcsicmp(current.name(), L"previous-attribute") ) {
+        process_patch_command_node({ context_attr.previous_attribute(), context.parent() }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"next-attribute") ) {
+        process_patch_command_node({ context_attr.next_attribute(), context.parent() }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"insert-attribute-after") ) {
+        process_patch_command_node({ context_node.insert_attribute_after(current.attribute(L"name").value(), context_attr), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"insert-attribute-before") ) {
+        process_patch_command_node({ context_node.insert_attribute_before(current.attribute(L"name").value(), context_attr), context_node }, current.children());
+      }
+    } else if ( auto context_node = context.node() ) {
+      if ( !_wcsicmp(current.name(), L"select-node") ) {
+        process_patch_command_node(context_node.select_node(current.attribute(L"query").value()), current.children());
+      } else if ( !_wcsicmp(current.name(), L"select-nodes") ) {
+        for ( auto &x : context_node.select_nodes(current.attribute(L"query").value()) ) {
+          process_patch_command_node(x, current.children());
+        }
+      } else if ( !_wcsicmp(current.name(), L"prepend-attribute") ) {
+        process_patch_command_node({ context_node.prepend_attribute(current.attribute(L"name").value()), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"append-attribute") ) {
+        process_patch_command_node({ context_node.append_attribute(current.attribute(L"name").value()), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"prepend-child") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"append-child") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"prepend-children") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"append-children") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"prepend-copy") ) {
+        auto x = context_node.select_node(current.attribute(L"query").value());
+        if ( auto attr = x.attribute() ) {
+          process_patch_command_node({ context_node.prepend_copy(attr), x.parent() }, current.children());
+        } else if ( auto node = x.node() ) {
+          process_patch_command_node(context_node.prepend_copy(node), current.children());
+        }
+      } else if ( !_wcsicmp(current.name(), L"append-copy") ) {
+        auto x = context_node.select_node(current.attribute(L"query").value());
+        if ( auto attr = x.attribute() ) {
+          process_patch_command_node({ context_node.append_copy(attr), x.parent() }, current.children());
+        } else if ( auto node = x.node() ) {
+          process_patch_command_node(context_node.append_copy(node), current.children());
+        }
+      } else if ( !_wcsicmp(current.name(), L"prepend-move") ) {
+        if ( auto node = context_node.select_node(current.attribute(L"query").value()).node() ) {
+          process_patch_command_node(context_node.prepend_move(node), current.children());
+        }
+      } else if ( !_wcsicmp(current.name(), L"append-move") ) {
+        if ( auto node = context_node.select_node(current.attribute(L"query").value()).node() ) {
+          process_patch_command_node(context_node.append_move(node), current.children());
+        }
+      } else if ( !_wcsicmp(current.name(), L"attribute") ) {
+        process_patch_command_node({ context_node.attribute(current.attribute(L"name").value()), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"attributes") ) {
+        for ( auto &attr : context_node.attributes() ) {
+          process_patch_command_node({ attr, context_node }, current.children());
+        }
+      } else if ( !_wcsicmp(current.name(), L"child") ) {
+        process_patch_command_node(context_node.child(current.attribute(L"name").value()), current.children());
+      } else if ( !_wcsicmp(current.name(), L"children") ) {
+        for ( auto &child : context_node.children() ) {
+          process_patch_command_node(child, current.children());
+        }
+      } else if ( !_wcsicmp(current.name(), L"find-child-by-attribute") ) {
+        process_patch_command_node(context_node.find_child_by_attribute(current.attribute(L"name").value(), current.attribute(L"attr-name").value(), current.attribute(L"attr-value").value()), current.children());
+      } else if ( !_wcsicmp(current.name(), L"first-attribute") ) {
+        process_patch_command_node({ context_node.first_attribute(), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"last-attribute") ) {
+        process_patch_command_node({ context_node.last_attribute(), context_node }, current.children());
+      } else if ( !_wcsicmp(current.name(), L"first-child") ) {
+        process_patch_command_node(context_node.first_child(), current.children());
+      } else if ( !_wcsicmp(current.name(), L"last-child") ) {
+        process_patch_command_node(context_node.last_child(), current.children());
+      } else if ( !_wcsicmp(current.name(), L"first-element-by-path") ) {
+        process_patch_command_node(context_node.first_element_by_path(current.attribute(L"path").value()), current.children());
+      } else if ( !_wcsicmp(current.name(), L"insert-child-after") ) {
+        if ( auto node = context_node.select_node(current.attribute(L"query").value()).node() )
+          process_patch_command_node(context_node.insert_child_after(current.attribute(L"name").value(), node), current.children());
+      } else if ( !_wcsicmp(current.name(), L"insert-child-before") ) {
+        if ( auto node = context_node.select_node(current.attribute(L"query").value()).node() )
+          process_patch_command_node(context_node.insert_child_before(current.attribute(L"name").value(), node), current.children());
+      } else if ( !_wcsicmp(current.name(), L"insert-copy-after") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"insert-copy-before") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"insert-move-after") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"insert-move-before") ) {
+        // not implemented
+      } else if ( !_wcsicmp(current.name(), L"next-sibling") ) {
+        process_patch_command_node(context_node.next_sibling(), current.children());
+      } else if ( !_wcsicmp(current.name(), L"remove-attribute") ) {
+        context_node.remove_attribute(current.attribute(L"name").value());
+      } else if ( !_wcsicmp(current.name(), L"remove-attributes") ) {
+        context_node.remove_attributes();
+      } else if ( !_wcsicmp(current.name(), L"remove-child") ) {
+        context_node.remove_child(current.attribute(L"name").value());
+      } else if ( !_wcsicmp(current.name(), L"remove-children") ) {
+        context_node.remove_children();
+      } else if ( !_wcsicmp(current.name(), L"root") ) {
+        process_patch_command_node(context_node.root(), current.children());
+      } else if ( !_wcsicmp(current.name(), L"set-name") ) {
+        context_node.set_name(current.attribute(L"value").value());
+      } else if ( !_wcsicmp(current.name(), L"set-value") ) {
+        context_node.set_value(current.attribute(L"value").value());
+      }
+    }
+  }
+}
+
+static pugi::xml_document const s_xml_patches = []() {
+  PWSTR pszPath;
+  if ( SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &pszPath) == S_OK ) {
+    fs::path path(pszPath);
+    CoTaskMemFree(pszPath);
+    path /= L"BNS\\patches.xml";
+
+    pugi::xml_document doc;
+    doc.load_file(path.c_str());
+    return doc;
+  }
+  return pugi::xml_document();
+}();
 
 XmlDoc *(*g_pfnRead)(XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class XmlPieceReader *);
 XmlDoc *Read_hook(
@@ -13,22 +157,58 @@ XmlDoc *Read_hook(
   wchar_t const *fileName,
   class XmlPieceReader *arg4)
 {
-  static fs::path folder;
+  auto xmlDoc = g_pfnRead(thisptr, data, size, fileName, arg4);
 
-  if ( folder.empty() ) {
-    std::array<WCHAR, _MAX_DIR> Publisher;
-    auto file = fs::absolute(xorstr_(L"local.ini"));
-    
-    if ( GetPrivateProfileStringW(xorstr_(L"Locale"), xorstr_(L"Publisher"), nullptr, Publisher.data(), SafeInt(Publisher.size()), file.c_str()) )
-      folder = fmt::format(xorstr_(L"..\\contents\\Local\\{}\\data"), Publisher.data());
-  }
+  if ( fileName && xmlDoc && xmlDoc->IsValid() ) {
+    std::vector<pugi::xml_node> vec;
+    for ( auto const &x : s_xml_patches.select_nodes(L"/patches/patch") ) {
+      if ( FastWildCompare(x.node().attribute(L"filename").value(), fileName) ) {
+        vec.push_back(x.node());
+      }
+    }
+    if ( !vec.empty() ) {
+      pugi::xml_document doc;
+      auto decl = doc.prepend_child(pugi::node_declaration);
+      decl.append_attribute(L"version") = L"1.0";
 
-  if ( fileName ) {
-    auto file = folder / fileName;
-    if ( GetFileAttributesW(file.c_str()) != INVALID_FILE_ATTRIBUTES )
-      return thisptr->Read(file.c_str(), arg4);
+      int flags = pugi::format_default;
+      auto encoding = pugi::xml_encoding::encoding_auto;
+      if ( !_wcsicmp(fs::path(fileName).extension().c_str(), L".x16") ) {
+        decl.append_attribute(L"encoding") = L"utf-16";
+        flags |= pugi::format_write_bom;
+        encoding = pugi::xml_encoding::encoding_utf16;
+      } else {
+        decl.append_attribute(L"encoding") = L"utf-8";
+      }
+      if ( auto name = xmlDoc->Name() )
+        doc.append_child(pugi::node_comment).set_value(name);
+
+      std::function<void(XmlElement const *, pugi::xml_node &)> process =
+        [&process](XmlElement const *src, pugi::xml_node &dst) {
+        auto node = dst.append_child(src->Name());
+        for ( int i = 0; i < src->AttributeCount(); ++i )
+          node.append_attribute(src->AttributeName(i)) = src->Attribute(i);
+        for ( auto child = src->FirstChildElement(); child; child = child->NextElement() )
+          process(child, node);
+      };
+      process(xmlDoc->Root(), doc);
+
+      for ( auto const &node : vec )
+        process_patch_command_node(doc.document_element(), node.children());
+      
+      std::array<WCHAR, MAX_PATH> PathName;
+      std::array<WCHAR, MAX_PATH> TempFile;
+      if ( GetTempPathW(SafeInt(PathName.size()), PathName.data())
+        && GetTempFileNameW(PathName.data(), L"bns", 0, TempFile.data())
+        && doc.save_file(TempFile.data(), L"  ", flags, encoding) ) {
+
+        thisptr->Close(xmlDoc);
+        xmlDoc = thisptr->Read(TempFile.data(), arg4);
+        //(void)DeleteFileW(TempFile.data());
+      }
+    }
   }
-  return g_pfnRead(thisptr, data, size, fileName, arg4);
+  return xmlDoc;
 }
 
 XmlReader *(*g_pfnCreateXmlReader)(void);

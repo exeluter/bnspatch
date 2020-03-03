@@ -67,8 +67,9 @@ and have never been warned nor banned, and neither has anyone else who I shared 
 - [microsoft/**GSL**][1.1] (MIT license)
 - [ocornut/**imgui**][1.2] (MIT license)
 - [MonoMod/**MonoMod**][1.3] (MIT license)
-- [processhacker/**phnt**][1.4] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][1.5] (Apache-2.0 license)
+- [zeux/**pugixml**][1.4] (MIT license)
+- [processhacker/**phnt**][1.5] (CC-BY-4.0 license)
+- [JustasMasiulis/**xorstr**][1.6] (Apache-2.0 license)
 
 [0.0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [0.1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
@@ -83,5 +84,6 @@ and have never been warned nor banned, and neither has anyone else who I shared 
 [1.1]: https://github.com/microsoft/GSL
 [1.2]: https://github.com/ocornut/imgui
 [1.3]: https://github.com/MonoMod/MonoMod
-[1.4]: https://github.com/processhacker/phnt
-[1.5]: https://github.com/JustasMasiulis/xorstr
+[1.4]: https://github.com/zeux/pugixml
+[1.5]: https://github.com/processhacker/phnt
+[1.6]: https://github.com/JustasMasiulis/xorstr

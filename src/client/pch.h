@@ -42,7 +42,7 @@ namespace fs = std::filesystem;
 #define JM_XORSTR_DISABLE_AVX_INTRINSICS
 #include <xorstr/xorstr.hpp>
 
-//#include <pugixml/pugixml.hpp>
+#include <pugixml/pugixml.hpp>
 
 //#include <libdeflate/libdeflate.h>
 //#pragma comment( lib, "lib/libdeflatestatic.lib")

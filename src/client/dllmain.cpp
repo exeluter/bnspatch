@@ -5,13 +5,6 @@
 #include "pe/export_directory.h"
 #include "SafeInt/SafeInt.hpp"
 
-struct hook_t
-{
-  PCSTR ProcedureName;
-  PVOID *ProcedureAddress;
-  PVOID DetourAddress;
-};
-
 LONG DetourAttachApi(
   pe::module *module,
   PCSTR pProcName,
@@ -25,19 +18,6 @@ LONG DetourAttachApi(
     return DetourAttach(pPointer, pDetour);
 
   return ERROR_PROC_NOT_FOUND;
-}
-
-template <size_t Size>
-inline void AttachMultipleDetours(
-  const pe::module *module,
-  const std::array<hook_t, Size> &detours)
-{
-  if ( module ) {
-    for ( const auto &det : detours ) {
-      if ( *det.ProcedureAddress = module->find_function(det.ProcedureName) )
-        DetourAttach(det.ProcedureAddress, det.DetourAddress);
-    }
-  }
 }
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
