@@ -19,6 +19,9 @@
 #include <cstdio>
 #include <cstdint>
 
+#include <ShlObj.h>
+#include <KnownFolders.h>
+
 #include <string>
 using namespace std::string_literals;
 #include <string_view>

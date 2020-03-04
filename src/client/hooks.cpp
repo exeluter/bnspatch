@@ -5,8 +5,6 @@
 #include "locks.h"
 #include "xmlreader.h"
 #include "FastWildCompare.h"
-#include <ShlObj.h>
-#include <KnownFolders.h>
 
 void process_patch_command_node(
   pugi::xpath_node const &context,
@@ -208,17 +206,18 @@ XmlDoc *Read_hook(
       for ( auto const &node : vec )
         process_patch_command_node(doc.document_element(), node.children());
       
-      std::array<WCHAR, MAX_PATH> PathName;
-      std::array<WCHAR, MAX_PATH> TempFile;
-      if ( GetTempPathW(SafeInt(PathName.size()), PathName.data())
-        && GetTempFileNameW(PathName.data(), xorstr_(L"bns"), 0, TempFile.data())
-        && doc.save_file(TempFile.data(), L"  ", flags, encoding) ) {
-
-        thisptr->Close(xmlDoc);
-        xmlDoc = thisptr->Read(TempFile.data(), arg4);
-#if NDEBUG
-        (void)DeleteFileW(TempFile.data());
+      if ( std::array<WCHAR, MAX_PATH> temp_path;
+        GetTempPathW(SafeInt(temp_path.size()), temp_path.data()) ) {
+        if ( std::array<WCHAR, MAX_PATH> temp_file;
+          GetTempFileNameW(temp_path.data(), L"bns", 0, temp_file.data())
+          && doc.save_file(temp_file.data(), L"  ", flags, encoding) ) {
+          
+          thisptr->Close(xmlDoc);
+          xmlDoc = thisptr->Read(temp_file.data(), arg4);
+#ifdef NDEBUG
+          DeleteFile(temp_file.c_str());
 #endif
+        }
       }
     }
   }
