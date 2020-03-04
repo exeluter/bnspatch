@@ -15,8 +15,8 @@ Blade & Soul [Rules of Conduct][0.0] and [User Agreement][0.1]. I accept no
 responsibility should you manage to get yourself banned while using it.
 
 ## Features
-You can check out the [**projects**](https://github.com/zeffy/bnspatch/projects) tab
-for a road map of upcoming and already implemented features.
+You can check out the [**projects**](https://github.com/zeffy/bnspatch/projects) page
+for an overview of planned and already implemented features.
 
 ## Building
 Everything should build as-is except for `Gaffeine.Data.XmlSerializers.dll`, which
@@ -43,7 +43,7 @@ No. Each component works individually and may be used together or separately.
 
 #### Q: Isn't this unsafe compared to BnS Buddy?
 TL;DR: No. I've been using some variant of it since I started development in 2017,
-and have never been warned nor banned, and neither has anyone else who I shared it with.
+and have never been warned nor banned, and neither has anyone else I shared it with.
 
 <details>
   <summary>Long version</summary> 

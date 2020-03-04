@@ -179,7 +179,11 @@ XmlDoc *Read_hook(
       auto decl = doc.prepend_child(pugi::node_declaration);
       decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
 
+#ifdef NDEBUG
       int flags = pugi::format_raw;
+#else
+      int flags = pugi::format_default;
+#endif
       auto encoding = pugi::xml_encoding::encoding_auto;
       if ( !_wcsicmp(fs::path(fileName).extension().c_str(), xorstr_(L".x16")) ) {
         decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
@@ -208,11 +212,13 @@ XmlDoc *Read_hook(
       std::array<WCHAR, MAX_PATH> TempFile;
       if ( GetTempPathW(SafeInt(PathName.size()), PathName.data())
         && GetTempFileNameW(PathName.data(), xorstr_(L"bns"), 0, TempFile.data())
-        && doc.save_file(TempFile.data(), L"", flags, encoding) ) {
+        && doc.save_file(TempFile.data(), L"  ", flags, encoding) ) {
 
         thisptr->Close(xmlDoc);
         xmlDoc = thisptr->Read(TempFile.data(), arg4);
+#if NDEBUG
         (void)DeleteFileW(TempFile.data());
+#endif
       }
     }
   }
