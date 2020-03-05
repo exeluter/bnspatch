@@ -215,7 +215,7 @@ XmlDoc *Read_hook(
           thisptr->Close(xmlDoc);
           xmlDoc = thisptr->Read(temp_file.data(), arg4);
 #ifdef NDEBUG
-          DeleteFile(temp_file.c_str());
+          DeleteFile(temp_file.data());
 #endif
         }
       }
