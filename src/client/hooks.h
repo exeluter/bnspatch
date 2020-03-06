@@ -3,9 +3,9 @@
 
 extern PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
-  ULONG                       NotificationReason,
+  ULONG NotificationReason,
   PCLDR_DLL_NOTIFICATION_DATA NotificationData,
-  PVOID                       Context);
+  PVOID Context);
 
 //extern void(*g_pfnProcessEvent)(UObject *, UFunction *, void *, void *);
 //void ProcessEvent_hook(

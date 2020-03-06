@@ -122,8 +122,8 @@ void process_patch(
       } else if ( !_wcsicmp(current.name(), xorstr_(L"insert-attribute-before")) ) {
         auto name = current.attribute(xorstr_(L"name")).value();
         auto attr_query = current.attribute(xorstr_(L"attr-query")).value();
-        auto xpath_node = context_node.select_node(attr_query);
-        process_patch({ context_node.insert_attribute_before(name, xpath_node.attribute()), xpath_node.parent() }, current.children());
+        auto xn = context_node.select_node(attr_query);
+        process_patch({ context_node.insert_attribute_before(name, xn.attribute()), xn.parent() }, current.children());
       } else if ( !_wcsicmp(current.name(), xorstr_(L"insert-attribute-after")) ) {
         // not implemented
       } else if ( !_wcsicmp(current.name(), xorstr_(L"insert-child-after")) ) {
@@ -192,9 +192,12 @@ void process_xmldoc(XmlElement const *src, pugi::xml_node &dst)
     process_xmldoc(child, node);
 }
 
-XmlDoc *(*g_pfnRead)(XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class XmlPieceReader *);
-XmlDoc *Read_hook(
+XmlDoc *(__thiscall *g_pfnRead)(XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class XmlPieceReader *);
+XmlDoc *__fastcall Read_hook(
   XmlReader const *thisptr,
+#ifdef _M_IX86
+  uintptr_t edx,
+#endif
   unsigned char const *data,
   unsigned int size,
   wchar_t const *fileName,
@@ -241,8 +244,8 @@ XmlDoc *Read_hook(
       if ( std::array<WCHAR, MAX_PATH> temp_path;
         GetTempPathW(SafeInt(temp_path.size()), temp_path.data()) ) {
         if ( std::array<WCHAR, MAX_PATH> temp_file;
-          GetTempFileNameW(temp_path.data(), L"bns", 0, temp_file.data())
-          && doc.save_file(temp_file.data(), L"  ", flags, encoding) ) {
+          GetTempFileNameW(temp_path.data(), xorstr_(L"bns"), 0, temp_file.data())
+          && doc.save_file(temp_file.data(), xorstr_(L"  "), flags, encoding) ) {
 
           thisptr->Close(xmlDoc);
           xmlDoc = thisptr->Read(temp_file.data(), arg4);
@@ -279,9 +282,9 @@ void DestroyXmlReader_hook(XmlReader *xmlReader)
 
 void *g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
-  ULONG                       NotificationReason,
+  ULONG NotificationReason,
   PCLDR_DLL_NOTIFICATION_DATA NotificationData,
-  PVOID                       Context)
+  PVOID Context)
 {
   static thread_local_lock mtx;
   std::unique_lock lock(mtx, std::try_to_lock);
@@ -293,24 +296,27 @@ VOID CALLBACK DllNotification(
       const auto module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
       const auto base_name = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
 
+#ifdef _M_X64
       if ( base_name->iequals(xorstr_(L"XmlReader_cl64.dll"))
         || base_name->iequals(xorstr_(L"XmlReader2017_cl64.dll")) ) {
-
-        if ( auto GetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(
+#else
+      if ( base_name->iequals(xorstr_(L"XmlReader_cl32.dll")) ) {
+#endif
+        if ( auto pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(
           module->find_function(xorstr_("GetInterfaceVersion"))) ) {
-          switch ( _wtoi(GetInterfaceVersion()) ) {
-            case 14:
-            case 15:
-              DetourTransactionBegin();
-              DetourUpdateThread(NtCurrentThread());
-              if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
-                module->find_function(xorstr_("CreateXmlReader"))) )
-                DetourAttach(&(PVOID &)g_pfnCreateXmlReader, &CreateXmlReader_hook);
-              if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
-                module->find_function(xorstr_("DestroyXmlReader"))) )
-                DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
-              DetourTransactionCommit();
-              break;
+          auto version = pfnGetInterfaceVersion();
+
+          if ( !_wcsicmp(version, xorstr_(L"14"))
+            || !_wcsicmp(version, xorstr_(L"15")) ) {
+            DetourTransactionBegin();
+            DetourUpdateThread(NtCurrentThread());
+            if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
+              module->find_function(xorstr_("CreateXmlReader"))) )
+              DetourAttach(&(PVOID &)g_pfnCreateXmlReader, &CreateXmlReader_hook);
+          //  if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
+          //    module->find_function(xorstr_("DestroyXmlReader"))) )
+          //    DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
+            DetourTransactionCommit();
           }
         }
       }
@@ -353,12 +359,10 @@ NTSTATUS NTAPI LdrLoadDll_hook(
 
   if ( lock.owns_lock() ) {
 #ifdef _M_X64
-    auto aegisty = xorstr(L"aegisty.bin");
+    if ( static_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"aegisty64.bin")) ) {
 #else
-    auto aegisty = xorstr(L"aegisty64.bin");
+    if ( static_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"aegisty.bin")) ) {
 #endif
-      if ( static_cast<ntapi::ustring_span *>(DllName)->iequals(aegisty.crypt_get()) ) {
-
       *DllHandle = nullptr;
       return STATUS_DLL_NOT_FOUND;
     }
@@ -432,17 +436,15 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
     && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
-    if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
-      __try {
-        StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
-      } __except ( EXCEPTION_EXECUTE_HANDLER ) {
-        return GetExceptionCode();
-      }
+    __try {
+      StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
+    } __except ( EXCEPTION_EXECUTE_HANDLER ) {
+      return GetExceptionCode();
+    }
 
-      for ( const auto &Address : { g_pfnDbgBreakPoint, g_pfnDbgUiRemoteBreakin } ) {
-        if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
-          return STATUS_INVALID_PARAMETER_2;
-      }
+    for ( const auto &Address : { g_pfnDbgBreakPoint, g_pfnDbgUiRemoteBreakin } ) {
+      if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
+        return STATUS_INVALID_PARAMETER_2;
     }
   }
   return g_pfnNtProtectVirtualMemory(ProcessHandle, BaseAddress, RegionSize, NewProtect, OldProtect);
@@ -544,7 +546,7 @@ HWND WINAPI FindWindowA_hook(
       if ( !_stricmp(lpClassName, String) )
         return nullptr;
     }
-    }
+  }
   if ( lpWindowName ) {
     auto xs1 = xorstr("File Monitor - Sysinternals: www.sysinternals.com");
     auto xs2 = xorstr("Process Monitor - Sysinternals: www.sysinternals.com");
@@ -555,56 +557,56 @@ HWND WINAPI FindWindowA_hook(
     }
   }
   return g_pfnFindWindowA(lpClassName, lpWindowName);
-  }
+}
 
-  //WNDPROC g_pfnWndProc;
-  //LRESULT CALLBACK WndProc_hook(
-  //  HWND hwnd,
-  //  UINT uMsg,
-  //  WPARAM wParam,
-  //  LPARAM lParam)
-  //{
-  //  //if ( ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam) == ERROR_SUCCESS ) {
-  //  //}
-  //  return CallWindowProcW(g_pfnWndProc, hwnd, uMsg, wParam, lParam);
-  //}
+//WNDPROC g_pfnWndProc;
+//LRESULT CALLBACK WndProc_hook(
+//  HWND hwnd,
+//  UINT uMsg,
+//  WPARAM wParam,
+//  LPARAM lParam)
+//{
+//  //if ( ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam) == ERROR_SUCCESS ) {
+//  //}
+//  return CallWindowProcW(g_pfnWndProc, hwnd, uMsg, wParam, lParam);
+//}
 
-  //decltype(&CreateWindowExW) g_pfnCreateWindowExW;
-  //HWND WINAPI CreateWindowExW_hook(
-  //  DWORD dwExStyle,
-  //  LPCWSTR lpClassName,
-  //  LPCWSTR lpWindowName,
-  //  DWORD dwStyle,
-  //  int X,
-  //  int Y,
-  //  int nWidth,
-  //  int nHeight,
-  //  HWND hWndParent,
-  //  HMENU hMenu,
-  //  HINSTANCE hInstance,
-  //  LPVOID lpParam)
-  //{
-  //  auto hWnd = g_pfnCreateWindowExW(
-  //    dwExStyle,
-  //    lpClassName,
-  //    lpWindowName,
-  //    dwStyle,
-  //    X,
-  //    Y,
-  //    nWidth,
-  //    nHeight,
-  //    hWndParent,
-  //    hMenu,
-  //    hInstance,
-  //    lpParam);
-  //
-  //  //if ( hWnd
-  //  //  && HIWORD(lpClassName)
-  //  //  && (!_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient"))
-  //  //    || !_wcsicmp(lpClassName, xorstr_(L"UnrealWindow"))) ) {
-  //
-  //  //  g_pfnWndProc = reinterpret_cast<WNDPROC>(
-  //  //    SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc_hook)));
-  //  //}
-  //  return hWnd;
-  //}
+//decltype(&CreateWindowExW) g_pfnCreateWindowExW;
+//HWND WINAPI CreateWindowExW_hook(
+//  DWORD dwExStyle,
+//  LPCWSTR lpClassName,
+//  LPCWSTR lpWindowName,
+//  DWORD dwStyle,
+//  int X,
+//  int Y,
+//  int nWidth,
+//  int nHeight,
+//  HWND hWndParent,
+//  HMENU hMenu,
+//  HINSTANCE hInstance,
+//  LPVOID lpParam)
+//{
+//  auto hWnd = g_pfnCreateWindowExW(
+//    dwExStyle,
+//    lpClassName,
+//    lpWindowName,
+//    dwStyle,
+//    X,
+//    Y,
+//    nWidth,
+//    nHeight,
+//    hWndParent,
+//    hMenu,
+//    hInstance,
+//    lpParam);
+//
+//  //if ( hWnd
+//  //  && HIWORD(lpClassName)
+//  //  && (!_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient"))
+//  //    || !_wcsicmp(lpClassName, xorstr_(L"UnrealWindow"))) ) {
+//
+//  //  g_pfnWndProc = reinterpret_cast<WNDPROC>(
+//  //    SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc_hook)));
+//  //}
+//  return hWnd;
+//}

@@ -1,5 +1,4 @@
 #include "pch.h"
-//#include "modulever.h"
 #include "hooks.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"
@@ -50,7 +49,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
             g_pfnDbgBreakPoint = module->find_function(xorstr_("DbgBreakPoint"));
             g_pfnDbgUiRemoteBreakin = module->find_function(xorstr_("DbgUiRemoteBreakin"));
           }
+#ifdef _M_X64
           DetourAttachApi(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
+#endif
           DetourAttachApi(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
         }
         if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) ) {

@@ -133,6 +133,8 @@
     <TargetName>winmm</TargetName>
     <GenerateManifest>false</GenerateManifest>
     <TargetExt>.dll</TargetExt>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-BNSR|x64'">
     <OutDir>$(ProjectDir)bin\$(Configuration)\$(PlatformTarget)\</OutDir>
@@ -145,6 +147,8 @@
     <TargetName>winmm</TargetName>
     <GenerateManifest>false</GenerateManifest>
     <TargetExt>.dll</TargetExt>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)bin\$(Configuration)\$(PlatformTarget)\</OutDir>
@@ -157,6 +161,8 @@
     <TargetName>winmm</TargetName>
     <GenerateManifest>false</GenerateManifest>
     <TargetExt>.dll</TargetExt>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-BNSR|x64'">
     <OutDir>$(ProjectDir)bin\$(Configuration)\$(PlatformTarget)\</OutDir>
@@ -169,6 +175,8 @@
     <TargetName>winmm</TargetName>
     <GenerateManifest>false</GenerateManifest>
     <TargetExt>.dll</TargetExt>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(ProjectName)\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -211,6 +219,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
@@ -258,6 +267,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
@@ -305,6 +315,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
@@ -352,6 +363,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
@@ -404,6 +416,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
@@ -456,6 +469,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
@@ -508,6 +522,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"
@@ -560,6 +575,7 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PreBuildEvent.ps1"
     <PostBuildEvent>
       <Command>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
 set "MSBuildTargetPath=$(TargetPath)"
+set "MSBuildPlatformTarget=$(PlatformTarget)"
 set "MSBuildProjectDir=$(ProjectDir)"
 set "MSBuildConfiguration=$(Configuration)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)PostBuildEvent.ps1"

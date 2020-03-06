@@ -94,7 +94,11 @@ if ( !$env:CI ) {
     } else { 
         $BaseDir = Get-BNSBaseDirectory 
         if ( $BaseDir ) {
-            Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin64\" -Force
+            if ( $MSBuildPlatformTarget -eq 'x64' ) {
+                Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin64\" -Force
+            } else {
+                Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force
+            }
         }
     }
 }
