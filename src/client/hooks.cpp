@@ -196,7 +196,7 @@ XmlDoc *(__thiscall *g_pfnRead)(XmlReader const *, unsigned char const *, unsign
 XmlDoc *__fastcall Read_hook(
   XmlReader const *thisptr,
 #ifdef _M_IX86
-  uintptr_t edx,
+  uintptr_t, // unused EDX register
 #endif
   unsigned char const *data,
   unsigned int size,
@@ -313,9 +313,9 @@ VOID CALLBACK DllNotification(
             if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
               module->find_function(xorstr_("CreateXmlReader"))) )
               DetourAttach(&(PVOID &)g_pfnCreateXmlReader, &CreateXmlReader_hook);
-          //  if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
-          //    module->find_function(xorstr_("DestroyXmlReader"))) )
-          //    DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
+            if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
+              module->find_function(xorstr_("DestroyXmlReader"))) )
+              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
             DetourTransactionCommit();
           }
         }
