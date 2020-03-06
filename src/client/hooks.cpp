@@ -352,6 +352,8 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
 
+void *g_pfnDbgBreakPoint;
+void *g_pfnDbgUiRemoteBreakin;
 decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
@@ -377,11 +379,8 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
         return GetExceptionCode();
       }
 
-      auto xs1 = xorstr("DbgBreakPoint");
-      auto xs2 = xorstr("DbgUiRemoteBreakin");
-      for ( const auto &Name : { xs1.crypt_get(), xs2.crypt_get() } ) {
-        if ( const auto ProcedureAddress = module->find_function(Name);
-          ProcedureAddress && StartingAddress == ((ULONG_PTR)ProcedureAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
+      for ( const auto &Address : { g_pfnDbgBreakPoint, g_pfnDbgUiRemoteBreakin } ) {
+        if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
           return STATUS_INVALID_PARAMETER_2;
       }
     }

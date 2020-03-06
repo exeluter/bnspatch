@@ -42,6 +42,9 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner);
 
+
+extern void *g_pfnDbgBreakPoint;
+extern void *g_pfnDbgUiRemoteBreakin;
 extern decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
