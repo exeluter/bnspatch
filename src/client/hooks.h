@@ -14,6 +14,13 @@ VOID CALLBACK DllNotification(
 //  void *Parms,
 //  void *Result);
 
+extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
+NTSTATUS NTAPI LdrGetDllHandle_hook(
+  PWSTR DllPath,
+  PULONG DllCharacteristics,
+  PUNICODE_STRING DllName,
+  PVOID *DllHandle);
+
 extern decltype(&LdrLoadDll) g_pfnLdrLoadDll;
 NTSTATUS NTAPI LdrLoadDll_hook(
   PWSTR DllPath,
@@ -41,7 +48,6 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   ACCESS_MASK DesiredAccess,
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner);
-
 
 extern void *g_pfnDbgBreakPoint;
 extern void *g_pfnDbgUiRemoteBreakin;

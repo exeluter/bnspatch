@@ -13,7 +13,11 @@ public:
   virtual enum ErrCode Next(void) = 0;
   virtual void Close(void) = 0;
 }; /* size: 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlReaderIO) == 0x8);
+#else
+static_assert(sizeof(XmlReaderIO) == 0x4);
+#endif
 
 class XmlReaderLog
 {
@@ -22,7 +26,11 @@ public:
   virtual void Debug(wchar_t const *, ...)const = 0;
   virtual void Trace(wchar_t const *, ...)const = 0;
 }; /* size = 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlReaderLog) == 0x8);
+#else
+static_assert(sizeof(XmlReaderLog) == 0x4);
+#endif
 
 class XmlElement
 {
@@ -41,7 +49,11 @@ public:
   virtual class XmlNode const *ToXmlNode(void)const = 0;
   virtual class XmlNode *ToXmlNode(void) = 0;
 }; /* size: 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlElement) == 0x8);
+#else
+static_assert(sizeof(XmlElement) == 0x4);
+#endif
 
 class XmlDoc
 {
@@ -53,7 +65,11 @@ public:
   virtual void SerializeTo(char *, int) const = 0;
   virtual void SerializeFrom(char *, int) = 0;
 }; /* size: 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlDoc) == 0x8);
+#else
+static_assert(sizeof(XmlDoc) == 0x4);
+#endif
 
 class XmlPieceReader
 {
@@ -61,7 +77,11 @@ public:
   virtual bool Read(class XmlDoc *) = 0;
   virtual int GetMaxNodeCountPerPiece(void) = 0;
 }; /* size: 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlPieceReader) == 0x8);
+#else
+static_assert(sizeof(XmlPieceReader) == 0x4);
+#endif
 
 class XmlReader
 {
@@ -79,7 +99,11 @@ public:
   virtual bool IsBinary(wchar_t const *)const = 0;
   virtual bool IsBinary(unsigned char const *, unsigned int)const = 0;
 }; /* size: 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlReader) == 0x8);
+#else
+static_assert(sizeof(XmlReader) == 0x4);
+#endif
 
 struct XmlCfgDef
 {
@@ -90,7 +114,11 @@ struct XmlCfgDef
   /* 0x0018 */ const void *defaultValue;
   /* 0x0020 */ const wchar_t *desc;
 }; /* size: 0x0028 */
+#ifdef _M_X64
 static_assert(sizeof(XmlCfgDef) == 0x28);
+#else
+static_assert(sizeof(XmlCfgDef) == 0x18);
+#endif
 
 struct XmlCfgDef2
 {
@@ -104,7 +132,11 @@ struct XmlCfgDef2
   /* 0x0030 */ int32_t firstChildIndex;
   /* 0x0034 */ int32_t nextSiblingIndex;
 }; /* size: 0x0038 */
+#ifdef _M_X64
 static_assert(sizeof(XmlCfgDef2) == 0x38);
+#else
+static_assert(sizeof(XmlCfgDef2) == 0x24);
+#endif
 
 class XmlConfigReader
 {
@@ -117,7 +149,11 @@ public:
   virtual void *Read(wchar_t const *, wchar_t const *, bool)const = 0;
   virtual wchar_t const *GetLastErrorString(void)const = 0;
 }; /* size: 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlConfigReader) == 0x8);
+#else
+static_assert(sizeof(XmlConfigReader) == 0x4);
+#endif
 
 class XmlNode
 {
@@ -151,7 +187,11 @@ public:
   virtual class XmlTextNode const *ToXmlTextNode(void)const = 0;
   virtual class XmlTextNode *ToXmlTextNode(void) = 0;
 }; /* size: 0x0008 */
-static_assert(sizeof(XmlReader) == 0x8);
+#ifdef _M_X64
+static_assert(sizeof(XmlNode) == 0x8);
+#else
+static_assert(sizeof(XmlNode) == 0x4);
+#endif
 
 class XmlTextNode
 {
@@ -160,4 +200,8 @@ public:
   virtual class XmlNode const *ToXmlNode(void)const = 0;
   virtual class XmlNode *ToXmlNode(void) = 0;
 }; /* size: 0x0008 */
+#ifdef _M_X64
 static_assert(sizeof(XmlTextNode) == 0x8);
+#else
+static_assert(sizeof(XmlTextNode) == 0x4);
+#endif

@@ -2,9 +2,9 @@ Set-Location -Path "$env:MSBuildProjectDir\stub"
 & cl /c /nologo "$env:MSBuildTargetName.cpp" /WX
 if ( Test-Path "$($env:MSBuildTargetName)_$($env:MSBuildPlatformTarget).def" ) {
     & link /lib `
-           /def:"$($env:MSBuildTargetName)_$env:MSBuildPlatformTarget.def" `
+           /def:"$($env:MSBuildTargetName)_$($env:MSBuildPlatformTarget).def" `
            "$env:MSBuildTargetName.obj" `
-           /out:"$env:MSBuildTargetName.lib" `
+           /out:"$($env:MSBuildTargetName)_$($env:MSBuildPlatformTarget).lib" `
            /errorreport:none `
            /machine:"$env:MSBuildPlatformTarget" `
            /nologo `

@@ -15,13 +15,14 @@
 #endif
 #pragma comment( lib, "delayimp.lib" )
 
-#include <cstdlib>
-#include <cstdio>
-#include <cstdint>
-
 #include <ShlObj.h>
 #include <KnownFolders.h>
 
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#include <cstdlib>
+#include <cstdio>
+#include <cstdint>
+#include <codecvt>
 #include <string>
 using namespace std::string_literals;
 #include <string_view>
@@ -47,8 +48,9 @@ namespace fs = std::filesystem;
 
 #include <pugixml/pugixml.hpp>
 
-//#include <libdeflate/libdeflate.h>
-//#pragma comment( lib, "lib/libdeflatestatic.lib")
+#define MAGIC_ENUM_RANGE_MIN 0
+#define MAGIC_ENUM_RANGE_MAX 16
+#include <magic_enum/magic_enum.hpp>
 
 static inline ptrdiff_t make_offset(const void *Base, const void *Pointer)
 {

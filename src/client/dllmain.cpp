@@ -31,16 +31,18 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
       if ( name == xorstr_(L"Client.exe") ) {
 #endif
         NtCurrentPeb()->BeingDebugged = FALSE;
-        if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
-          if ( const auto pfn = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
-            module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
-            pfn(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
-          }
-        }
 
         DetourTransactionBegin();
         DetourUpdateThread(NtCurrentThread());
         if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
+          if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
+            module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
+            pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
+          }
+
+#ifdef _M_IX86
+          DetourAttachApi(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
+#endif
           DetourAttachApi(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
           DetourAttachApi(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
           DetourAttachApi(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);

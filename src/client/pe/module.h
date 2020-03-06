@@ -12,7 +12,7 @@ namespace pe
   class segment;
   class export_directory;
 
-  class module : public IMAGE_DOS_HEADER
+  class module : private IMAGE_DOS_HEADER
   {
   public:
     module() = delete;
@@ -74,6 +74,16 @@ namespace pe
         Entry = Entry->Flink;
       }
       return {};
+    }
+
+    inline IMAGE_DOS_HEADER *dos_header()
+    {
+      return reinterpret_cast<IMAGE_DOS_HEADER *>(this);
+    }
+
+    inline const IMAGE_DOS_HEADER *dos_header() const
+    {
+      return reinterpret_cast<const IMAGE_DOS_HEADER *>(this);
     }
 
     inline IMAGE_NT_HEADERS *nt_header()
