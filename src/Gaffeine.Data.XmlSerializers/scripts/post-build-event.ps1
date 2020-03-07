@@ -1,47 +1,43 @@
 function Get-NCLauncherBaseDirectory {
-    $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
-        [Microsoft.Win32.RegistryHive]::LocalMachine,
-        [Microsoft.Win32.RegistryView]::Registry32)
+  $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
+  if ( $localMachine -ne $null ) {
     try {
-        $key = $localMachine.OpenSubKey(
-            'SOFTWARE\plaync\NCLauncherW')
+      $key = $localMachine.OpenSubKey('SOFTWARE\plaync\NCLauncherW')
+      if ( $key -ne $null ) {
         try {
-            $BaseDir = [string]$key.GetValue('BaseDir')
-            if ( Test-Path $BaseDir ) {
-                return $BaseDir
-            }
+          $value = [string]$key.GetValue('BaseDir')
+          if ( [System.IO.Directory]::Exists($value) ) {
+            return $value
+          }
         } finally {
-            if ( $key -ne $null ) {
-                $key.Dispose()
-            }
+          $key.Dispose()
         }
+      }
 
-        $key = $localMachine.OpenSubKey(
-            'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NCLauncherW_plaync')
+      $key = $localMachine.OpenSubKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\NCLauncherW_plaync')
+      if ( $key -ne $null ) {
         try {
-            $InstallLocation = [string]$key.GetValue('InstallLocation')
-            if ( Test-Path $InstallLocation ) {
-                return $InstallLocation
-            }
+          $value = [string]$key.GetValue('InstallLocation')
+          if ( [System.IO.Directory]::Exists($value) ) {
+            return $BaseDir
+          }
         } finally {
-            if ( $key -ne $null ) {
-                $key.Dispose()
-            }
+          $key.Dispose()
         }
+      }
 
-        $default = "$env:MSBuildProgramFiles32\NCSOFT\NC Launcher 2"
-        if ( Test-Path $default ) {
-            return $default
-        }
+      $default = "$env:MSBuildProgramFiles32\NCSOFT\NC Launcher 2"
+      if ( [System.IO.Directory]::Exists($default) ) {
+        return $default
+      }
     } finally {
-        if ( $localMachine -ne $null ) {
-            $localMachine.Dispose()
-        }
+      $localMachine.Dispose()
     }
-    return $null
+  }
+  return $null
 }
 
 $BaseDir = Get-NCLauncherBaseDirectory
 if ( $BaseDir ) {
-    Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\" -Force
+  Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\" -Force
 }
