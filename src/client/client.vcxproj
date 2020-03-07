@@ -583,7 +583,6 @@ powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)scripts\post_build_
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="FastWildCompare.cpp" />
     <ClCompile Include="include\detours\creatwth.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
