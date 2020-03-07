@@ -173,6 +173,8 @@ void process_patch(
 
 static pugi::xml_document const s_xml_patches = []() {
   PWSTR pszPath;
+  pugi::xml_document doc;
+
   if ( SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &pszPath) == S_OK ) {
     fs::path path(pszPath);
     CoTaskMemFree(pszPath);
@@ -181,10 +183,19 @@ static pugi::xml_document const s_xml_patches = []() {
 #else
     path /= xorstr_(L"BnS\\patches.xml");
 #endif
-    if ( pugi::xml_document doc; doc.load_file(path.c_str()) )
-      return doc;
+
+load_patches:
+      auto const result = doc.load_file(path.c_str());
+    if ( !result ) {
+      auto const text = fmt::format("{} at offset {}.\nDo you want to try again?", result.description(), result.offset);
+      switch ( MessageBoxA(nullptr, text.c_str(), "patches.xml", MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
+        case IDCANCEL: exit(1);
+        case IDTRYAGAIN: goto load_patches;
+        case IDCONTINUE: break;
+      }
+    }
   }
-  return pugi::xml_document();
+  return doc;
 }();
 
 void process_xmldoc(XmlElement const *src, pugi::xml_node &dst)
