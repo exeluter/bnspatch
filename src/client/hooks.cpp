@@ -28,6 +28,8 @@ void process_patch(
         process_patch({ context_attr.previous_attribute(), context.parent() }, current.children());
       } else if ( !_wcsicmp(current.name(), xorstr_(L"next-attribute")) ) {
         process_patch({ context_attr.next_attribute(), context.parent() }, current.children());
+      } else if ( !_wcsicmp(current.name(), xorstr_(L"remove-node")) ) {
+        context.parent().remove_attribute(context_attr);
       }
     } else if ( auto context_node = context.node() ) {
       if ( !_wcsicmp(current.name(), xorstr_(L"select-node")) ) {
@@ -162,6 +164,8 @@ void process_patch(
         context_node.set_name(current.attribute(xorstr_(L"value")).value());
       } else if ( !_wcsicmp(current.name(), xorstr_(L"set-value")) ) {
         context_node.set_value(current.attribute(xorstr_(L"value")).value());
+      } else if ( !_wcsicmp(current.name(), xorstr_(L"remove-node")) ) {
+        context_node.parent().remove_child(context_node);
       }
     }
   }
@@ -250,7 +254,7 @@ XmlDoc *__fastcall Read_hook(
           thisptr->Close(xmlDoc);
           xmlDoc = thisptr->Read(temp_file.data(), arg4);
 #ifdef NDEBUG
-          DeleteFile(temp_file.data());
+          DeleteFileW(temp_file.data());
 #endif
         }
       }
