@@ -102,8 +102,8 @@ void process_patch(
           process_patch(context_node.append_child(t.value_or(xml_node_type::node_element)), current.children());
         }
       } else if ( !_wcsicmp(current.name(), xorstr_(L"append-buffer")) ) {
-        auto const s = std::basic_string_view<pugi::char_t>(current.value());
-        context_node.append_buffer(s.data(), s.size());
+        auto const s = std::basic_string_view<pugi::char_t>(current.text().get());
+        context_node.append_buffer(s.data(), s.size(), pugi::parse_default | pugi::parse_fragment);
       } else if ( !_wcsicmp(current.name(), xorstr_(L"append-child")) ) {
         if ( auto const name = current.attribute(xorstr_(L"name")) ) {
           process_patch(context_node.append_child(name.value()), current.children());
