@@ -9,6 +9,7 @@
 namespace fs = std::filesystem;
 #include <mutex>
 #include <optional>
+#include <queue>
 
 #include <detours/detours.h>
 #include <fastwildcompare.hpp>
@@ -40,14 +41,13 @@ XmlDoc *__fastcall Read_hook(
   auto xmlDoc = g_pfnRead(thisptr, data, size, fileName, arg4);
 
   if ( fileName && xmlDoc && xmlDoc->IsValid() ) {
-    OutputDebugStringW(fileName);
-    std::vector<pugi::xml_node> vec;
-    for ( auto const &x : g_XML_PATCHES.select_nodes(xorstr_(L"/patches/patch")) ) {
+    std::queue<pugi::xml_node> queue;
+    for ( auto const &x : g_patches.select_nodes(xorstr_(L"/patches/patch")) ) {
       if ( FastWildCompare(x.node().attribute(xorstr_(L"filename")).value(), fileName) ) {
-        vec.push_back(x.node());
+        queue.push(x.node());
       }
     }
-    if ( !vec.empty() ) {
+    if ( !queue.empty() ) {
       pugi::xml_document doc;
       auto decl = doc.prepend_child(pugi::node_declaration);
       decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
@@ -73,21 +73,21 @@ XmlDoc *__fastcall Read_hook(
 
       process_xmldoc(xmlDoc->Root(), doc);
 
-      for ( auto const &node : vec )
-        process_patch(doc.document_element(), node.children());
+      do {
+        auto const &patch = queue.front();
+        process_patch(doc.document_element(), patch.children());
+        queue.pop();
+      } while ( !queue.empty() );
 
-      if ( std::array<WCHAR, MAX_PATH> temp_path;
-        GetTempPathW(SafeInt(temp_path.size()), temp_path.data()) ) {
-        if ( std::array<WCHAR, MAX_PATH> temp_file;
-          GetTempFileNameW(temp_path.data(), xorstr_(L"bns"), 0, temp_file.data())
-          && doc.save_file(temp_file.data(), xorstr_(L"  "), flags, encoding) ) {
+      if ( std::array<WCHAR, MAX_PATH> path;
+        GetTempFileNameW(fs::temp_directory_path().c_str(), xorstr_(L"bns"), 0, path.data())
+        && doc.save_file(path.data(), xorstr_(L"  "), flags, encoding) ) {
 
-          thisptr->Close(xmlDoc);
-          xmlDoc = thisptr->Read(temp_file.data(), arg4);
+        thisptr->Close(xmlDoc);
+        xmlDoc = thisptr->Read(path.data(), arg4);
 #ifdef NDEBUG
-          DeleteFileW(temp_file.data());
+        DeleteFileW(path.data());
 #endif
-        }
       }
     }
   }

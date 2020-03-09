@@ -2,7 +2,7 @@
 #include <pugixml/pugixml.hpp>
 #include "xmlreader.h"
 
-extern pugi::xml_document const g_XML_PATCHES;
+extern pugi::xml_document const g_patches;
 
 void process_patch(
   pugi::xpath_node const &context,

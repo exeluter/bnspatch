@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 #include "ic_char_traits.h"
 #include "xmlreader.h"
 
-pugi::xml_document const g_XML_PATCHES = []() {
+pugi::xml_document const g_patches = []() {
   PWSTR pszPath;
   pugi::xml_document doc;
 
