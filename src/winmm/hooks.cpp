@@ -138,10 +138,9 @@ VOID CALLBACK DllNotification(
 #endif
         if ( auto pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(
           module->find_function(xorstr_("GetInterfaceVersion"))) ) {
-          auto version = pfnGetInterfaceVersion();
+          auto version = ic_wstring_view(pfnGetInterfaceVersion());
 
-          if ( !_wcsicmp(version, xorstr_(L"14"))
-            || !_wcsicmp(version, xorstr_(L"15")) ) {
+          if ( version == xorstr_(L"14") || version == xorstr_(L"15") ) {
             DetourTransactionBegin();
             DetourUpdateThread(NtCurrentThread());
             if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
