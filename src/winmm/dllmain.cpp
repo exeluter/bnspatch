@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 LONG DetourAttachApi(
   pe::module *module,
-  PCSTR pProcName,
+  const char *pProcName,
   PVOID *pPointer,
   PVOID pDetour)
 {
@@ -64,7 +64,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
         }
         if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) ) {
           DetourAttachApi(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
-          //DetourAttachApi(module, xorstr_("CreateWindowExW"), &(PVOID &)g_pfnCreateWindowExW, &CreateWindowExW_hook);
         }
         DetourTransactionCommit();
         break;
