@@ -75,10 +75,10 @@
     <ClInclude Include="pe\segment.h">
       <Filter>Header Files\pe</Filter>
     </ClInclude>
-    <ClInclude Include="pe\traits.h">
-      <Filter>Header Files\pe</Filter>
-    </ClInclude>
     <ClInclude Include="xmlpatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ic_char_traits.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

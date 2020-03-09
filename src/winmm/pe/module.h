@@ -2,7 +2,7 @@
 #include <ntdll.h>
 #include <string>
 #include <mutex>
-#include "traits.h"
+#include "..\ic_char_traits.h"
 #include "segment.h"
 #include "..\ntapi\string_span.h"
 #include "..\ntapi\critical_section.h"
@@ -41,7 +41,7 @@ namespace pe
       return reinterpret_cast<const T *>(reinterpret_cast<uintptr_t>(this) + rva);
     }
 
-    inline pe::ic_wstring base_name() const
+    inline ic_wstring base_name() const
     {
       ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
       std::lock_guard<ntapi::critical_section> guard(crit);
@@ -52,13 +52,13 @@ namespace pe
 
         if ( Module->DllBase == this ) {
           const auto name = static_cast<ntapi::ustring_span *>(&Module->BaseDllName);
-          return pe::ic_wstring(name->begin(), name->end());
+          return ic_wstring(name->begin(), name->end());
         }
       }
       return {};
     }
 
-    inline pe::ic_wstring full_name() const
+    inline ic_wstring full_name() const
     {
       ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
       std::lock_guard<ntapi::critical_section> guard(crit);
@@ -69,7 +69,7 @@ namespace pe
 
         if ( Module->DllBase == this ) {
           const auto name = static_cast<ntapi::ustring_span *>(&Module->FullDllName);
-          return pe::ic_wstring(name->begin(), name->end());
+          return ic_wstring(name->begin(), name->end());
         }
         Entry = Entry->Flink;
       }
