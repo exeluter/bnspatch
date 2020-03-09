@@ -91,7 +91,7 @@ void process_patch(
         process_patch({ context_node.append_attribute(name.value()), context_node }, current.children());
       } else if ( !_wcsicmp(current.name(), xorstr_(L"prepend-child")) ) {
         if ( auto const name = current.attribute(xorstr_(L"name")) ) {
-          process_patch(context_node.append_child(name.value()), current.children());
+          process_patch(context_node.prepend_child(name.value()), current.children());
         } else {
           std::optional<xml_node_type> t;
           if ( auto const type = current.attribute(xorstr_(L"type")) ) {
@@ -101,6 +101,9 @@ void process_patch(
           }
           process_patch(context_node.append_child(t.value_or(xml_node_type::node_element)), current.children());
         }
+      } else if ( !_wcsicmp(current.name(), xorstr_(L"append-buffer")) ) {
+        auto const s = std::basic_string_view<pugi::char_t>(current.value());
+        context_node.append_buffer(s.data(), s.size());
       } else if ( !_wcsicmp(current.name(), xorstr_(L"append-child")) ) {
         if ( auto const name = current.attribute(xorstr_(L"name")) ) {
           process_patch(context_node.append_child(name.value()), current.children());
