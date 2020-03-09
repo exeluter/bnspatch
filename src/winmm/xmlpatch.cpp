@@ -48,7 +48,7 @@ load_patches:
 #ifdef _M_IX86
 #pragma push_macro( "xorstr_" )
 #undef xorstr_
-#define xorstr_(x) (x)
+#define xorstr_(str) (str)
 #endif
 
 void process_patch(
