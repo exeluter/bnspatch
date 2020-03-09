@@ -45,7 +45,7 @@ load_patches:
 // HACK: Using xorstr in process_patch makes compilation of the x86 build take
 // a very long time for some reason, so make the macro a no-op for x86.
 
-#ifdef _M_IX86
+#if defined(_M_IX86) && defined(NDEBUG)
 #pragma push_macro( "xorstr_" )
 #undef xorstr_
 #define xorstr_(str) (str)
@@ -217,7 +217,7 @@ void process_patch(
   }
 }
 
-#ifdef _M_IX86
+#if defined(_M_IX86) && defined(NDEBUG)
 #pragma pop_macro( "xorstr_" )
 #endif
 
