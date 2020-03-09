@@ -31,7 +31,7 @@ XmlDoc *(__thiscall *g_pfnRead)(XmlReader const *, unsigned char const *, unsign
 XmlDoc *__fastcall Read_hook(
   XmlReader const *thisptr,
 #ifdef _M_IX86
-  uintptr_t unused__, // edx
+  intptr_t unused__, // edx
 #endif
   unsigned char const *data,
   unsigned int size,
@@ -43,9 +43,8 @@ XmlDoc *__fastcall Read_hook(
   if ( fileName && xmlDoc && xmlDoc->IsValid() ) {
     std::queue<pugi::xml_node> queue;
     for ( auto const &x : g_patches.select_nodes(xorstr_(L"/patches/patch")) ) {
-      if ( FastWildCompare(x.node().attribute(xorstr_(L"filename")).value(), fileName) ) {
+      if ( FastWildCompare(x.node().attribute(xorstr_(L"filename")).value(), fileName) )
         queue.push(x.node());
-      }
     }
     if ( !queue.empty() ) {
       pugi::xml_document doc;

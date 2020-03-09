@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
 using MonoMod.RuntimeDetour;
@@ -14,7 +14,7 @@ namespace MonoMod.RuntimeDetour
 
     public MonoModHookAttribute(Type type)
     {
-      this.Type = type;
+      Type = type;
     }
 
     public MonoModHookAttribute(string typeName)
@@ -26,32 +26,32 @@ namespace MonoMod.RuntimeDetour
     {
       hook = null;
 
-      if ( this.Type is null )
+      if ( Type is null )
         return false;
 
       var parameterTypes = to.GetParameters()
                              .Select(x => x.ParameterType)
                              .SkipWhile((x, i) => i == 0 && typeof(Delegate).IsAssignableFrom(x))
                              .SkipWhile((x, i) => i == 0
-                                                  && !this.BindingFlags.HasFlag(BindingFlags.Static)
-                                                  && x.IsAssignableFrom(this.Type))
+                                                  && !BindingFlags.HasFlag(BindingFlags.Static)
+                                                  && x.IsAssignableFrom(Type))
                              .ToList();
 
-      var comparisonType = this.BindingFlags.HasFlag(BindingFlags.IgnoreCase)
+      var comparisonType = BindingFlags.HasFlag(BindingFlags.IgnoreCase)
                              ? StringComparison.OrdinalIgnoreCase
                              : StringComparison.Ordinal;
 
-      var from = this.Type.GetMethods(this.BindingFlags)
-                          .SingleOrDefault(x => {
-                            if ( (this.IgnoreName || x.Name.Equals(to.Name, StringComparison.OrdinalIgnoreCase))
-                              && to.ReturnType == x.ReturnType ) {
+      var from = Type.GetMethods(BindingFlags)
+                     .SingleOrDefault(x => {
+                       if ( (IgnoreName || x.Name.Equals(to.Name, StringComparison.OrdinalIgnoreCase))
+                         && to.ReturnType == x.ReturnType ) {
 
-                              var parameters = x.GetParameters();
-                              return parameters.Length == parameterTypes.Count
-                                && parameterTypes.SequenceEqual(parameters.Select(y => y.ParameterType));
-                            }
-                            return false;
-                          });
+                         var parameters = x.GetParameters();
+                         return parameters.Length == parameterTypes.Count
+                           && parameterTypes.SequenceEqual(parameters.Select(y => y.ParameterType));
+                       }
+                       return false;
+                     });
 
       if ( from is null )
         return false;
