@@ -5,12 +5,12 @@
 namespace fs = std::filesystem;
 
 #include <detours/detours.h>
-#include <xorstr/xorstr.hpp>
+#include <xorstr.hpp>
 
 #include "hooks.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"
-#include "SafeInt/SafeInt.hpp"
+#include "SafeInt.hpp"
 
 LONG DetourAttachApi(
   pe::module *module,

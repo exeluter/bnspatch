@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <type_traits>
-#include <SafeInt/SafeInt.hpp>
+#include <SafeInt.hpp>
 
 namespace ntapi
 {

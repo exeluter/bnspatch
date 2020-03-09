@@ -45,6 +45,9 @@
     <ClCompile Include="..\..\include\detours\image.cpp">
       <Filter>Source Files\detours</Filter>
     </ClCompile>
+    <ClCompile Include="xmlpatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xmlreader.h">
@@ -70,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="pe\traits.h">
       <Filter>Header Files\pe</Filter>
+    </ClInclude>
+    <ClInclude Include="xmlpatch.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
