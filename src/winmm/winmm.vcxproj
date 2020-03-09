@@ -63,6 +63,16 @@
       <DelayLoadDLLs>$(TargetFileName);%(DelayLoadDLLs)</DelayLoadDLLs>
       <ModuleDefinitionFile>$(ProjectName)_$(PlatformShortName).def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>
+        set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+        set "MSBuildTargetPath=$(TargetPath)"
+        set "MSBuildPlatformTarget=$(PlatformTarget)"
+        set "MSBuildProjectDir=$(ProjectDir)"
+        set "MSBuildConfiguration=$(Configuration)"
+        powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)scripts\post_build_event.ps1"
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <!-- Debug -->
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
