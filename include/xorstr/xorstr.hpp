@@ -248,6 +248,7 @@ namespace jm {
         return xor_string<detail::tstring_<str_lambda()[StringIndices]...>,
                           detail::_ki<KeyIndices, detail::key8<KeyIndices>()>...>{};
     }
+
 } // namespace jm
 
 #endif // include guard

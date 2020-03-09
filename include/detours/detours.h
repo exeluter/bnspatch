@@ -1103,14 +1103,6 @@ BOOL WINAPI DetourVirtualProtectSameExecute(_In_  PVOID pAddress,
 #endif // DETOURS_INTERNAL
 #endif // __cplusplus
 
-#if defined(DETOURS_HEADER_ONLY)
-#include "createwth.cpp"
-#include "detours.cpp"
-#include "disasm.cpp"
-#include "image.cpp"
-#include "modules.cpp"
-#endif
-
 #endif // _DETOURS_H_
 //
 ////////////////////////////////////////////////////////////////  End of File.
