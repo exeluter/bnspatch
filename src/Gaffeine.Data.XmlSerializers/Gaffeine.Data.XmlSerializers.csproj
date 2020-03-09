@@ -1,42 +1,41 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
+  <!-- Common settings -->
+  <PropertyGroup Label="Globals">
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{75A29EEF-1E39-4D4D-A63D-0F1C56630363}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>
-    </RootNamespace>
     <AssemblyName>Gaffeine.Data.XmlSerializers</AssemblyName>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <IntermediateOutputPath>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntermediateOutputPath>
+    <OutputPath>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutputPath>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <ErrorReport>none</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <!-- Debug -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;_DYNAMIC_XMLSERIALIZER_COMPILATION</DefineConstants>
-    <ErrorReport>none</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <!-- Release -->
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE;_DYNAMIC_XMLSERIALIZER_COMPILATION</DefineConstants>
-    <ErrorReport>none</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
+  <!-- Targets -->
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- Items -->
   <ItemGroup>
     <Reference Include="Gaffeine.Data">
       <HintPath>lib\ncLauncherW\Gaffeine.Data.dll</HintPath>
@@ -68,20 +67,17 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Gaffeine.Data.XmlSerializers\moduleinitializer.cs" />
-    <Compile Include="Mono.Cecil\assemblydefinitionextensions.cs" />
-    <Compile Include="System\Runtime\urlutility.cs" />
-    <Compile Include="System\Runtime\CompilerServices\ignoreaccesschecksto.cs" />
-    <Compile Include="MonoMod.RuntimeDetour\monomodhookattribute.cs" />
+    <Compile Include="moduleinitializer.cs" />
+    <Compile Include="assemblydefinitionextensions.cs" />
+    <Compile Include="urlutility.cs" />
+    <Compile Include="ignoreaccesschecksto.cs" />
+    <Compile Include="monomodhookattribute.cs" />
     <Compile Include="Properties\assemblyinfo.cs" />
-    <Compile Include="Gaffeine.Data.XmlSerializers\hooks.cs" />
-    <Compile Include="System\stringextensions.cs" />
-    <Compile Include="Microsoft.Xml.Serialization.GeneratedAssembly\xmlserializercontract.cs" />
+    <Compile Include="hooks.cs" />
+    <Compile Include="stringextensions.cs" />
+    <Compile Include="xmlserializercontract.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\ApplicationInsights.config">
-      <LogicalName>ApplicationInsights.config</LogicalName>
-    </EmbeddedResource>
     <EmbeddedResource Include="Resources\Mono.Cecil.dll.deflate">
       <LogicalName>Mono.Cecil.dll.deflate</LogicalName>
     </EmbeddedResource>
@@ -91,17 +87,10 @@
     <EmbeddedResource Include="Resources\MonoMod.Utils.dll.deflate">
       <LogicalName>MonoMod.Utils.dll.deflate</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Condition=" '$(Configuration)' == 'Debug' " Include="Resources\NCLog.Debug.xml">
-      <LogicalName>NCLog.xml</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Condition=" '$(Configuration)' == 'Release' " Include="Resources\NCLog.Release.xml">
-      <LogicalName>NCLog.xml</LogicalName>
-    </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+set "MSBuildSolutionDir=$(SolutionDir)"
 set "MSBuildProjectDir=$(ProjectDir)"
 powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)scripts\pre-build-event.ps1"
 </PreBuildEvent>

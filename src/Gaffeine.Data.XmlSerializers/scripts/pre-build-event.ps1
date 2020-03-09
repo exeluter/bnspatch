@@ -41,6 +41,6 @@ $BaseDir = Get-NCLauncherBaseDirectory
 if ( $BaseDir ) {
   $env:MONOMOD_PUBLIC_EVERYTHING = '1'
   foreach ( $file in @('Gaffeine.Data.dll', 'GameUpdateService.dll') ) {
-    & "$env:MSBuildProjectDir\tools\MonoMod\MonoMod.exe" "$BaseDir\$file" "$env:MSBuildProjectDir\lib\ncLauncherW\$file"
+    & "$env:MSBuildSolutionDir\tools\monomod\MonoMod.exe" "$BaseDir\$file" "$env:MSBuildProjectDir\lib\ncLauncherW\$file"
   }
 }
