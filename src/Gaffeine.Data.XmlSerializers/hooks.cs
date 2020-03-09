@@ -15,40 +15,13 @@ namespace Gaffeine.Data.XmlSerializers
 {
   internal static class Hooks
   {
-    //[MonoModHook(typeof(FileInfoMap),
-    //  BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)]
-    //[SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    //public static List<KeyValuePair<string, FileInfo>> GetList(
-    //  Func<FileInfoMap, List<KeyValuePair<string, FileInfo>>> @delegate,
-    //  FileInfoMap @this)
-    //{
-    //  var list = new List<KeyValuePair<string, FileInfo>>();
-    //  foreach ( var item in @this._FileInfoMap ) {
-    //    if ( !Utils.ShouldIgnoreFile(item.Key) )
-    //      list.Add(item);
-    //  }
-    //  return list;
-    //}
-
-    //[MonoModHook(typeof(PatchInfoMap),
-    //  BindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy)]
-    //[SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-    //public static List<KeyValuePair<string, PatchInfo>> GetList(
-    //  Func<PatchInfoMap, List<KeyValuePair<string, PatchInfo>>> @delegate,
-    //  PatchInfoMap @this)
-    //{
-    //  var list = new List<KeyValuePair<string, PatchInfo>>();
-    //  foreach ( var item in @this._FileInfoMap ) {
-    //    if ( !Utils.ShouldIgnoreFile(item.Key) )
-    //      list.Add(item);
-    //  }
-    //  return list;
-    //}
-
     [MonoModHook(typeof(US4UpdateModeBase),
       BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic)]
-    public static void FileReplace(Action<US4UpdateModeBase, string, string> @delegate, US4UpdateModeBase @this,
-      string src, string dest)
+    public static void FileReplace(
+      Action<US4UpdateModeBase, string, string> @delegate,
+      US4UpdateModeBase @this,
+      string src,
+      string dest)
     {
       if ( Guid.TryParse(@this._Game.AppId, out var AppId)
         && AppId.Equals(new Guid(0x0D726F91, 0x202E, 0x4158, 0x9B, 0x9D, 0xCA, 0x0B, 0xF9, 0x44, 0x6B, 0x36))
@@ -82,11 +55,15 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook("Microsoft.ApplicationInsights.Extensibility.TelemetryConfiguration, Microsoft.ApplicationInsights",
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static bool get_DisableTelemetry(Func<object, bool> @delegate, object @this) => true;
+    public static bool get_DisableTelemetry(
+      Func<object, bool> @delegate,
+      object @this) => true;
 
     [MonoModHook(typeof(GameInfo),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static string get_ExeArgument(Func<GameInfo, string> @delegate, GameInfo @this)
+    public static string get_ExeArgument(
+      Func<GameInfo, string> @delegate,
+      GameInfo @this)
     {
       var dict = new Dictionary<string, string>();
       var list = new List<string>();
@@ -123,8 +100,7 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook("Gaffeine.Controls.Helpers.ShortcutHelper, Gaffeine.Controls",
       BindingFlags = BindingFlags.Static | BindingFlags.Public)]
-    public static bool MakeGameShortcut(Func<Game, bool> @delegate, 
-      Game game)
+    public static bool MakeGameShortcut(Func<Game, bool> @delegate, Game game)
     {
       string path = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), game.GameName + ".lnk");
@@ -134,7 +110,9 @@ namespace Gaffeine.Data.XmlSerializers
 
     [MonoModHook(typeof(LanguagePackageFiles),
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public static bool Exists(Func<LanguagePackageFiles, string, bool> @delegate, LanguagePackageFiles @this,
+    public static bool Exists(
+      Func<LanguagePackageFiles, string, bool> @delegate,
+      LanguagePackageFiles @this,
       string fileName)
     {
       return !string.IsNullOrEmpty(fileName)
@@ -144,8 +122,11 @@ namespace Gaffeine.Data.XmlSerializers
     [MonoModHook("NCLauncherW.Views.SignInWindow, NCLauncher2",
       IgnoreName = true,
       BindingFlags = BindingFlags.Instance | BindingFlags.NonPublic)]
-    public static void ca8de357b76a2339a41ee639eb04cc454(Action<object, UIElement, bool> @delegate,
-      object @this, UIElement A_1, bool A_2)
+    public static void ca8de357b76a2339a41ee639eb04cc454(
+      Action<object, UIElement, bool> @delegate,
+      object @this,
+      UIElement A_1,
+      bool A_2)
     {
     }
 
@@ -153,7 +134,9 @@ namespace Gaffeine.Data.XmlSerializers
     [MonoModHook("NCLog.RSAEncrytor, NCLog",
       BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
     public
-      static string EncryptMessage(Func<object, string, string> @delegate, object @this,
+      static string EncryptMessage(
+      Func<object, string, string> @delegate,
+      object @this,
       string msg) => msg;
 #endif
   }
