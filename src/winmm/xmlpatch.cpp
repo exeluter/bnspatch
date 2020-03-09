@@ -73,7 +73,7 @@ void process_patch(
         process_patch({ context_attr.previous_attribute(), context.parent() }, current.children());
       } else if ( !_wcsicmp(current.name(), xorstr_(L"next-attribute")) ) {
         process_patch({ context_attr.next_attribute(), context.parent() }, current.children());
-      } else if ( !_wcsicmp(current.name(), xorstr_(L"remove-node")) ) {
+      } else if ( !_wcsicmp(current.name(), xorstr_(L"remove")) ) {
         context.parent().remove_attribute(context_attr);
       }
     } else if ( auto context_node = context.node() ) {
@@ -116,10 +116,6 @@ void process_patch(
           }
           process_patch(context_node.append_child(t.value_or(xml_node_type::node_element)), current.children());
         }
-      } else if ( !_wcsicmp(current.name(), xorstr_(L"prepend-children")) ) {
-        // not implemented
-      } else if ( !_wcsicmp(current.name(), xorstr_(L"append-children")) ) {
-        // not implemented
       } else if ( !_wcsicmp(current.name(), xorstr_(L"prepend-copy")) ) {
         auto xn = context_node.select_node(current.attribute(xorstr_(L"proto-query")).value());
         if ( auto attr = xn.attribute() ) {
@@ -212,7 +208,7 @@ void process_patch(
         context_node.set_name(current.attribute(xorstr_(L"value")).value());
       } else if ( !_wcsicmp(current.name(), xorstr_(L"set-value")) ) {
         context_node.set_value(current.attribute(xorstr_(L"value")).value());
-      } else if ( !_wcsicmp(current.name(), xorstr_(L"remove-node")) ) {
+      } else if ( !_wcsicmp(current.name(), xorstr_(L"remove")) ) {
         context_node.parent().remove_child(context_node);
       }
     }
