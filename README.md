@@ -72,6 +72,11 @@ shared it with.
   people, without giving any credit ([~~dead link~~][2.3] [mirror][2.4], [link][2.5]).
 </details>
 
+#### Q: Is this compatible with BnS Buddy?
+There is some overlapping functionality, but yes. Just make sure the multi-client
+feature in BnS Buddy is **disabled**, and understand that `patches.xml` will
+always take priority over changes made by BnS Buddy add-ons.
+
 [2.0]: https://github.com/megai2/d912pxy
 [2.1]: https://i.imgur.com/rzFEY0F.png
 [2.2]: https://archive.li/XFWdU
