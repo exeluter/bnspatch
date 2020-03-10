@@ -6,84 +6,92 @@
   <img src="https://img.shields.io/github/license/zeffy/bnspatch?style=for-the-badge"/>
 </p>
 
-<p align="center">Personal project I decided to (partially) release to the public.</p>
+<p align="center">
+  Personal project I decided to (partially) release to the public.
+</p>
 
 ### Disclaimer
 This project is for educational purposes only. There is no support; attempts to
-contact me for support will be ignored. Using this on a live server is against the
-Blade & Soul [Rules of Conduct][0.0] and [User Agreement][0.1]. I accept no
+contact me for support will be ignored. Using this on a live server is against
+the Blade & Soul [Rules of Conduct][0.0] and [User Agreement][0.1]. I accept no
 responsibility should you manage to get yourself banned while using it.
 
+[0.0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
+[0.1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
+
 ## Features
-You can check out the [**projects**](https://github.com/zeffy/bnspatch/projects) page
-for an overview of planned and already implemented features.
+You can check out the [**projects**](https://github.com/zeffy/bnspatch/projects)
+page for an overview of planned and already implemented features.
 
 ## Building
-Everything should build as-is except for `Gaffeine.Data.XmlSerializers.dll`, which
-may need a little manual configuration.
+Everything should build as-is except for `Gaffeine.Data.XmlSerializers.dll`,
+which may need a little manual configuration.
 
 1. NC Launcher 2 must be installed.
-2. With each new version of NC Launcher 2, [`assemblyinfo.cs`][0.2] must be updated
-   to match the MVID of `Gaffeine.Data.dll`, or nothing will work.
-   You can find this value with dnSpy or CFF Explorer.
-3. All dependencies are deflated with `zopfli --deflate --i1000`, and the length of
-   the compressed data (32-bit signed) is prepended to the beginning of the `.deflate`
-   file. You can use `scripts\pack-embedded-assemblies.ps1` to automate this process.
-4. If you update the `MonoMod.Utils.dll` dependency, you need to modify it so that
-   its `System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute` type is
-   `internal` instead of `public`. This can be done easily with dnSpy.
+2. With each new version of NC Launcher 2, [`assemblyinfo.cs`][1.0] must be
+   updated to match the MVID of `Gaffeine.Data.dll`, or nothing will work. You
+   can find this value with [dnSpy][1.1].
+3. All dependencies are deflated with `zopfli --deflate --i1000`, and the
+   length of the compressed data (32-bit signed) is prepended to the beginning
+   of the `.deflate` file. You can use `scripts\pack-embedded-assemblies.ps1`
+   to automate this process.
+4. If you update the `MonoMod.Utils.dll` dependency, you need to modify it so
+   that its `System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute`
+   type is `internal` instead of `public`. This can be done easily with [dnSpy][1.1].
+
+[1.0]: https://github.com/zeffy/bnspatch/blob/master/src/Gaffeine.Data.XmlSerializers/Properties/assemblyinfo.cs#L12
+[1.1]: https://github.com/0xd4d/dnSpy
 
 ## FAQ
 
-#### Q: Does this work with [**d912pxy**][0.3]?
+#### Q: Does this work with [**d912pxy**][2.0]?
 Yes it does! In fact, I highly recommend using it.
 
 #### Q: Do I have to use all of the components for this to work?
 No. Each component works individually and may be used together or separately.
 
 #### Q: Isn't this unsafe compared to BnS Buddy?
-TL;DR: No. I've been using some variant of it since I started development in 2017,
-and have never been warned nor banned, and neither has anyone else I shared it with.
+TL;DR: No. I've been using some variant of it since I started development in
+2017, and have never been warned nor banned, and neither has anyone else I
+shared it with.
 
 <details>
-  <summary>Long version</summary> 
-  
+  <summary>Long version</summary>
+
   BnS Buddy's developer has been known to spread [FUD](https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt)
-  around in an effort to discourage others from using alternatives to BnS Buddy,
-  by using spooky terminology like ["injecting"][0.4], ["bannable" and "exploit"][0.5].
+  around in an effort to discourage others from using alternative solutions,
+  by using spooky terminology like ["injecting"][2.1], ["bannable" and "exploit"][2.2].
 
-  While bnspatch does make use of DLL hijacking to do what it does, this exact method
-  is also used by the multi-client feature in BnS Buddy (and the XIGNCODE3 bypass as
-  well, previously).
+  While bnspatch does make use of DLL hijacking to do what it does, this exact
+  same method is also used by the multi-client feature in BnS Buddy (and the
+  XIGNCODE3 bypass as well, previously).
 
-  In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe than
-  BnS Buddy is. I don't expect its developer to understand any of this though,
-  since they literally copy-pasted both of those features from other people, without
-  giving any credit ([~~dead link~~][0.6] [mirror][0.7], [link][0.8]).
+  In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe
+  than BnS Buddy is. I don't expect its developer to understand any of this
+  though, since they literally copy-pasted both of those features from other
+  people, without giving any credit ([~~dead link~~][2.3] [mirror][2.4], [link][2.5]).
 </details>
 
-## Acknowledgements
-- [microsoft/**Detours**][1.0] (MIT license)
-- [microsoft/**GSL**][1.1] (MIT license)
-- [ocornut/**imgui**][1.2] (MIT license)
-- [MonoMod/**MonoMod**][1.3] (MIT license)
-- [zeux/**pugixml**][1.4] (MIT license)
-- [processhacker/**phnt**][1.5] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][1.6] (Apache-2.0 license)
+[2.0]: https://github.com/megai2/d912pxy
+[2.1]: https://i.imgur.com/rzFEY0F.png
+[2.2]: https://archive.li/XFWdU
+[2.3]: https://github.com/Evengard/bnsnogg
+[2.4]: https://github.com/zeffy/bnsnogg-mirror
+[2.5]: https://github.com/VirtualPuppet/XignCode3-bypass
 
-[0.0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
-[0.1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
-[0.2]: https://github.com/zeffy/bnspatch/blob/master/src/Gaffeine.Data.XmlSerializers/Properties/assemblyinfo.cs#L12
-[0.3]: https://github.com/megai2/d912pxy
-[0.4]: https://i.imgur.com/rzFEY0F.png
-[0.5]: https://archive.li/XFWdU
-[0.6]: https://github.com/Evengard/bnsnogg
-[0.7]: https://github.com/zeffy/bnsnogg-mirror
-[0.8]: https://github.com/VirtualPuppet/XignCode3-bypass
-[1.0]: https://github.com/microsoft/Detours
-[1.1]: https://github.com/microsoft/GSL
-[1.2]: https://github.com/ocornut/imgui
-[1.3]: https://github.com/MonoMod/MonoMod
-[1.4]: https://github.com/zeux/pugixml
-[1.5]: https://github.com/processhacker/phnt
-[1.6]: https://github.com/JustasMasiulis/xorstr
+## Acknowledgements
+- [microsoft/**Detours**][3.0] (MIT license)
+- [microsoft/**GSL**][3.1] (MIT license)
+- [ocornut/**imgui**][3.2] (MIT license)
+- [MonoMod/**MonoMod**][3.3] (MIT license)
+- [zeux/**pugixml**][3.4] (MIT license)
+- [processhacker/**phnt**][3.5] (CC-BY-4.0 license)
+- [JustasMasiulis/**xorstr**][3.6] (Apache-2.0 license)
+
+[3.0]: https://github.com/microsoft/Detours
+[3.1]: https://github.com/microsoft/GSL
+[3.2]: https://github.com/ocornut/imgui
+[3.3]: https://github.com/MonoMod/MonoMod
+[3.4]: https://github.com/zeux/pugixml
+[3.5]: https://github.com/processhacker/phnt
+[3.6]: https://github.com/JustasMasiulis/xorstr
