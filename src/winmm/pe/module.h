@@ -45,7 +45,7 @@ namespace pe
     {
       ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
       std::lock_guard<ntapi::critical_section> guard(crit);
-
+      
       const auto ModuleListHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
       for ( auto Entry = ModuleListHead->Flink; Entry != ModuleListHead; Entry = Entry->Flink ) {
         auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);

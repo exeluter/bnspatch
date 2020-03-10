@@ -130,6 +130,7 @@
     <ClCompile Include="xmlpatch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="fnv1a.h" />
     <ClInclude Include="ic_char_traits.h" />
     <ClInclude Include="ntapi\critical_section.h" />
     <ClInclude Include="ntapi\string_span.h" />
@@ -137,6 +138,7 @@
     <ClInclude Include="pe\module.h" />
     <ClInclude Include="pe\pe.h" />
     <ClInclude Include="pe\segment.h" />
+    <ClInclude Include="wow64.h" />
     <ClInclude Include="xmlpatch.h" />
     <ClInclude Include="xmlreader.h" />
   </ItemGroup>

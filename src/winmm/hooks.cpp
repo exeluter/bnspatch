@@ -21,6 +21,7 @@ namespace fs = std::filesystem;
 #include <SafeInt.hpp>
 #include <xorstr.hpp>
 
+#include "fnv1a.h"
 #include "ntapi/string_span.h"
 #include "thread_local_lock.h"
 #include "pe/module.h"
@@ -172,7 +173,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock()
-    && static_cast<ntapi::ustring_span *>(DllName)->iequals(L"kmon.dll") ) {
+    && static_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -191,11 +192,13 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock() ) {
+    if ( static_cast<ntapi::ustring_span *>(DllName)->iequals(
 #ifdef _M_X64
-    if ( static_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"aegisty64.bin")) ) {
+      xorstr_(L"aegisty64.bin")
 #else
-    if ( static_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"aegisty.bin")) ) {
+      xorstr_(L"aegisty.bin")
 #endif
+    ) ) {
       *DllHandle = nullptr;
       return STATUS_DLL_NOT_FOUND;
     }
@@ -249,8 +252,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
 
-void *g_pfnDbgBreakPoint;
-void *g_pfnDbgUiRemoteBreakin;
+std::vector<void const *> g_ReadOnlyAddresses;
 decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
@@ -263,7 +265,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   SYSTEM_BASIC_INFORMATION SystemInfo;
   ULONG_PTR StartingAddress;
 
-  if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY)
+  if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY | PAGE_WRITECOMBINE)
     && (ProcessHandle == NtCurrentProcess()
       || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
         && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
@@ -275,7 +277,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
       return GetExceptionCode();
     }
 
-    for ( const auto &Address : { g_pfnDbgBreakPoint, g_pfnDbgUiRemoteBreakin } ) {
+    for ( const auto &Address : g_ReadOnlyAddresses ) {
       if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }
@@ -362,84 +364,26 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
+    switch ( fnv1a::hash<CHAR>(lpClassName) ) {
 #ifdef _M_IX86
-    auto xs0 = xorstr("OLLYDBG");
-    auto xs1 = xorstr("GBDYLLO");
-    auto xs2 = xorstr("pediy06");
+      case "OLLYDBG"_fnv1a:
+      case "GBDYLLO"_fnv1a:
+      case "pediy06"_fnv1a:
 #endif         
-    auto xs3 = xorstr("FilemonClass");
-    auto xs4 = xorstr("PROCMON_WINDOW_CLASS");
-    auto xs5 = xorstr("RegmonClass");
-    auto xs6 = xorstr("18467-41");
-    for ( const auto &String : {
-#ifdef _M_IX86
-      xs0.crypt_get(), xs1.crypt_get(), xs2.crypt_get(),
-#endif
-      xs3.crypt_get(), xs4.crypt_get(), xs5.crypt_get(), xs6.crypt_get() } ) {
-      if ( !_stricmp(lpClassName, String) )
+      case "FilemonClass"_fnv1a:
+      case "pediyPROCMON_WINDOW_CLASS06"_fnv1a:
+      case "RegmonClass"_fnv1a:
+      case "18467-41"_fnv1a:
         return nullptr;
     }
   }
   if ( lpWindowName ) {
-    auto xs1 = xorstr("File Monitor - Sysinternals: www.sysinternals.com");
-    auto xs2 = xorstr("Process Monitor - Sysinternals: www.sysinternals.com");
-    auto xs3 = xorstr("Registry Monitor - Sysinternals: www.sysinternals.com");
-    for ( const auto &String : { xs1.crypt_get(), xs2.crypt_get(), xs3.crypt_get() } ) {
-      if ( !strcmp(lpWindowName, String) )
+    switch ( fnv1a::hash<CHAR>(lpWindowName) ) {
+      case "File Monitor - Sysinternals: www.sysinternals.com"_fnv1a:
+      case "Process Monitor - Sysinternals: www.sysinternals.com"_fnv1a:
+      case "Registry Monitor - Sysinternals: www.sysinternals.com"_fnv1a:
         return nullptr;
     }
   }
   return g_pfnFindWindowA(lpClassName, lpWindowName);
 }
-
-//WNDPROC g_pfnWndProc;
-//LRESULT CALLBACK WndProc_hook(
-//  HWND hwnd,
-//  UINT uMsg,
-//  WPARAM wParam,
-//  LPARAM lParam)
-//{
-//  //if ( ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam) == ERROR_SUCCESS ) {
-//  //}
-//  return CallWindowProcW(g_pfnWndProc, hwnd, uMsg, wParam, lParam);
-//}
-
-//decltype(&CreateWindowExW) g_pfnCreateWindowExW;
-//HWND WINAPI CreateWindowExW_hook(
-//  DWORD dwExStyle,
-//  LPCWSTR lpClassName,
-//  LPCWSTR lpWindowName,
-//  DWORD dwStyle,
-//  int X,
-//  int Y,
-//  int nWidth,
-//  int nHeight,
-//  HWND hWndParent,
-//  HMENU hMenu,
-//  HINSTANCE hInstance,
-//  LPVOID lpParam)
-//{
-//  auto hWnd = g_pfnCreateWindowExW(
-//    dwExStyle,
-//    lpClassName,
-//    lpWindowName,
-//    dwStyle,
-//    X,
-//    Y,
-//    nWidth,
-//    nHeight,
-//    hWndParent,
-//    hMenu,
-//    hInstance,
-//    lpParam);
-//
-//  //if ( hWnd
-//  //  && HIWORD(lpClassName)
-//  //  && (!_wcsicmp(lpClassName, xorstr_(L"LaunchUnrealUWindowsClient"))
-//  //    || !_wcsicmp(lpClassName, xorstr_(L"UnrealWindow"))) ) {
-//
-//  //  g_pfnWndProc = reinterpret_cast<WNDPROC>(
-//  //    SetWindowLongPtrW(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WndProc_hook)));
-//  //}
-//  return hWnd;
-//}

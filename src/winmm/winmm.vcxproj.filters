@@ -81,6 +81,12 @@
     <ClInclude Include="ic_char_traits.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="wow64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fnv1a.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\natvis\pugixml.natvis">

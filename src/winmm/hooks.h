@@ -1,5 +1,6 @@
 #pragma once
 #include <ntdll.h>
+#include <vector>
 
 extern PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -42,8 +43,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner);
 
-extern void *g_pfnDbgBreakPoint;
-extern void *g_pfnDbgUiRemoteBreakin;
+extern std::vector<void const *> g_ReadOnlyAddresses;
 extern decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
