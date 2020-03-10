@@ -368,11 +368,11 @@ HWND WINAPI FindWindowA_hook(
 #ifdef _M_IX86
       case "OLLYDBG"_fnv1a:
       case "GBDYLLO"_fnv1a:
-      case "pediy06"_fnv1a:
+      case "PEDIY06"_fnv1a:
 #endif         
-      case "FilemonClass"_fnv1a:
-      case "pediyPROCMON_WINDOW_CLASS06"_fnv1a:
-      case "RegmonClass"_fnv1a:
+      case "FILEMONCLASS"_fnv1a:
+      case "PROCMON_WINDOW_CLASS06"_fnv1a:
+      case "REGMONCLASS"_fnv1a:
       case "18467-41"_fnv1a:
         return nullptr;
     }
