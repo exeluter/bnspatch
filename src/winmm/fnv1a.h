@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cstdint>
+#include <locale>
 #include <string_view>
 
 template <typename T, T Prime, T OffsetBasis>
@@ -47,10 +48,47 @@ struct basic_fnv1a
   {
     return hash(str.data(), str.size());
   }
-  template <typename... Args>
-  constexpr T operator()(Args &&... args) const
+
+  template <class Char>
+  static T hash_lower(const Char *p, std::size_t len)
   {
-    return hash(std::forward<Args>(args)...);
+    const auto &facet = std::use_facet<std::ctype<Char>>(std::locale());
+    T hash = OffsetBasis;
+    for ( std::size_t i = 0; i < len; ++i ) {
+      hash = (hash ^ static_cast<T>(facet.tolower(p[i]))) * Prime;
+    }
+    return hash;
+  }
+  template <class Char, size_t Size>
+  static constexpr T hash_lower(const Char(&s)[Size])
+  {
+    return hash_lower(s, Size - 1);
+  }
+  template <class Char>
+  static constexpr T hash_lower(const std::basic_string_view<Char> &str)
+  {
+    return hash_lower(str.data(), str.size());
+  }
+
+  template <class Char>
+  static T hash_upper(const Char *p, std::size_t len)
+  {
+    const auto &facet = std::use_facet<std::ctype<Char>>(std::locale());
+    T hash = OffsetBasis;
+    for ( std::size_t i = 0; i < len; ++i ) {
+      hash = (hash ^ static_cast<T>(facet.tolower(p[i]))) *Prime;
+    }
+    return hash;
+  }
+  template <class Char, size_t Size>
+  static constexpr T hash_upper(const Char(&s)[Size])
+  {
+    return hash_upper(s, Size - 1);
+  }
+  template <class Char>
+  static constexpr T hash_upper(const std::basic_string_view<Char> &str)
+  {
+    return hash_upper(str.data(), str.size());
   }
 };
 using fnv1a32 = basic_fnv1a<std::uint32_t, 0x1000193UL, 2166136261UL>;

@@ -364,7 +364,7 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
-    switch ( fnv1a::hash<CHAR>(lpClassName) ) {
+    switch ( fnv1a::hash_upper<CHAR>(lpClassName) ) {
 #ifdef _M_IX86
       case "OLLYDBG"_fnv1a:
       case "GBDYLLO"_fnv1a:

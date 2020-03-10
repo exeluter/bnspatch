@@ -56,11 +56,8 @@ void process_patch(
   const auto &facet = std::use_facet<std::ctype<pugi::char_t>>(std::locale());
 
   for ( auto const &current : children ) {
-    std::basic_string<pugi::char_t> name(current.name());
-    facet.tolower(name.data(), name.data() + name.size());
-
     if ( auto context_attr = context.attribute() ) {
-      switch ( fnv1a::hash<pugi::char_t>(name) ) {
+      switch ( fnv1a::hash_lower<pugi::char_t>(current.name()) ) {
         case L"parent"_fnv1a: {
           process_patch(context.parent(), current.children());
           break;
@@ -82,7 +79,7 @@ void process_patch(
         }
       }
     } else if ( auto context_node = context.node() ) {
-      switch ( fnv1a::hash<pugi::char_t>(name) ) {
+      switch ( fnv1a::hash_lower<pugi::char_t>(current.name()) ) {
         case L"parent"_fnv1a: {
           process_patch(context.parent(), current.children());
           break;
