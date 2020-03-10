@@ -76,7 +76,7 @@ struct basic_fnv1a
     const auto &facet = std::use_facet<std::ctype<Char>>(std::locale());
     T hash = OffsetBasis;
     for ( std::size_t i = 0; i < len; ++i ) {
-      hash = (hash ^ static_cast<T>(facet.tolower(p[i]))) *Prime;
+      hash = (hash ^ static_cast<T>(facet.toupper(p[i]))) *Prime;
     }
     return hash;
   }

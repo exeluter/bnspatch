@@ -371,7 +371,7 @@ HWND WINAPI FindWindowA_hook(
       case "PEDIY06"_fnv1a:
 #endif         
       case "FILEMONCLASS"_fnv1a:
-      case "PROCMON_WINDOW_CLASS06"_fnv1a:
+      case "PROCMON_WINDOW_CLASS"_fnv1a:
       case "REGMONCLASS"_fnv1a:
       case "18467-41"_fnv1a:
         return nullptr;
