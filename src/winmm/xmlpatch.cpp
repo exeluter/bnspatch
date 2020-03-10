@@ -57,7 +57,6 @@ void process_patch(
 
   for ( auto const &current : children ) {
     std::basic_string<pugi::char_t> name(current.name());
-    
     facet.tolower(name.data(), name.data() + name.size());
 
     if ( auto context_attr = context.attribute() ) {
