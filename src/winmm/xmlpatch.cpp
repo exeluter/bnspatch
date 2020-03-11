@@ -75,7 +75,7 @@ void process_patch(
           break;
         } case L"remove"_fnv1a: {
           ctx.parent().remove_attribute(ctx.attribute());
-          break;
+          return; // context attribute is removed, nothing to do.
         }
       }
     } else {
@@ -84,23 +84,24 @@ void process_patch(
           process_patch(ctx.parent(), current.children());
           break;
         } case L"select-node"_fnv1a: {
-          process_patch(ctx.node().select_node(current.attribute(xorstr_(L"query")).value()), current.children());
+          auto query = current.attribute(xorstr_(L"query")).value();
+          process_patch(ctx.node().select_node(query), current.children());
           break;
         } case L"select-nodes"_fnv1a: {
-          for ( auto &xn : ctx.node().select_nodes(current.attribute(xorstr_(L"query")).value()) ) {
-            process_patch(xn, current.children());
-          }
+          auto query = current.attribute(xorstr_(L"query")).value();
+          for ( auto &node : ctx.node().select_nodes(query) )
+            process_patch(node, current.children());
           break;
         } case L"prepend-attribute"_fnv1a: {
-          auto const name = current.attribute(xorstr_(L"name"));
+          auto name = current.attribute(xorstr_(L"name"));
           process_patch({ ctx.node().prepend_attribute(name.value()), ctx.node() }, current.children());
           break;
         } case L"append-attribute"_fnv1a: {
-          auto const name = current.attribute(xorstr_(L"name"));
+          auto name = current.attribute(xorstr_(L"name"));
           process_patch({ ctx.node().append_attribute(name.value()), ctx.node() }, current.children());
           break;
         } case L"prepend-child"_fnv1a: {
-          if ( auto const name = current.attribute(xorstr_(L"name")) ) {
+          if ( auto name = current.attribute(xorstr_(L"name")) ) {
             process_patch(ctx.node().prepend_child(name.value()), current.children());
           } else {
             std::optional<xml_node_type> t;
@@ -130,52 +131,50 @@ void process_patch(
           }
           break;
         } case L"prepend-copy"_fnv1a: {
-          auto xn = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
-          if ( auto attr = xn.attribute() ) {
-            process_patch({ ctx.node().prepend_copy(attr), xn.parent() }, current.children());
-          } else if ( auto node = xn.node() ) {
-            process_patch(ctx.node().prepend_copy(node), current.children());
+          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
+          if ( proto.attribute() ) {
+            process_patch({ ctx.node().prepend_copy(proto.attribute()), ctx.node() }, current.children());
+          } else {
+            process_patch(ctx.node().prepend_copy(proto.node()), current.children());
           }
           break;
         } case L"append-copy"_fnv1a: {
-          auto xn = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
-          if ( auto attr = xn.attribute() ) {
-            process_patch({ ctx.node().append_copy(attr), xn.parent() }, current.children());
-          } else if ( auto node = xn.node() ) {
-            process_patch(ctx.node().append_copy(node), current.children());
+          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
+          if ( proto.attribute() ) {
+            process_patch({ ctx.node().append_copy(proto.attribute()), ctx.node() }, current.children());
+          } else {
+            process_patch(ctx.node().append_copy(proto.node()), current.children());
           }
           break;
         } case L"prepend-move"_fnv1a: {
-          process_patch(
-            ctx.node().prepend_move(ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node()),
-            current.children());
+          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
+          process_patch(ctx.node().prepend_move(moved), current.children());
           break;
         } case L"append-move"_fnv1a: {
-          process_patch(ctx.node().append_move(ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node()), current.children());
+          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
+          process_patch(ctx.node().append_move(moved), current.children());
           break;
         } case L"attribute"_fnv1a: {
-          process_patch({ ctx.node().attribute(current.attribute(xorstr_(L"name")).value()), ctx.node() }, current.children());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          process_patch({ ctx.node().attribute(name), ctx.node() }, current.children());
           break;
         } case L"attributes"_fnv1a: {
-          for ( auto &attr : ctx.node().attributes() ) {
+          for ( auto &attr : ctx.node().attributes() )
             process_patch({ attr, ctx.node() }, current.children());
-          }
           break;
         } case L"child"_fnv1a: {
-          process_patch(ctx.node().child(current.attribute(xorstr_(L"name")).value()), current.children());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          process_patch(ctx.node().child(name), current.children());
           break;
         } case L"children"_fnv1a: {
-          for ( auto &child : ctx.node().children() ) {
+          for ( auto &child : ctx.node().children() )
             process_patch(child, current.children());
-          }
           break;
         } case L"find-child-by-attribute"_fnv1a: {
-          process_patch(
-            ctx.node().find_child_by_attribute(
-              current.attribute(xorstr_(L"name")).value(),
-              current.attribute(xorstr_(L"attr-name")).value(),
-              current.attribute(xorstr_(L"attr-value")).value()),
-            current.children());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          auto attr_name = current.attribute(xorstr_(L"attr-name")).value();
+          auto attr_value = current.attribute(xorstr_(L"attr-value")).value();
+          process_patch(ctx.node().find_child_by_attribute(name, attr_name, attr_value), current.children());
           break;
         } case L"first-attribute"_fnv1a: {
           process_patch({ ctx.node().first_attribute(), ctx.node() }, current.children());
@@ -190,54 +189,62 @@ void process_patch(
           process_patch(ctx.node().last_child(), current.children());
           break;
         } case L"first-element-by-path"_fnv1a: {
-          process_patch(ctx.node().first_element_by_path(current.attribute(xorstr_(L"path")).value()), current.children());
+          auto path = current.attribute(xorstr_(L"path")).value();
+          process_patch(ctx.node().first_element_by_path(path), current.children());
           break;
         } case L"insert-attribute-before"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
-          auto attr_query = current.attribute(xorstr_(L"attr-query")).value();
-          auto xn = ctx.node().select_node(attr_query);
-          process_patch({ ctx.node().insert_attribute_before(name, xn.attribute()), xn.parent() }, current.children());
+          auto attr = ctx.node().select_node(current.attribute(xorstr_(L"attr-query")).value()).attribute();
+          process_patch({ ctx.node().insert_attribute_before(name, attr), ctx.node() }, current.children());
           break;
         } case L"insert-attribute-after"_fnv1a: {
-          // not implemented
+          auto name = current.attribute(xorstr_(L"name")).value();
+          auto attr = ctx.node().select_node(current.attribute(xorstr_(L"attr-query")).value()).attribute();
+          process_patch({ ctx.node().insert_attribute_after(name, attr), ctx.node() }, current.children());
           break;
         } case L"insert-child-after"_fnv1a: {
-          process_patch(
-            ctx.node().insert_child_after(
-              current.attribute(xorstr_(L"name")).value(),
-              ctx.node().select_node(current.attribute(xorstr_(L"query")).value()).node()),
-            current.children());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
+          process_patch(ctx.node().insert_child_after(name, node), current.children());
           break;
         } case L"insert-child-before"_fnv1a: {
-          process_patch(
-            ctx.node().insert_child_before(
-              current.attribute(xorstr_(L"name")).value(),
-              ctx.node().select_node(current.attribute(xorstr_(L"query")).value()).node()),
-            current.children());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
+          process_patch(ctx.node().insert_child_before(name, node), current.children());
           break;
         } case L"insert-copy-after"_fnv1a: {
-          // not implemented
+          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value()).node();
+          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
+          process_patch(ctx.node().insert_copy_after(proto, node), current.children());
           break;
         } case L"insert-copy-before"_fnv1a: {
-          // not implemented
+          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value()).node();
+          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
+          process_patch(ctx.node().insert_copy_before(proto, node), current.children());
           break;
         } case L"insert-move-after"_fnv1a: {
-          // not implemented
+          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
+          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
+          process_patch(ctx.node().insert_move_after(moved, node), current.children());
           break;
         } case L"insert-move-before"_fnv1a: {
-          // not implemented
+          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
+          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
+          process_patch(ctx.node().insert_move_before(moved, node), current.children());
           break;
         } case L"next-sibling"_fnv1a: {
           process_patch(ctx.node().next_sibling(), current.children());
           break;
         } case L"remove-attribute"_fnv1a: {
-          ctx.node().remove_attribute(current.attribute(xorstr_(L"name")).value());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          ctx.node().remove_attribute(name);
           break;
         } case L"remove-attributes"_fnv1a: {
           ctx.node().remove_attributes();
           break;
         } case L"remove-child"_fnv1a: {
-          ctx.node().remove_child(current.attribute(xorstr_(L"name")).value());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          ctx.node().remove_child(name);
           break;
         } case L"remove-children"_fnv1a: {
           ctx.node().remove_children();
@@ -246,14 +253,16 @@ void process_patch(
           process_patch(ctx.node().root(), current.children());
           break;
         } case L"set-name"_fnv1a: {
-          ctx.node().set_name(current.attribute(xorstr_(L"value")).value());
+          auto name = current.attribute(xorstr_(L"name")).value();
+          ctx.node().set_name(name);
           break;
         } case L"set-value"_fnv1a: {
-          ctx.node().set_value(current.attribute(xorstr_(L"value")).value());
+          auto value = current.attribute(xorstr_(L"value")).value();
+          ctx.node().set_value(value);
           break;
         } case L"remove"_fnv1a: {
           ctx.node().parent().remove_child(ctx.node());
-          break;
+          return; // context node is removed, nothing to do.
         }
       }
     }
