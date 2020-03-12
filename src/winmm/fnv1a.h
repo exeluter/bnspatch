@@ -102,7 +102,7 @@ constexpr auto operator"" _fnv1a64(const char *s, std::size_t len)
 {
   return fnv1a64::make_hash(s);
 }
-constexpr auto operator"" _fnv1a64(const wchar_t *s, size_t len)
+constexpr auto operator"" _fnv1a64(const wchar_t *s, std::size_t len)
 {
   return fnv1a64::make_hash(s);
 }
