@@ -119,8 +119,8 @@ constexpr auto operator"" _fnv1a64u(const wchar_t *s, std::size_t len)
 using fnv1a = fnv1a64;
 #else
 using fnv1a = fnv1a32;
-
 #endif
+
 constexpr auto operator"" _fnv1a(const char *s, std::size_t len)
 {
   return fnv1a::make_hash(s);
