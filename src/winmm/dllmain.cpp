@@ -1,4 +1,4 @@
-#include <ntdll.h>
+﻿#include <ntdll.h>
 #include <delayimp.h>
 
 #include <filesystem>
@@ -8,6 +8,7 @@ namespace fs = std::filesystem;
 #include <xorstr.hpp>
 #include <SafeInt.hpp>
 
+#include "fnv1a.h"
 #include "hooks.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"
@@ -30,21 +31,13 @@ LONG DetourAttachApi(
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
-  switch ( fdwReason ) {
-    case DLL_PROCESS_ATTACH: {
-      auto const name = pe::get_module()->base_name();
-#ifdef BNSR
-      if ( name == xorstr_(L"BNSR.exe") ) {
-#else
-      if ( name == xorstr_(L"Client.exe") ) {
-#endif
+  if ( fdwReason == DLL_PROCESS_ATTACH ) {
+    const auto name = pe::get_module()->base_name();
+    switch ( fnv1a::make_hash_lower(name.c_str()) ) {
+      case L"Client.exe"_fnv1al:
+      case L"BNSR.exe"_fnv1al:
         NtCurrentPeb()->BeingDebugged = FALSE;
 
-//#ifdef _M_IX86
-//        if ( IsWow64() ) {
-//
-//        }
-//#endif
         DetourTransactionBegin();
         DetourUpdateThread(NtCurrentThread());
         if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
@@ -72,7 +65,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
         }
         DetourTransactionCommit();
         break;
-      }
     }
   }
   return TRUE;

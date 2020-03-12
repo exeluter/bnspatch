@@ -2,7 +2,7 @@
 #include <ntdll.h>
 #include "pe/module.h"
 
-inline void *__ptr32 GetKiFastSystemCallPtr()
+inline void *__ptr32 GetKiFastSystemCallPointer()
 {
 #ifdef _M_IX86
   return reinterpret_cast<void *__ptr32>(__readfsdword(0xc0));
@@ -11,10 +11,10 @@ inline void *__ptr32 GetKiFastSystemCallPtr()
 #endif
 }
 
-bool IsWow64()
+inline bool IsWow64()
 {
   if ( auto const module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
-    auto pfnIsWow64Process = reinterpret_cast<BOOL(WINAPI *)(HANDLE, PBOOL)>(
+    auto const pfnIsWow64Process = reinterpret_cast<BOOL(WINAPI *)(HANDLE, PBOOL)>(
       module->find_function(xorstr_("IsWow64Process")));
 
     if ( pfnIsWow64Process ) {

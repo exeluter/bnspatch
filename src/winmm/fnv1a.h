@@ -23,72 +23,60 @@
 
 #include <cstdint>
 #include <locale>
-#include <string_view>
 
 template <typename T, T Prime, T OffsetBasis>
 struct basic_fnv1a
 {
-  using key_type = T;
+  struct details
+  {
+    template <class Char>
+    static constexpr Char tolower(Char c)
+    {
+      if ( c >= 'A' && c <= 'Z' )
+        return c - ('A' - 'a');
+      return c;
+    }
+
+    template <class Char>
+    static constexpr Char toupper(Char c)
+    {
+      if ( c >= 'a' && c <= 'z' )
+        return c - ('a' - 'A');
+      return c;
+    }
+  };
+
   template <class Char>
-  static constexpr T hash(const Char *p, std::size_t len)
+  static constexpr T make_hash(const Char *s)
   {
     T hash = OffsetBasis;
-    for ( std::size_t i = 0; i < len; ++i ) {
-      hash = (hash ^ static_cast<T>(p[i])) * Prime;
+    while ( *s ) {
+      hash ^= static_cast<T>(*s++);
+      hash *= Prime;
     }
     return hash;
-  }
-  template <class Char, size_t Size>
-  static constexpr T hash(const Char(&s)[Size])
-  {
-    return hash(s, Size - 1);
-  }
-  template <class Char>
-  static constexpr T hash(const std::basic_string_view<Char> &str)
-  {
-    return hash(str.data(), str.size());
   }
 
   template <class Char>
-  static T hash_lower(const Char *p, std::size_t len)
+  static constexpr T make_hash_lower(const Char *s)
   {
-    const auto &facet = std::use_facet<std::ctype<Char>>(std::locale());
     T hash = OffsetBasis;
-    for ( std::size_t i = 0; i < len; ++i ) {
-      hash = (hash ^ static_cast<T>(facet.tolower(p[i]))) * Prime;
+    while ( *s ) {
+      hash ^= static_cast<T>(details::tolower(*s++));
+      hash *= Prime;
     }
     return hash;
-  }
-  template <class Char, size_t Size>
-  static constexpr T hash_lower(const Char(&s)[Size])
-  {
-    return hash_lower(s, Size - 1);
-  }
-  template <class Char>
-  static constexpr T hash_lower(const std::basic_string_view<Char> &str)
-  {
-    return hash_lower(str.data(), str.size());
   }
 
   template <class Char>
-  static T hash_upper(const Char *p, std::size_t len)
+  static constexpr T make_hash_upper(const Char *s)
   {
-    const auto &facet = std::use_facet<std::ctype<Char>>(std::locale());
     T hash = OffsetBasis;
-    for ( std::size_t i = 0; i < len; ++i ) {
-      hash = (hash ^ static_cast<T>(facet.toupper(p[i]))) * Prime;
+    while ( *s ) {
+      hash ^= static_cast<T>(details::toupper(*s++));
+      hash *= Prime;
     }
     return hash;
-  }
-  template <class Char, size_t Size>
-  static constexpr T hash_upper(const Char(&s)[Size])
-  {
-    return hash_upper(s, Size - 1);
-  }
-  template <class Char>
-  static constexpr T hash_upper(const std::basic_string_view<Char> &str)
-  {
-    return hash_upper(str.data(), str.size());
   }
 };
 using fnv1a32 = basic_fnv1a<std::uint32_t, 0x1000193UL, 2166136261UL>;
@@ -96,31 +84,65 @@ using fnv1a64 = basic_fnv1a<std::uint64_t, 0x100000001b3ULL, 1469598103934665603
 
 constexpr auto operator"" _fnv1a32(const char *s, std::size_t len)
 {
-  return fnv1a32::hash(s, len);
+  return fnv1a32::make_hash(s);
 }
 constexpr auto operator"" _fnv1a32(const wchar_t *s, std::size_t len)
 {
-  return fnv1a32::hash(s, len);
+  return fnv1a32::make_hash(s);
+}
+constexpr auto operator"" _fnv1a32l(const wchar_t *s, std::size_t len)
+{
+  return fnv1a32::make_hash_lower(s);
+}
+constexpr auto operator"" _fnv1a32u(const wchar_t *s, std::size_t len)
+{
+  return fnv1a32::make_hash_upper(s);
 }
 constexpr auto operator"" _fnv1a64(const char *s, std::size_t len)
 {
-  return fnv1a64::hash(s, len);
+  return fnv1a64::make_hash(s);
 }
 constexpr auto operator"" _fnv1a64(const wchar_t *s, size_t len)
 {
-  return fnv1a64::hash(s, len);
+  return fnv1a64::make_hash(s);
+}
+constexpr auto operator"" _fnv1a64l(const wchar_t *s, std::size_t len)
+{
+  return fnv1a64::make_hash_lower(s);
+}
+constexpr auto operator"" _fnv1a64u(const wchar_t *s, std::size_t len)
+{
+  return fnv1a64::make_hash_upper(s);
 }
 
 #ifdef _M_X64
 using fnv1a = fnv1a64;
 #else
 using fnv1a = fnv1a32;
+
 #endif
 constexpr auto operator"" _fnv1a(const char *s, std::size_t len)
 {
-  return fnv1a::hash(s, len);
+  return fnv1a::make_hash(s);
 }
+constexpr auto operator"" _fnv1al(const char *s, std::size_t len)
+{
+  return fnv1a::make_hash_lower(s);
+}
+constexpr auto operator"" _fnv1au(const char *s, std::size_t len)
+{
+  return fnv1a::make_hash_upper(s);
+}
+
 constexpr auto operator"" _fnv1a(const wchar_t *s, std::size_t len)
 {
-  return fnv1a::hash(s, len);
+  return fnv1a::make_hash(s);
+}
+constexpr auto operator"" _fnv1al(const wchar_t *s, std::size_t len)
+{
+  return fnv1a::make_hash_lower(s);
+}
+constexpr auto operator"" _fnv1au(const wchar_t *s, std::size_t len)
+{
+  return fnv1a::make_hash_upper(s);
 }

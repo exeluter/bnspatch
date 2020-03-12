@@ -364,21 +364,21 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
-    switch ( fnv1a::hash_upper<CHAR>(lpClassName) ) {
+    switch ( fnv1a::make_hash_upper(lpClassName) ) {
 #ifdef _M_IX86
-      case "OLLYDBG"_fnv1a:
-      case "GBDYLLO"_fnv1a:
-      case "PEDIY06"_fnv1a:
+      case "OLLYDBG"_fnv1au:
+      case "GBDYLLO"_fnv1au:
+      case "pediy06"_fnv1au:
 #endif         
-      case "FILEMONCLASS"_fnv1a:
-      case "PROCMON_WINDOW_CLASS"_fnv1a:
-      case "REGMONCLASS"_fnv1a:
-      case "18467-41"_fnv1a:
+      case "FilemonClass"_fnv1au:
+      case "PROCMON_WINDOW_CLASS"_fnv1au:
+      case "RegmonClass"_fnv1au:
+      case "18467-41"_fnv1au:
         return nullptr;
     }
   }
   if ( lpWindowName ) {
-    switch ( fnv1a::hash<CHAR>(lpWindowName) ) {
+    switch ( fnv1a::make_hash(lpWindowName) ) {
       case "File Monitor - Sysinternals: www.sysinternals.com"_fnv1a:
       case "Process Monitor - Sysinternals: www.sysinternals.com"_fnv1a:
       case "Registry Monitor - Sysinternals: www.sysinternals.com"_fnv1a:

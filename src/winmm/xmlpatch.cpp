@@ -53,11 +53,10 @@ void process_patch(
   using pugi::xml_node_iterator;
   using pugi::xml_node_type;
   using pugi::xml_object_range;
-  const auto &facet = std::use_facet<std::ctype<pugi::char_t>>(std::locale());
 
   for ( auto const &current : children ) {
     if ( ctx.attribute() ) {
-      switch ( fnv1a::hash_lower<pugi::char_t>(current.name()) ) {
+      switch ( fnv1a::make_hash_lower<wchar_t>(current.name()) ) {
         case L"parent"_fnv1a: {
           process_patch(ctx.parent(), current.children());
           break;
@@ -73,13 +72,21 @@ void process_patch(
         } case L"next-attribute"_fnv1a: {
           process_patch({ ctx.attribute().next_attribute(), ctx.parent() }, current.children());
           break;
+        } case L"insert-attribute-before"_fnv1a: {
+          auto name = current.attribute(xorstr_(L"name")).value();
+          process_patch({ ctx.node().insert_attribute_before(name, ctx.attribute()), ctx.node() }, current.children());
+          break;
+        } case L"insert-attribute-after"_fnv1a: {
+          auto name = current.attribute(xorstr_(L"name")).value();
+          process_patch({ ctx.node().insert_attribute_after(name, ctx.attribute()), ctx.node() }, current.children());
+          break;
         } case L"remove"_fnv1a: {
           ctx.parent().remove_attribute(ctx.attribute());
-          return; // context attribute is removed, nothing to do.
+          return; // context attribute is removed, nothing more to do.
         }
       }
     } else {
-      switch ( fnv1a::hash_lower<pugi::char_t>(current.name()) ) {
+      switch ( fnv1a::make_hash_lower<wchar_t>(current.name()) ) {
         case L"parent"_fnv1a: {
           process_patch(ctx.parent(), current.children());
           break;
@@ -192,16 +199,6 @@ void process_patch(
           auto path = current.attribute(xorstr_(L"path")).value();
           process_patch(ctx.node().first_element_by_path(path), current.children());
           break;
-        } case L"insert-attribute-before"_fnv1a: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          auto attr = ctx.node().select_node(current.attribute(xorstr_(L"attr-query")).value()).attribute();
-          process_patch({ ctx.node().insert_attribute_before(name, attr), ctx.node() }, current.children());
-          break;
-        } case L"insert-attribute-after"_fnv1a: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          auto attr = ctx.node().select_node(current.attribute(xorstr_(L"attr-query")).value()).attribute();
-          process_patch({ ctx.node().insert_attribute_after(name, attr), ctx.node() }, current.children());
-          break;
         } case L"insert-child-after"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
           auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
@@ -262,7 +259,7 @@ void process_patch(
           break;
         } case L"remove"_fnv1a: {
           ctx.node().parent().remove_child(ctx.node());
-          return; // context node is removed, nothing to do.
+          return; // context node is removed, nothing more to do.
         }
       }
     }
