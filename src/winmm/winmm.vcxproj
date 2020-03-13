@@ -120,23 +120,26 @@
   </ImportGroup>
   <!-- Items -->
   <ItemGroup>
-    <ClCompile Include="..\..\include\detours\creatwth.cpp" />
-    <ClCompile Include="..\..\include\detours\detours.cpp" />
-    <ClCompile Include="..\..\include\detours\disasm.cpp" />
-    <ClCompile Include="..\..\include\detours\image.cpp" />
-    <ClCompile Include="..\..\include\detours\modules.cpp" />
+    <ClCompile Include="detours\creatwth.cpp" />
+    <ClCompile Include="detours\detours.cpp" />
+    <ClCompile Include="detours\disasm.cpp" />
+    <ClCompile Include="detours\image.cpp" />
+    <ClCompile Include="detours\modules.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hooks.cpp" />
+    <ClCompile Include="pe\export_directory.cpp" />
+    <ClCompile Include="pe\module.cpp" />
+    <ClCompile Include="pe\segment.cpp" />
     <ClCompile Include="xmlpatch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="fnv1a.h" />
+    <ClInclude Include="detours\detours.h" />
+    <ClInclude Include="detours\detver.h" />
     <ClInclude Include="ic_char_traits.h" />
     <ClInclude Include="ntapi\critical_section.h" />
     <ClInclude Include="ntapi\string_span.h" />
     <ClInclude Include="pe\export_directory.h" />
     <ClInclude Include="pe\module.h" />
-    <ClInclude Include="pe\pe.h" />
     <ClInclude Include="pe\segment.h" />
     <ClInclude Include="wow64.h" />
     <ClInclude Include="xmlpatch.h" />

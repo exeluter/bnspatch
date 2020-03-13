@@ -9,12 +9,13 @@
 namespace fs = std::filesystem;
 
 #include <fmt/format.h>
+#include <fnv1a.h>
 #include <magic_enum.hpp>
 #include <pugixml/pugixml.hpp>
 #include <xorstr.hpp>
 
-#include "fnv1a.h"
 #include "ic_char_traits.h"
+#include "pe/module.h"
 #include "xmlreader.h"
 
 pugi::xml_document const g_patches = []() {
@@ -24,20 +25,26 @@ pugi::xml_document const g_patches = []() {
   if ( SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &pszPath) == S_OK ) {
     fs::path path(pszPath);
     CoTaskMemFree(pszPath);
-#ifdef BNSR
-    path /= xorstr_(L"BNSR\\patches.xml");
-#else
-    path /= xorstr_(L"BnS\\patches.xml");
-#endif
+
+    const auto name = pe::get_module()->base_name();
+    switch ( fnv1a::make_hash_lower(name.c_str()) ) {
+      case L"Client.exe"_fnv1al: {
+        path /= xorstr_(L"BnS\\patches.xml");
 
 load_patches:
-    auto const result = doc.load_file(path.c_str());
-    if ( !result ) {
-      auto const text = fmt::format(xorstr_("{} at offset {}.\nDo you want to try again?"), result.description(), result.offset);
-      switch ( MessageBoxA(nullptr, text.c_str(), xorstr_("patches.xml"), MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
-        case IDTRYAGAIN: goto load_patches;
-        case IDCONTINUE: break;
-        default: exit(1);
+        auto const result = doc.load_file(path.c_str());
+        if ( !result ) {
+          auto const text = fmt::format(xorstr_("{} at offset {}.\nDo you want to try again?"), result.description(), result.offset);
+          switch ( MessageBoxA(nullptr, text.c_str(), xorstr_("patches.xml"), MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
+            case IDTRYAGAIN: goto load_patches;
+            case IDCONTINUE: break;
+            default: exit(1);
+          }
+        }
+        break;
+      } case L"BNSR.exe"_fnv1al: {
+        path /= xorstr_(L"BNSR\\patches.xml");
+        goto load_patches;
       }
     }
   }
@@ -56,7 +63,7 @@ void process_patch(
 
   for ( auto const &current : children ) {
     if ( ctx.attribute() ) {
-      switch ( fnv1a::make_hash_lower<wchar_t>(current.name()) ) {
+      switch ( fnv1a::make_hash_lower(current.name()) ) {
         case L"parent"_fnv1a: {
           process_patch(ctx.parent(), current.children());
           break;
@@ -86,7 +93,7 @@ void process_patch(
         }
       }
     } else {
-      switch ( fnv1a::make_hash_lower<wchar_t>(current.name()) ) {
+      switch ( fnv1a::make_hash_lower(current.name()) ) {
         case L"parent"_fnv1a: {
           process_patch(ctx.parent(), current.children());
           break;

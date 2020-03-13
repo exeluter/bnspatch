@@ -26,6 +26,12 @@
     <Filter Include="Source Files\detours">
       <UniqueIdentifier>{848c6380-e69b-46e0-b1be-2472a83d8be2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\detours">
+      <UniqueIdentifier>{76499094-ef0a-4443-ae3a-552d13079271}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pe">
+      <UniqueIdentifier>{12a418fe-f7e1-47bb-93c6-4a0f34cccfae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -34,23 +40,32 @@
     <ClCompile Include="hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\include\detours\modules.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\include\detours\creatwth.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\include\detours\detours.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\include\detours\disasm.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\include\detours\image.cpp">
-      <Filter>Source Files\detours</Filter>
-    </ClCompile>
     <ClCompile Include="xmlpatch.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="detours\modules.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="detours\creatwth.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="detours\detours.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="detours\disasm.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="detours\image.cpp">
+      <Filter>Source Files\detours</Filter>
+    </ClCompile>
+    <ClCompile Include="pe\export_directory.cpp">
+      <Filter>Source Files\pe</Filter>
+    </ClCompile>
+    <ClCompile Include="pe\module.cpp">
+      <Filter>Source Files\pe</Filter>
+    </ClCompile>
+    <ClCompile Include="pe\segment.cpp">
+      <Filter>Source Files\pe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -69,9 +84,6 @@
     <ClInclude Include="pe\module.h">
       <Filter>Header Files\pe</Filter>
     </ClInclude>
-    <ClInclude Include="pe\pe.h">
-      <Filter>Header Files\pe</Filter>
-    </ClInclude>
     <ClInclude Include="pe\segment.h">
       <Filter>Header Files\pe</Filter>
     </ClInclude>
@@ -84,8 +96,11 @@
     <ClInclude Include="wow64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fnv1a.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="detours\detours.h">
+      <Filter>Header Files\detours</Filter>
+    </ClInclude>
+    <ClInclude Include="detours\detver.h">
+      <Filter>Header Files\detours</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

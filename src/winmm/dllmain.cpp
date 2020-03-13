@@ -4,11 +4,11 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include <detours/detours.h>
 #include <xorstr.hpp>
 #include <SafeInt.hpp>
 
-#include "fnv1a.h"
+#include "detours/detours.h"
+#include <fnv1a.h>
 #include "hooks.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"

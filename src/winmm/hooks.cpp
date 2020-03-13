@@ -11,9 +11,9 @@ namespace fs = std::filesystem;
 #include <optional>
 #include <queue>
 
-#include <detours/detours.h>
 #include <fastwildcompare.hpp>
 #include <fmt/format.h>
+#include <fnv1a.h>
 #include <gsl/span>
 #include <gsl/span_ext>
 #include <magic_enum.hpp>
@@ -21,7 +21,7 @@ namespace fs = std::filesystem;
 #include <SafeInt.hpp>
 #include <xorstr.hpp>
 
-#include "fnv1a.h"
+#include "detours/detours.h"
 #include "ntapi/string_span.h"
 #include "thread_local_lock.h"
 #include "pe/module.h"
