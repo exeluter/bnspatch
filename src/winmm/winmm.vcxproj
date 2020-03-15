@@ -58,7 +58,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ntdll.lib;delayimp.lib;$(ProjectDir)lib\$(PlatformShortName)\$(ProjectName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;delayimp.lib;$(SolutionDir)lib\$(PlatformShortName)\$(ProjectName).lib;$(SolutionDir)lib\$(PlatformShortName)\libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>$(TargetFileName);%(DelayLoadDLLs)</DelayLoadDLLs>
       <ModuleDefinitionFile>$(ProjectName)_$(PlatformShortName).def</ModuleDefinitionFile>
     </Link>

@@ -139,18 +139,20 @@ VOID CALLBACK DllNotification(
 #endif
         if ( auto pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(
           module->find_function(xorstr_("GetInterfaceVersion"))) ) {
-          auto version = ic_wstring_view(pfnGetInterfaceVersion());
-
-          if ( version == xorstr_(L"14") || version == xorstr_(L"15") ) {
-            DetourTransactionBegin();
-            DetourUpdateThread(NtCurrentThread());
-            if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
-              module->find_function(xorstr_("CreateXmlReader"))) )
-              DetourAttach(&(PVOID &)g_pfnCreateXmlReader, &CreateXmlReader_hook);
-            if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
-              module->find_function(xorstr_("DestroyXmlReader"))) )
-              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
-            DetourTransactionCommit();
+          switch ( _wtoi(pfnGetInterfaceVersion()) ) {
+            //case 13:
+            case 14:
+            case 15:
+              DetourTransactionBegin();
+              DetourUpdateThread(NtCurrentThread());
+              if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
+                module->find_function(xorstr_("CreateXmlReader"))) )
+                DetourAttach(&(PVOID &)g_pfnCreateXmlReader, &CreateXmlReader_hook);
+              if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
+                module->find_function(xorstr_("DestroyXmlReader"))) )
+                DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
+              DetourTransactionCommit();
+              break;
           }
         }
       }

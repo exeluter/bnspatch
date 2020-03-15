@@ -1,7 +1,6 @@
 #pragma once
 #include "export_directory.h"
 #include "module.h"
-
 #include <ntdll.h>
 #include <chrono>
 
@@ -9,12 +8,12 @@ namespace pe
 {
   const module *export_directory::module() const
   {
-    return pe::get_module_from_address(this);
+    return get_module_from_address(this);
   }
 
   module *export_directory::module()
   {
-    return pe::get_module_from_address(this);
+    return get_module_from_address(this);
   }
 
   std::chrono::system_clock::time_point export_directory::timestamp() const

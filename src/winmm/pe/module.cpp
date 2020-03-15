@@ -1,11 +1,12 @@
 #pragma once
+#include "module.h"
+#include "segment.h"
+#include "..\ic_char_traits.h"
+#include "..\ntapi\string_span.h"
+#include "..\ntapi\critical_section.h"
 #include <ntdll.h>
 #include <string>
 #include <mutex>
-#include "..\ic_char_traits.h"
-#include "segment.h"
-#include "..\ntapi\string_span.h"
-#include "..\ntapi\critical_section.h"
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
@@ -18,7 +19,7 @@ namespace pe
 
   module::operator HINSTANCE() const
   {
-    return reinterpret_cast<HINSTANCE>(const_cast<pe::module *>(this));
+    return reinterpret_cast<HINSTANCE>(const_cast<module *>(this));
   }
 
   ic_wstring module::base_name() const
@@ -79,7 +80,7 @@ namespace pe
 
   const IMAGE_NT_HEADERS *module::nt_header() const
   {
-    return const_cast<pe::module *>(this)->nt_header();
+    return const_cast<module *>(this)->nt_header();
   }
 
   size_t module::size() const
@@ -96,26 +97,26 @@ namespace pe
     return ntheader->OptionalHeader.SizeOfImage;
   }
 
-  gsl::span<class pe::segment> module::segments()
+  gsl::span<segment> module::segments()
   {
     const auto ntheader = this->nt_header();
     if ( !ntheader )
       return {};
 
     return gsl::make_span(
-      reinterpret_cast<class pe::segment *>(IMAGE_FIRST_SECTION(ntheader)),
+      reinterpret_cast<class segment *>(IMAGE_FIRST_SECTION(ntheader)),
       ntheader->FileHeader.NumberOfSections);
   }
 
-  gsl::span<const class pe::segment> module::segments() const
+  gsl::span<const class segment> module::segments() const
   {
-    return const_cast<pe::module *>(this)->segments();
+    return const_cast<module *>(this)->segments();
   }
 
-  class pe::segment *module::segment(const std::string_view &name)
+  class segment *module::segment(const std::string_view &name)
   {
     const auto segments = this->segments();
-    const auto &it = std::find_if(segments.begin(), segments.end(), [&](const pe::segment &x) {
+    const auto &it = std::find_if(segments.begin(), segments.end(), [&](const class segment &x) {
       return x.name() == name;
     });
     if ( it != segments.end() )
@@ -124,9 +125,9 @@ namespace pe
     throw nullptr;
   }
 
-  const class pe::segment *module::segment(const std::string_view &name) const
+  const class segment *module::segment(const std::string_view &name) const
   {
-    return const_cast<pe::module *>(this)->segment(name);
+    return const_cast<module *>(this)->segment(name);
   }
 
   class export_directory *module::export_directory()
@@ -139,13 +140,13 @@ namespace pe
       || !ntheader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size )
       return nullptr;
 
-    return this->rva_to<pe::export_directory>(
+    return this->rva_to<class export_directory>(
       ntheader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
   }
 
   const class export_directory *module::export_directory() const
   {
-    return const_cast<pe::module *>(this)->export_directory();
+    return const_cast<module *>(this)->export_directory();
   }
 
   void *module::find_function(const char *name) const
@@ -153,7 +154,7 @@ namespace pe
     if ( !name ) return nullptr;
 
     if ( PVOID ProcedureAddress;
-      NT_SUCCESS(LdrGetProcedureAddress(const_cast<pe::module *>(this), ntapi::string_span(name), 0, &ProcedureAddress)) ) {
+      NT_SUCCESS(LdrGetProcedureAddress(const_cast<module *>(this), ntapi::string_span(name), 0, &ProcedureAddress)) ) {
       return ProcedureAddress;
     }
     return nullptr;
@@ -164,7 +165,7 @@ namespace pe
     if ( !num ) return nullptr;
 
     if ( PVOID ProcedureAddress;
-      NT_SUCCESS(LdrGetProcedureAddress(const_cast<pe::module *>(this), nullptr, num, &ProcedureAddress)) ) {
+      NT_SUCCESS(LdrGetProcedureAddress(const_cast<module *>(this), nullptr, num, &ProcedureAddress)) ) {
       return ProcedureAddress;
     }
     return nullptr;

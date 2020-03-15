@@ -7,12 +7,12 @@
 
 namespace pe
 {
-  const module *segment::module() const
+  const class module *segment::module() const
   {
     return get_module_from_address(this);
   }
 
-  module *segment::module()
+  class module *segment::module()
   {
     return get_module_from_address(this);
   }
@@ -24,7 +24,7 @@ namespace pe
       if ( !this->Name[count] )
         break;
     }
-    return { (char *)this->Name, count };
+    return { reinterpret_cast<const char *>(this->Name), count };
   }
 
   gsl::span<uint8_t> segment::as_bytes()
