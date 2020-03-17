@@ -58,18 +58,18 @@ shared it with.
 <details>
   <summary>Long version</summary>
 
-  BnS Buddy's developer has been known to spread [FUD](https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt)
-  around in an effort to discourage others from using alternative solutions,
-  by using spooky terminology like ["injecting"][2.1], ["bannable" and "exploit"][2.2].
-
-  While bnspatch does make use of DLL hijacking to do what it does, this exact
-  same method is also used by the multi-client feature in BnS Buddy (and the
-  XIGNCODE3 bypass as well, previously).
-
-  In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe
-  than BnS Buddy is. I don't expect its developer to understand any of this
-  though, since they literally copy-pasted both of those features from other
-  people, without giving any credit ([~~dead link~~][2.3] [mirror][2.4], [link][2.5]).
+>  BnS Buddy's developer has been known to spread [FUD](https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt)
+>  around in an effort to discourage others from using alternative solutions,
+>  by using spooky terminology like ["injecting"][2.1], ["bannable" and "exploit"][2.2].
+>
+>  While bnspatch does make use of DLL hijacking to do what it does, this exact
+>  same method is also used by the multi-client feature in BnS Buddy (and the
+>  XIGNCODE3 bypass as well, previously).
+>
+>  In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe
+>  than BnS Buddy is. I don't expect its developer to understand any of this
+>  though, since they literally copy-pasted both of those features from other
+>  people, without giving any credit ([~~dead link~~][2.3] [mirror][2.4], [link][2.5]).
 </details>
 
 #### Q: Is this compatible with BnS Buddy?
