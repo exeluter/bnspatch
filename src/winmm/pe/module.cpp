@@ -27,8 +27,8 @@ namespace pe
     ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
     std::lock_guard<ntapi::critical_section> guard(crit);
 
-    const auto ModuleListHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
-    for ( auto Entry = ModuleListHead->Flink; Entry != ModuleListHead; Entry = Entry->Flink ) {
+    auto const Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
+    for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
       if ( Module->DllBase == this ) {
@@ -44,8 +44,8 @@ namespace pe
     ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
     std::lock_guard<ntapi::critical_section> guard(crit);
 
-    const auto ModuleListHead = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
-    for ( auto Entry = ModuleListHead->Flink; Entry != ModuleListHead; Entry = Entry->Flink ) {
+    const auto Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
+    for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
       if ( Module->DllBase == this ) {
@@ -171,14 +171,25 @@ namespace pe
     return nullptr;
   };
 
-  module *get_module(const wchar_t *name)
+  module *get_module(wchar_t const *name)
   {
-    if ( !name )
-      return reinterpret_cast<module *>(NtCurrentPeb()->ImageBaseAddress);
+    ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
 
-    if ( PVOID DllHandle;
-      NT_SUCCESS(LdrGetDllHandle(nullptr, nullptr, ntapi::ustring_span(name), &DllHandle)) ) {
-      return reinterpret_cast<module *>(DllHandle);
+    if ( !name ) {
+      return reinterpret_cast<module *>(NtCurrentPeb()->ImageBaseAddress);
+    } else {
+      std::lock_guard<ntapi::critical_section> guard(crit);
+
+      auto const Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
+      for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
+        auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+        if ( !Module->InMemoryOrderLinks.Flink )
+          continue;
+
+        if ( static_cast<ntapi::ustring_span *>(&Module->BaseDllName)->iequals(name) ) {
+          return reinterpret_cast<module *>(Module->DllBase);
+        }
+      }
     }
     return nullptr;
   }
@@ -194,7 +205,7 @@ namespace pe
     return get_module_from_address(const_cast<void *>(pc));
   }
 
-  module *get_instance_module()
+  inline module *instance_module()
   {
     return reinterpret_cast<module *>(&__ImageBase);
   }

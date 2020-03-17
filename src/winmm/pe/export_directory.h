@@ -1,6 +1,5 @@
 #pragma once
 #include <ntdll.h>
-#include <chrono>
 
 namespace pe
 {
@@ -10,7 +9,7 @@ namespace pe
     export_directory() = delete;
     const class module *module() const;
     class module *module();
-    std::chrono::system_clock::time_point timestamp() const;
+    __time32_t timestamp() const;
     const char *name() const;
   };
 }

@@ -42,5 +42,5 @@ namespace pe
   class module *get_module(const wchar_t *name = nullptr);
   class module *get_module_from_address(void *pc);
   const class module *get_module_from_address(const void *pc);
-  class module *get_instance_module();
+  class module *instance_module();
 }

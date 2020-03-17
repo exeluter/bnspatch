@@ -2,7 +2,6 @@
 #include "export_directory.h"
 #include "module.h"
 #include <ntdll.h>
-#include <chrono>
 
 namespace pe
 {
@@ -16,9 +15,9 @@ namespace pe
     return get_module_from_address(this);
   }
 
-  std::chrono::system_clock::time_point export_directory::timestamp() const
+  __time32_t export_directory::timestamp() const
   {
-    return std::chrono::system_clock::from_time_t(this->TimeDateStamp);
+    return this->TimeDateStamp;
   }
 
   const char *export_directory::name() const
