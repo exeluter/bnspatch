@@ -25,95 +25,8 @@ namespace fs = std::filesystem;
 #include "ntapi/string_span.h"
 #include "thread_local_lock.h"
 #include "pe/module.h"
-#include "xmlreader.h"
+#include "xmlhooks.h"
 #include "xmlpatch.h"
-
-XmlDoc *(__thiscall *g_pfnRead)(XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class XmlPieceReader *);
-XmlDoc *__fastcall Read_hook(
-  XmlReader const *thisptr,
-#ifdef _M_IX86
-  intptr_t unused__, // edx
-#endif
-  unsigned char const *data,
-  unsigned int size,
-  wchar_t const *fileName,
-  class XmlPieceReader *arg4)
-{
-  auto xmlDoc = g_pfnRead(thisptr, data, size, fileName, arg4);
-
-  if ( fileName && xmlDoc && xmlDoc->IsValid() ) {
-    std::queue<pugi::xml_node> queue;
-    for ( auto const &x : g_patches.select_nodes(xorstr_(L"/patches/patch")) ) {
-      if ( FastWildCompare(x.node().attribute(xorstr_(L"filename")).value(), fileName) )
-        queue.push(x.node());
-    }
-    if ( !queue.empty() ) {
-      pugi::xml_document doc;
-      auto decl = doc.prepend_child(pugi::node_declaration);
-      decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
-
-#ifdef NDEBUG
-      int flags = pugi::format_raw;
-#else
-      int flags = pugi::format_default;
-#endif
-      auto encoding = pugi::xml_encoding::encoding_auto;
-
-      if ( auto ext = fs::path(fileName).extension();
-        !_wcsicmp(ext.c_str(), xorstr_(L".x16")) ) {
-
-        decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
-        flags |= pugi::format_write_bom;
-        encoding = pugi::xml_encoding::encoding_utf16;
-      } else {
-        decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-8");
-      }
-      if ( auto name = xmlDoc->Name() )
-        doc.append_child(pugi::node_comment).set_value(name);
-
-      process_xmldoc(xmlDoc->Root(), doc);
-
-      do {
-        auto const &patch = queue.front();
-        process_patch(doc.document_element(), patch.children());
-        queue.pop();
-      } while ( !queue.empty() );
-
-      if ( std::array<WCHAR, MAX_PATH> path;
-        GetTempFileNameW(fs::temp_directory_path().c_str(), xorstr_(L"bns"), 0, path.data())
-        && doc.save_file(path.data(), xorstr_(L"  "), flags, encoding) ) {
-
-        thisptr->Close(xmlDoc);
-        xmlDoc = thisptr->Read(path.data(), arg4);
-#ifdef NDEBUG
-        DeleteFileW(path.data());
-#endif
-      }
-    }
-  }
-  return xmlDoc;
-}
-
-XmlReader *(*g_pfnCreateXmlReader)(void);
-XmlReader *CreateXmlReader_hook(void)
-{
-  auto xmlReader = g_pfnCreateXmlReader();
-  auto vftable = gsl::make_span(*reinterpret_cast<void ***>(xmlReader), 12);
-  auto vfcopy = new void *[vftable.size()];
-  std::copy(vftable.begin(), vftable.end(), vfcopy);
-  g_pfnRead = reinterpret_cast<decltype(g_pfnRead)>(
-    InterlockedExchangePointer(&vfcopy[7], &Read_hook));
-  *reinterpret_cast<void ***>(xmlReader) = vfcopy;
-  return xmlReader;
-}
-
-void(*g_pfnDestroyXmlReader)(XmlReader *);
-void DestroyXmlReader_hook(XmlReader *xmlReader)
-{
-  auto vfcopy = *reinterpret_cast<void ***>(xmlReader);
-  g_pfnDestroyXmlReader(xmlReader);
-  delete[] vfcopy;
-}
 
 void *g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -139,21 +52,35 @@ VOID CALLBACK DllNotification(
 #endif
         if ( auto pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(
           module->find_function(xorstr_("GetInterfaceVersion"))) ) {
+          DetourTransactionBegin();
+          DetourUpdateThread(NtCurrentThread());
           switch ( _wtoi(pfnGetInterfaceVersion()) ) {
-            //case 13:
+            case 13:
+              g_pfnCreateXmlReader13 = reinterpret_cast<decltype(g_pfnCreateXmlReader13)>(
+                module->find_function(xorstr_("CreateXmlReader")));
+              DetourAttach(&(PVOID &)g_pfnCreateXmlReader13, &CreateXmlReader13_hook);
+              g_pfnDestroyXmlReader13 = reinterpret_cast<decltype(g_pfnDestroyXmlReader13)>(
+                module->find_function(xorstr_("DestroyXmlReader")));
+              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader13, &DestroyXmlReader13_hook);
+              break;
             case 14:
+              g_pfnCreateXmlReader14 = reinterpret_cast<decltype(g_pfnCreateXmlReader14)>(
+                module->find_function(xorstr_("CreateXmlReader")));
+              DetourAttach(&(PVOID &)g_pfnCreateXmlReader14, &CreateXmlReader14_hook);
+              g_pfnDestroyXmlReader14 = reinterpret_cast<decltype(g_pfnDestroyXmlReader14)>(
+                module->find_function(xorstr_("DestroyXmlReader")));
+              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader14, &DestroyXmlReader14_hook);
+              break;
             case 15:
-              DetourTransactionBegin();
-              DetourUpdateThread(NtCurrentThread());
-              if ( g_pfnCreateXmlReader = reinterpret_cast<decltype(g_pfnCreateXmlReader)>(
-                module->find_function(xorstr_("CreateXmlReader"))) )
-                DetourAttach(&(PVOID &)g_pfnCreateXmlReader, &CreateXmlReader_hook);
-              if ( g_pfnDestroyXmlReader = reinterpret_cast<decltype(g_pfnDestroyXmlReader)>(
-                module->find_function(xorstr_("DestroyXmlReader"))) )
-                DetourAttach(&(PVOID &)g_pfnDestroyXmlReader, &DestroyXmlReader_hook);
-              DetourTransactionCommit();
+              g_pfnCreateXmlReader15 = reinterpret_cast<decltype(g_pfnCreateXmlReader15)>(
+                module->find_function(xorstr_("CreateXmlReader")));
+              DetourAttach(&(PVOID &)g_pfnCreateXmlReader15, &CreateXmlReader15_hook);
+              g_pfnDestroyXmlReader15 = reinterpret_cast<decltype(g_pfnDestroyXmlReader15)>(
+                module->find_function(xorstr_("DestroyXmlReader")));
+              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader15, &DestroyXmlReader15_hook);
               break;
           }
+          DetourTransactionCommit();
         }
       }
       break;

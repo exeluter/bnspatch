@@ -12,7 +12,6 @@ namespace fs = std::filesystem;
 #include "hooks.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"
-#include "wow64.h"
 
 LONG DetourAttachApi(
   pe::module *module,
@@ -77,7 +76,7 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
     case dliStartProcessing:
       break;
     case dliNotePreLoadLibrary:
-      if ( !_stricmp(pdli->szDll, pe::get_instance_module()->export_directory()->name())
+      if ( !_stricmp(pdli->szDll, pe::instance_module()->export_directory()->name())
         && GetSystemDirectoryW(Buffer.data(), SafeInt(Buffer.size())) ) {
 
         auto Path = fs::path(Buffer.data());

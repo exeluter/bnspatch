@@ -205,7 +205,7 @@ namespace pe
     return get_module_from_address(const_cast<void *>(pc));
   }
 
-  inline module *instance_module()
+  module *instance_module()
   {
     return reinterpret_cast<module *>(&__ImageBase);
   }

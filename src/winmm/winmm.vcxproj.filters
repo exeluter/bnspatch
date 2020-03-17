@@ -67,6 +67,9 @@
     <ClCompile Include="pe\segment.cpp">
       <Filter>Source Files\pe</Filter>
     </ClCompile>
+    <ClCompile Include="xmlhooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xmlreader.h">
@@ -101,6 +104,9 @@
     </ClInclude>
     <ClInclude Include="detours\detver.h">
       <Filter>Header Files\detours</Filter>
+    </ClInclude>
+    <ClInclude Include="xmlhooks.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@
 #include <codecvt>
 #include <filesystem>
 namespace fs = std::filesystem;
+#include <optional>
 
 #include <fmt/format.h>
 #include <fnv1a.h>
@@ -14,11 +15,9 @@ namespace fs = std::filesystem;
 #include <pugixml/pugixml.hpp>
 #include <xorstr.hpp>
 
-#include "ic_char_traits.h"
 #include "pe/module.h"
-#include "xmlreader.h"
 
-pugi::xml_document const g_patches = []() {
+pugi::xml_document const g_PatchesDocument = []() {
   PWSTR pszPath;
   pugi::xml_document doc;
 
@@ -51,7 +50,7 @@ load_patches:
   return doc;
 }();
 
-void process_patch(
+void ProcessPatch(
   pugi::xpath_node const &ctx,
   pugi::xml_object_range<pugi::xml_node_iterator> const &children)
 {
@@ -65,7 +64,7 @@ void process_patch(
     if ( ctx.attribute() ) {
       switch ( fnv1a::make_hash_lower(current.name()) ) {
         case L"parent"_fnv1a: {
-          process_patch(ctx.parent(), current.children());
+          ProcessPatch(ctx.parent(), current.children());
           break;
         } case L"set-name"_fnv1a: {
           ctx.attribute().set_name(current.attribute(xorstr_(L"name")).value());
@@ -74,18 +73,18 @@ void process_patch(
           ctx.attribute().set_value(current.attribute(xorstr_(L"value")).value());
           break;
         } case L"previous-attribute"_fnv1a: {
-          process_patch({ ctx.attribute().previous_attribute(), ctx.parent() }, current.children());
+          ProcessPatch({ ctx.attribute().previous_attribute(), ctx.parent() }, current.children());
           break;
         } case L"next-attribute"_fnv1a: {
-          process_patch({ ctx.attribute().next_attribute(), ctx.parent() }, current.children());
+          ProcessPatch({ ctx.attribute().next_attribute(), ctx.parent() }, current.children());
           break;
         } case L"insert-attribute-before"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch({ ctx.node().insert_attribute_before(name, ctx.attribute()), ctx.node() }, current.children());
+          ProcessPatch({ ctx.node().insert_attribute_before(name, ctx.attribute()), ctx.node() }, current.children());
           break;
         } case L"insert-attribute-after"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch({ ctx.node().insert_attribute_after(name, ctx.attribute()), ctx.node() }, current.children());
+          ProcessPatch({ ctx.node().insert_attribute_after(name, ctx.attribute()), ctx.node() }, current.children());
           break;
         } case L"remove"_fnv1a: {
           ctx.parent().remove_attribute(ctx.attribute());
@@ -95,28 +94,28 @@ void process_patch(
     } else {
       switch ( fnv1a::make_hash_lower(current.name()) ) {
         case L"parent"_fnv1a: {
-          process_patch(ctx.parent(), current.children());
+          ProcessPatch(ctx.parent(), current.children());
           break;
         } case L"select-node"_fnv1a: {
           auto query = current.attribute(xorstr_(L"query")).value();
-          process_patch(ctx.node().select_node(query), current.children());
+          ProcessPatch(ctx.node().select_node(query), current.children());
           break;
         } case L"select-nodes"_fnv1a: {
           auto query = current.attribute(xorstr_(L"query")).value();
           for ( auto &node : ctx.node().select_nodes(query) )
-            process_patch(node, current.children());
+            ProcessPatch(node, current.children());
           break;
         } case L"prepend-attribute"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name"));
-          process_patch({ ctx.node().prepend_attribute(name.value()), ctx.node() }, current.children());
+          ProcessPatch({ ctx.node().prepend_attribute(name.value()), ctx.node() }, current.children());
           break;
         } case L"append-attribute"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name"));
-          process_patch({ ctx.node().append_attribute(name.value()), ctx.node() }, current.children());
+          ProcessPatch({ ctx.node().append_attribute(name.value()), ctx.node() }, current.children());
           break;
         } case L"prepend-child"_fnv1a: {
           if ( auto name = current.attribute(xorstr_(L"name")) ) {
-            process_patch(ctx.node().prepend_child(name.value()), current.children());
+            ProcessPatch(ctx.node().prepend_child(name.value()), current.children());
           } else {
             std::optional<xml_node_type> t;
             if ( auto const type = current.attribute(xorstr_(L"type")) ) {
@@ -124,7 +123,7 @@ void process_patch(
               auto s = converter.to_bytes(type.value());
               t = magic_enum::enum_cast<xml_node_type>(s);
             }
-            process_patch(ctx.node().append_child(t.value_or(xml_node_type::node_element)), current.children());
+            ProcessPatch(ctx.node().append_child(t.value_or(xml_node_type::node_element)), current.children());
           }
           break;
         } case L"append-buffer"_fnv1a: {
@@ -133,7 +132,7 @@ void process_patch(
           break;
         } case L"append-child"_fnv1a: {
           if ( auto const name = current.attribute(xorstr_(L"name")) ) {
-            process_patch(ctx.node().append_child(name.value()), current.children());
+            ProcessPatch(ctx.node().append_child(name.value()), current.children());
           } else {
             std::optional<xml_node_type> t;
             if ( auto const type = current.attribute(xorstr_(L"type")) ) {
@@ -141,103 +140,103 @@ void process_patch(
               auto s = converter.to_bytes(type.value());
               t = magic_enum::enum_cast<xml_node_type>(s);
             }
-            process_patch(ctx.node().append_child(t.value_or(xml_node_type::node_element)), current.children());
+            ProcessPatch(ctx.node().append_child(t.value_or(xml_node_type::node_element)), current.children());
           }
           break;
         } case L"prepend-copy"_fnv1a: {
           auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
           if ( proto.attribute() ) {
-            process_patch({ ctx.node().prepend_copy(proto.attribute()), ctx.node() }, current.children());
+            ProcessPatch({ ctx.node().prepend_copy(proto.attribute()), ctx.node() }, current.children());
           } else {
-            process_patch(ctx.node().prepend_copy(proto.node()), current.children());
+            ProcessPatch(ctx.node().prepend_copy(proto.node()), current.children());
           }
           break;
         } case L"append-copy"_fnv1a: {
           auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
           if ( proto.attribute() ) {
-            process_patch({ ctx.node().append_copy(proto.attribute()), ctx.node() }, current.children());
+            ProcessPatch({ ctx.node().append_copy(proto.attribute()), ctx.node() }, current.children());
           } else {
-            process_patch(ctx.node().append_copy(proto.node()), current.children());
+            ProcessPatch(ctx.node().append_copy(proto.node()), current.children());
           }
           break;
         } case L"prepend-move"_fnv1a: {
           auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
-          process_patch(ctx.node().prepend_move(moved), current.children());
+          ProcessPatch(ctx.node().prepend_move(moved), current.children());
           break;
         } case L"append-move"_fnv1a: {
           auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
-          process_patch(ctx.node().append_move(moved), current.children());
+          ProcessPatch(ctx.node().append_move(moved), current.children());
           break;
         } case L"attribute"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch({ ctx.node().attribute(name), ctx.node() }, current.children());
+          ProcessPatch({ ctx.node().attribute(name), ctx.node() }, current.children());
           break;
         } case L"attributes"_fnv1a: {
           for ( auto &attr : ctx.node().attributes() )
-            process_patch({ attr, ctx.node() }, current.children());
+            ProcessPatch({ attr, ctx.node() }, current.children());
           break;
         } case L"child"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch(ctx.node().child(name), current.children());
+          ProcessPatch(ctx.node().child(name), current.children());
           break;
         } case L"children"_fnv1a: {
           for ( auto &child : ctx.node().children() )
-            process_patch(child, current.children());
+            ProcessPatch(child, current.children());
           break;
         } case L"find-child-by-attribute"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
           auto attr_name = current.attribute(xorstr_(L"attr-name")).value();
           auto attr_value = current.attribute(xorstr_(L"attr-value")).value();
-          process_patch(ctx.node().find_child_by_attribute(name, attr_name, attr_value), current.children());
+          ProcessPatch(ctx.node().find_child_by_attribute(name, attr_name, attr_value), current.children());
           break;
         } case L"first-attribute"_fnv1a: {
-          process_patch({ ctx.node().first_attribute(), ctx.node() }, current.children());
+          ProcessPatch({ ctx.node().first_attribute(), ctx.node() }, current.children());
           break;
         } case L"last-attribute"_fnv1a: {
-          process_patch({ ctx.node().last_attribute(), ctx.node() }, current.children());
+          ProcessPatch({ ctx.node().last_attribute(), ctx.node() }, current.children());
           break;
         } case L"first-child"_fnv1a: {
-          process_patch(ctx.node().first_child(), current.children());
+          ProcessPatch(ctx.node().first_child(), current.children());
           break;
         } case L"last-child"_fnv1a: {
-          process_patch(ctx.node().last_child(), current.children());
+          ProcessPatch(ctx.node().last_child(), current.children());
           break;
         } case L"first-element-by-path"_fnv1a: {
           auto path = current.attribute(xorstr_(L"path")).value();
-          process_patch(ctx.node().first_element_by_path(path), current.children());
+          ProcessPatch(ctx.node().first_element_by_path(path), current.children());
           break;
         } case L"insert-child-after"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
           auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_child_after(name, node), current.children());
+          ProcessPatch(ctx.node().insert_child_after(name, node), current.children());
           break;
         } case L"insert-child-before"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
           auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_child_before(name, node), current.children());
+          ProcessPatch(ctx.node().insert_child_before(name, node), current.children());
           break;
         } case L"insert-copy-after"_fnv1a: {
           auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value()).node();
           auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_copy_after(proto, node), current.children());
+          ProcessPatch(ctx.node().insert_copy_after(proto, node), current.children());
           break;
         } case L"insert-copy-before"_fnv1a: {
           auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value()).node();
           auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_copy_before(proto, node), current.children());
+          ProcessPatch(ctx.node().insert_copy_before(proto, node), current.children());
           break;
         } case L"insert-move-after"_fnv1a: {
           auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
           auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_move_after(moved, node), current.children());
+          ProcessPatch(ctx.node().insert_move_after(moved, node), current.children());
           break;
         } case L"insert-move-before"_fnv1a: {
           auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
           auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_move_before(moved, node), current.children());
+          ProcessPatch(ctx.node().insert_move_before(moved, node), current.children());
           break;
         } case L"next-sibling"_fnv1a: {
-          process_patch(ctx.node().next_sibling(), current.children());
+          ProcessPatch(ctx.node().next_sibling(), current.children());
           break;
         } case L"remove-attribute"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
@@ -254,7 +253,7 @@ void process_patch(
           ctx.node().remove_children();
           break;
         } case L"root"_fnv1a: {
-          process_patch(ctx.node().root(), current.children());
+          ProcessPatch(ctx.node().root(), current.children());
           break;
         } case L"set-name"_fnv1a: {
           auto name = current.attribute(xorstr_(L"name")).value();
@@ -271,13 +270,4 @@ void process_patch(
       }
     }
   }
-}
-
-void process_xmldoc(XmlElement const *src, pugi::xml_node &dst)
-{
-  auto node = dst.append_child(src->Name());
-  for ( int i = 0; i < src->AttributeCount(); ++i )
-    node.append_attribute(src->AttributeName(i)) = src->Attribute(i);
-  for ( auto child = src->FirstChildElement(); child; child = child->NextElement() )
-    process_xmldoc(child, node);
 }
