@@ -75,7 +75,7 @@ if ( !$env:CI -or [System.IO.File]::Exists("$env:MSBuildProjectDir\scripts\postb
     if ( [System.IO.Directory]::Exists($BaseDir) ) {
       switch ( $env:MSBuildPlatformTarget ) {
         'x86' { Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force; break }
-        'x64' { Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force; break }
+        'x64' { Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin64\" -Force; break }
       }
     }
   }
