@@ -1,13 +1,14 @@
 function Get-BaseDir {
   param(
-    [string]$SubKey
+    [Parameter(Mandatory=$true)] [string]$SubKey,
+    [Parameter(Mandatory=$false)] [string]$Combine
   )
 
   $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
   try {
     $key = $localMachine.OpenSubKey($SubKey)
     try {
-        return [string]$key.GetValue('BaseDir')
+        return [System.IO.Path]::Combine([string]$key.GetValue('BaseDir'), $Combine)
     } catch {
     } finally {
       if ( $key -ne $null ) {
@@ -25,19 +26,22 @@ function Get-BaseDir {
 
 function Get-InstallLocation {
   param(
-    [string]$ProductCode
+    [Parameter(Mandatory=$true)] [string]$ProductCode,
+    [Parameter(Mandatory=$false)] [string]$Combine
   )
 
   $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
   try {
     $key = $localMachine.OpenSubKey("SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$ProductCode")
     try {
-        return [string]$key.GetValue('InstallLocation')
+        return [System.IO.Path]::Combine([string]$key.GetValue('InstallLocation'), $Combine)
+    } catch {
     } finally {
       if ( $key -ne $null ) {
         $key.Dispose()
       }
     }
+  } catch {
   } finally {
     if ( $localMachine -ne $null ) {
       $localMachine.Dispose()
@@ -68,10 +72,11 @@ if ( !$env:CI -or [System.IO.File]::Exists("$env:MSBuildProjectDir\scripts\postb
     $TWBNS22BaseDir = Get-InstallLocation -ProductCode '{37EEA701-C7E3-4DC9-BCFB-39C89A6998AD}'
   }
   foreach ( $BaseDir in @($BnSBaseDir, $TWBNS22BaseDir) ) {
-    if ( [System.IO.Directory]::Exists($BaseDir) -and $env:MSBuildPlatformTarget -eq 'x64' ) {
-      Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin64\" -Force
-    } else {
-      Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force
+    if ( [System.IO.Directory]::Exists($BaseDir) ) {
+      switch ( $env:MSBuildPlatformTarget ) {
+        'x86' { Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force; break }
+        'x64' { Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force; break }
+      }
     }
   }
 
@@ -80,9 +85,9 @@ if ( !$env:CI -or [System.IO.File]::Exists("$env:MSBuildProjectDir\scripts\postb
     Copy-Item "$env:MSBuildTargetPath" -Destination "$BlueBnsBaseDir\bin\" -Force
   }
 
-  $BNSRBaseDir = Get-BaseDir -SubKey 'SOFTWARE\plaync\BNSR_LIVE'
+  $BNSRBaseDir = Get-BaseDir -SubKey 'SOFTWARE\plaync\BNSR_LIVE' -Combine 'BNSR'
   if ( !$BNSRBaseDir -or ![System.IO.Directory]::Exists($BNSRBaseDir) ) {
-    $BNSRBaseDir = Get-InstallLocation -ProductCode '{97789F8F-D694-46FC-B5C7-2C59EEEBE7A1}'
+    $BNSRBaseDir = Get-InstallLocation -ProductCode '{97789F8F-D694-46FC-B5C7-2C59EEEBE7A1}' -Combine 'BNSR'
   }
   if ( [System.IO.Directory]::Exists($BNSRBaseDir) -and $env:MSBuildPlatformTarget -eq 'x64' ) {
     Copy-Item "$env:MSBuildTargetPath" -Destination "$BNSRBaseDir\Binaries\Win64\" -Force

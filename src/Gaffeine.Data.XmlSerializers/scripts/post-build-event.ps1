@@ -33,11 +33,13 @@ function Get-InstallLocation {
     $key = $localMachine.OpenSubKey("SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$ProductCode")
     try {
         return [string]$key.GetValue('InstallLocation')
+    } catch {
     } finally {
       if ( $key -ne $null ) {
         $key.Dispose()
       }
     }
+  } catch {
   } finally {
     if ( $localMachine -ne $null ) {
       $localMachine.Dispose()
