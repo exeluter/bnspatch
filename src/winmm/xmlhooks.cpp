@@ -70,32 +70,6 @@ bool Patch(wchar_t const *DocumentName, XmlElement *root, wchar_t const *file, s
   return false;
 }
 
-v14::XmlDoc *(__thiscall *g_pfnRead14)(v14::XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class v14::XmlPieceReader *);
-v14::XmlDoc *__fastcall Read14_hook(
-  v14::XmlReader const *thisptr,
-#ifdef _M_IX86
-  intptr_t unused__, // edx
-#endif
-  unsigned char const *data,
-  unsigned int size,
-  wchar_t const *file,
-  class v14::XmlPieceReader *arg4)
-{
-  std::array<WCHAR, MAX_PATH> tempFile;
-  auto Document = g_pfnRead14(thisptr, data, size, file, arg4);
-
-  if ( Document
-    && Document->IsValid()
-    && Patch(Document->Name(), Document->Root(), file, tempFile) ) {
-    thisptr->Close(Document);
-    Document = thisptr->Read(tempFile.data(), arg4);
-#ifdef NDEBUG
-    DeleteFileW(tempFile.data());
-#endif
-  }
-  return Document;
-}
-
 v13::XmlDoc *(__thiscall *g_pfnRead13)(v13::XmlReader const *, unsigned char const *, unsigned int, wchar_t const *);
 v13::XmlDoc *__fastcall Read13_hook(
   v13::XmlReader const *thisptr,
@@ -115,6 +89,32 @@ v13::XmlDoc *__fastcall Read13_hook(
 
     thisptr->Close(Document);
     Document = thisptr->Read(tempFile.data());
+#ifdef NDEBUG
+    DeleteFileW(tempFile.data());
+#endif
+  }
+  return Document;
+}
+
+v14::XmlDoc *(__thiscall *g_pfnRead14)(v14::XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class v14::XmlPieceReader *);
+v14::XmlDoc *__fastcall Read14_hook(
+  v14::XmlReader const *thisptr,
+#ifdef _M_IX86
+  intptr_t unused__, // edx
+#endif
+  unsigned char const *data,
+  unsigned int size,
+  wchar_t const *file,
+  class v14::XmlPieceReader *arg4)
+{
+  std::array<WCHAR, MAX_PATH> tempFile;
+  auto Document = g_pfnRead14(thisptr, data, size, file, arg4);
+
+  if ( Document
+    && Document->IsValid()
+    && Patch(Document->Name(), Document->Root(), file, tempFile) ) {
+    thisptr->Close(Document);
+    Document = thisptr->Read(tempFile.data(), arg4);
 #ifdef NDEBUG
     DeleteFileW(tempFile.data());
 #endif
@@ -184,19 +184,19 @@ v15::XmlReader *CreateXmlReader15_hook(void)
   return ptr;
 }
 
-void(*g_pfnDestroyXmlReader14)(v14::XmlReader *);
-void DestroyXmlReader14_hook(v14::XmlReader *xmlReader)
-{
-  auto vfcopy = *reinterpret_cast<void ***>(xmlReader);
-  g_pfnDestroyXmlReader14(xmlReader);
-  delete[] vfcopy;
-}
-
 void(*g_pfnDestroyXmlReader13)(v13::XmlReader *);
 void DestroyXmlReader13_hook(v13::XmlReader *xmlReader)
 {
   auto vfcopy = *reinterpret_cast<void ***>(xmlReader);
   g_pfnDestroyXmlReader13(xmlReader);
+  delete[] vfcopy;
+}
+
+void(*g_pfnDestroyXmlReader14)(v14::XmlReader *);
+void DestroyXmlReader14_hook(v14::XmlReader *xmlReader)
+{
+  auto vfcopy = *reinterpret_cast<void ***>(xmlReader);
+  g_pfnDestroyXmlReader14(xmlReader);
   delete[] vfcopy;
 }
 

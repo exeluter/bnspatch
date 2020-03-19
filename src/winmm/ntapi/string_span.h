@@ -9,7 +9,7 @@
 namespace ntapi
 {
   template<class T>
-  class basic_string_span : public T
+  class basic_string_span : private T
   {
   public:
 #pragma region Member types

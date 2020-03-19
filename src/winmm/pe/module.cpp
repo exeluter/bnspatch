@@ -32,7 +32,7 @@ namespace pe
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
       if ( Module->DllBase == this ) {
-        const auto name = static_cast<ntapi::ustring_span *>(&Module->BaseDllName);
+        const auto name = reinterpret_cast<ntapi::ustring_span *>(&Module->BaseDllName);
         return ic_wstring(name->begin(), name->end());
       }
     }
@@ -49,7 +49,7 @@ namespace pe
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
       if ( Module->DllBase == this ) {
-        const auto name = static_cast<ntapi::ustring_span *>(&Module->FullDllName);
+        const auto name = reinterpret_cast<ntapi::ustring_span *>(&Module->FullDllName);
         return ic_wstring(name->begin(), name->end());
       }
     }
@@ -186,7 +186,7 @@ namespace pe
         if ( !Module->InMemoryOrderLinks.Flink )
           continue;
 
-        if ( static_cast<ntapi::ustring_span *>(&Module->BaseDllName)->iequals(name) ) {
+        if ( reinterpret_cast<ntapi::ustring_span *>(&Module->BaseDllName)->iequals(name) ) {
           return reinterpret_cast<module *>(Module->DllBase);
         }
       }

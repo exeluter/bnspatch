@@ -14,12 +14,12 @@ namespace pe
     uintptr_t handle() const;
     operator HINSTANCE() const;
     template <class T>
-    inline T *rva_to(uint32_t rva)
+    inline auto rva_to(uint32_t rva)
     {
       return reinterpret_cast<T *>(reinterpret_cast<uintptr_t>(this) + rva);
     }
     template <class T>
-    inline T *rva_to(uint32_t rva) const
+    inline auto rva_to(uint32_t rva) const
     {
       return reinterpret_cast<const T *>(reinterpret_cast<uintptr_t>(this) + rva);
     }

@@ -42,7 +42,7 @@ VOID CALLBACK DllNotification(
   switch ( NotificationReason ) {
     case LDR_DLL_NOTIFICATION_REASON_LOADED: {
       const auto module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
-      const auto base_name = static_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
+      const auto base_name = reinterpret_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
 
 #ifdef _M_X64
       if ( base_name->iequals(xorstr_(L"XmlReader_cl64.dll"))
@@ -102,7 +102,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock()
-    && static_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
+    && reinterpret_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -121,7 +121,7 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock() ) {
-    if ( static_cast<ntapi::ustring_span *>(DllName)->iequals(
+    if ( reinterpret_cast<ntapi::ustring_span *>(DllName)->iequals(
 #ifdef _M_X64
       xorstr_(L"aegisty64.bin")
 #else
@@ -172,7 +172,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
 {
   if ( ObjectAttributes
     && ObjectAttributes->ObjectName
-    && static_cast<ntapi::ustring_span *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
+    && reinterpret_cast<ntapi::ustring_span *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
 
     ObjectAttributes->ObjectName = nullptr;
     ObjectAttributes->Attributes &= ~OBJ_OPENIF;
@@ -190,28 +190,48 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   ULONG NewProtect,
   PULONG OldProtect)
 {
-  PROCESS_BASIC_INFORMATION ProcessInfo;
-  SYSTEM_BASIC_INFORMATION SystemInfo;
+  PROCESS_BASIC_INFORMATION pbi;
+  SYSTEM_BASIC_INFORMATION sbi;
   ULONG_PTR StartingAddress;
 
   if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY | PAGE_WRITECOMBINE)
     && (ProcessHandle == NtCurrentProcess()
-      || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-        && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-    && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
+      || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+        && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
+    && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
-      StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)SystemInfo.PageSize - 1);
+      StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)sbi.PageSize - 1);
     } __except ( EXCEPTION_EXECUTE_HANDLER ) {
       return GetExceptionCode();
     }
 
     for ( const auto &Address : g_ReadOnlyAddresses ) {
-      if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)SystemInfo.PageSize - 1)) )
+      if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)sbi.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }
   }
   return g_pfnNtProtectVirtualMemory(ProcessHandle, BaseAddress, RegionSize, NewProtect, OldProtect);
+}
+
+decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
+NTSTATUS NTAPI NtSetInformationThread_hook(
+  HANDLE ThreadHandle,
+  THREADINFOCLASS ThreadInformationClass,
+  PVOID ThreadInformation,
+  ULONG ThreadInformationLength)
+{
+  THREAD_BASIC_INFORMATION tbi;
+
+  if ( ThreadInformationClass == ThreadHideFromDebugger
+    && ThreadInformationLength == 0 ) {
+    if ( ThreadHandle == NtCurrentThread()
+      || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0))
+        && tbi.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+      return STATUS_SUCCESS;
+    }
+  }
+  return g_pfnNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 }
 
 decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
@@ -222,11 +242,11 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
   ULONG ProcessInformationLength,
   PULONG ReturnLength)
 {
-  PROCESS_BASIC_INFORMATION ProcessInfo;
+  PROCESS_BASIC_INFORMATION pbi;
 
   if ( ProcessHandle == NtCurrentProcess()
-    || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-      && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+    || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+      && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
 
     switch ( ProcessInformationClass ) {
       case ProcessDebugPort:

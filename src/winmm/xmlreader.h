@@ -203,11 +203,6 @@ namespace v14
   using v13::XmlReaderLog;
   using v13::XmlElement;
   using v13::XmlDoc;
-  using v13::XmlCfgDef;
-  using v13::XmlCfgDef2;
-  using v13::XmlConfigReader;
-  using v13::XmlNode;
-  using v13::XmlTextNode;
 
   class XmlPieceReader
   {
@@ -242,6 +237,12 @@ namespace v14
 #else
   static_assert(sizeof(XmlReader) == 0x4);
 #endif
+
+  using v13::XmlCfgDef;
+  using v13::XmlCfgDef2;
+  using v13::XmlConfigReader;
+  using v13::XmlNode;
+  using v13::XmlTextNode;
 }
 
 namespace v15
