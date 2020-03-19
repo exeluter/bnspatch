@@ -1,6 +1,6 @@
 function Get-BaseDir {
   param(
-    [string]$SubKey
+    [Parameter(Mandatory=$true)] [string]$SubKey
   )
 
   $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
@@ -25,7 +25,7 @@ function Get-BaseDir {
 
 function Get-InstallLocation {
   param(
-    [string]$ProductCode
+    [Parameter(Mandatory=$true)] [string]$ProductCode
   )
 
   $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
