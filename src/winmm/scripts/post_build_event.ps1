@@ -1,103 +1,90 @@
-function Get-BNSBaseDirectory {
+function Get-BaseDir {
+  param(
+    [string]$SubKey
+  )
+
   $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
-  if ( $localMachine -ne $null ) {
+  try {
+    $key = $localMachine.OpenSubKey($SubKey)
     try {
-      $key = $localMachine.OpenSubKey('SOFTWARE\NCWest\BnS')
-      try {
-        if ( $key -ne $null ) {
-          $value = [string]$key.GetValue('BaseDir')
-          if ( [System.IO.Directory]::Exists($value) ) {
-            return $value
-          }
-        }
-      } finally {
-        if ( $key -ne $null ) {
-          $key.Dispose()
-        }
-      }
-
-      $key = $localMachine.OpenSubKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{9C7ADD9B-0F54-4526-87E8-E739FBB91FD4}')
-      if ( $key -ne $null ) {
-        try {
-            $value = [string]$key.GetValue('InstallLocation')
-            if ( [System.IO.Directory]::Exists($value) ) {
-              return $value
-            }
-        } finally {
-          $key.Dispose()
-        }
-      }
-
-      $default = "$env:MSBuildProgramFiles32\NCSOFT\BNS"
-      if ( [System.IO.Directory]::Exists($default) ) {
-        return $default
-      }
+        return [string]$key.GetValue('BaseDir')
+    } catch {
     } finally {
-      if ( $localMachine -ne $null ) {
-        $localMachine.Dispose()
+      if ( $key -ne $null ) {
+        $key.Dispose()
       }
+    }
+  } catch {
+  } finally {
+    if ( $localMachine -ne $null ) {
+      $localMachine.Dispose()
     }
   }
   return $null
 }
 
-function Get-BNSRBaseDirectory {
+function Get-InstallLocation {
+  param(
+    [string]$ProductCode
+  )
+
   $localMachine = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
-  if ( $localMachine -ne $null ) {
+  try {
+    $key = $localMachine.OpenSubKey("SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$ProductCode")
     try {
-      $key = $localMachine.OpenSubKey('SOFTWARE\plaync\BNSR_LIVE')
-      try {
-        if ( $key -ne $null ) {
-        $value = [System.IO.Path]::Combine([string]$key.GetValue('BaseDir'), 'BNSR')
-          if ( [System.IO.Directory]::Exists($value) ) {
-            return $value
-          }
-        }
-      } finally {
-        if ( $key -ne $null ) {
-          $key.Dispose()
-        }
-      }
-
-      $key = $localMachine.OpenSubKey('SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{9C7ADD9B-0F54-4526-87E8-E739FBB91FD4}')
-      if ( $key -ne $null ) {
-        try {
-          $value = [System.IO.Path]::Combine([string]$key.GetValue('InstallLocation'), 'BNSR')
-            if ( [System.IO.Directory]::Exists($value) ) {
-              return $value
-            }
-        } finally {
-          $key.Dispose()
-        }
-      }
-
-      $default = "$env:MSBuildProgramFiles32\plaync\BNSR"
-      if ( [System.IO.Directory]::Exists($default) ) {
-        return $default
-      }
+        return [string]$key.GetValue('InstallLocation')
     } finally {
-      if ( $localMachine -ne $null ) {
-        $localMachine.Dispose()
+      if ( $key -ne $null ) {
+        $key.Dispose()
       }
+    }
+  } finally {
+    if ( $localMachine -ne $null ) {
+      $localMachine.Dispose()
     }
   }
   return $null
 }
 
-if ( !$env:CI ) {
-  if ( $env:MSBuildConfiguration.EndsWith('-BNSR') ) { 
-    $BaseDir = Get-BNSRBaseDirectory 
-    if ( $BaseDir ) {
-      Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\Binaries\Win64\" -Force
+if ( !$env:CI -or [System.IO.File]::Exists("$env:MSBuildProjectDir\scripts\postbuild.no") ) {
+  if ( ![System.IO.File]::Exists("$env:MSBuildProjectDir\scripts\postbuild.yes") ) {
+    Add-Type -AssemblyName 'System.Windows.Forms'
+    switch ( [System.Windows.Forms.MessageBox]::Show(`
+      "Would you like to automatically copy $env:MSBuildTargetFileName to your BNS folder(s) after compilation? You may need to copy it once manually and adjust its ACL.`nYou won't be asked about this again.",`
+      "$env:MSBuildTargetPath",`
+      [System.Windows.Forms.MessageBoxButtons]::YesNo,`
+      [System.Windows.Forms.MessageBoxIcon]::Question) ) {
+      {[System.Windows.Forms.DialogResult]::Yes} { '' > "$env:MSBuildProjectDir\scripts\postbuild.yes"; break }
+      {[System.Windows.Forms.DialogResult]::No} { '' > "$env:MSBuildProjectDir\scripts\postbuild.no" }
+      default { exit }
     }
-  } else { 
-    $BaseDir = Get-BNSBaseDirectory 
-    if ( $BaseDir ) {
-      if ( $env:MSBuildPlatformTarget -eq 'x64' ) {
-        Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin64\" -Force
-      } else {
-        Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force
-      }
+  }
+  $BnSBaseDir = Get-BaseDir -SubKey 'SOFTWARE\NCWest\BnS'
+  if ( ![System.IO.Directory]::Exists($BnSBaseDir) ) {
+    $BnSBaseDir = Get-InstallLocation -ProductCode '{9C7ADD9B-0F54-4526-87E8-E739FBB91FD4}'
+  }
+  $TWBNS22BaseDir = Get-BaseDir -SubKey 'SOFTWARE\NCTaiwan\TWBNS22'
+  if ( ![System.IO.Directory]::Exists($TWBNS22BaseDir) ) {
+    $TWBNS22BaseDir = Get-InstallLocation -ProductCode '{37EEA701-C7E3-4DC9-BCFB-39C89A6998AD}'
+  }
+  foreach ( $BaseDir in @($BnSBaseDir, $TWBNS22BaseDir) ) {
+    if ( [System.IO.Directory]::Exists($BaseDir) -and $env:MSBuildPlatformTarget -eq 'x64' ) {
+      Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin64\" -Force
+    } else {
+      Copy-Item "$env:MSBuildTargetPath" -Destination "$BaseDir\bin\" -Force
     }
+  }
+
+  $BlueBnsBaseDir = 'D:\BlueBnsGameHJ'
+  if ( [System.IO.Directory]::Exists($BlueBnsBaseDir) -and $env:MSBuildPlatformTarget -eq 'x86' ) {
+    Copy-Item "$env:MSBuildTargetPath" -Destination "$BlueBnsBaseDir\bin\" -Force
+  }
+
+  $BNSRBaseDir = Get-BaseDir -SubKey 'SOFTWARE\plaync\BNSR_LIVE'
+  if ( !$BNSRBaseDir -or ![System.IO.Directory]::Exists($BNSRBaseDir) ) {
+    $BNSRBaseDir = Get-InstallLocation -ProductCode '{97789F8F-D694-46FC-B5C7-2C59EEEBE7A1}'
+  }
+  if ( [System.IO.Directory]::Exists($BNSRBaseDir) -and $env:MSBuildPlatformTarget -eq 'x64' ) {
+    Copy-Item "$env:MSBuildTargetPath" -Destination "$BNSRBaseDir\Binaries\Win64\" -Force
   }
 }

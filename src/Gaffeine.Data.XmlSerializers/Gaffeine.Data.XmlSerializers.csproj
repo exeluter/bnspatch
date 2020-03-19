@@ -89,16 +89,27 @@
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
-    <PreBuildEvent>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
-set "MSBuildSolutionDir=$(SolutionDir)"
-set "MSBuildProjectDir=$(ProjectDir)"
-powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)scripts\pre-build-event.ps1"
-</PreBuildEvent>
+    <PreBuildEvent>
+      set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+      set "MSBuildTargetFileName=$(TargetFileName)"
+      set "MSBuildTargetPath=$(TargetPath)"
+      set "MSBuildPlatformTarget=$(PlatformTarget)"
+      set "MSBuildProjectDir=$(ProjectDir)"
+      set "MSBuildSolutionDir=$(SolutionDir)"
+      set "MSBuildConfiguration=$(Configuration)"
+      powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)scripts\pre-build-event.ps1"
+    </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
-set "MSBuildTargetPath=$(TargetPath)"
-powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)scripts\post-build-event.ps1"
-</PostBuildEvent>
+    <PostBuildEvent>
+      set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
+      set "MSBuildTargetFileName=$(TargetFileName)"
+      set "MSBuildTargetPath=$(TargetPath)"
+      set "MSBuildPlatformTarget=$(PlatformTarget)"
+      set "MSBuildProjectDir=$(ProjectDir)"
+      set "MSBuildSolutionDir=$(SolutionDir)"
+      set "MSBuildConfiguration=$(Configuration)"
+      powershell -ExecutionPolicy RemoteSigned -File "$(ProjectDir)scripts\post-build-event.ps1"
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
