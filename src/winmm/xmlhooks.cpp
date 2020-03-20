@@ -28,7 +28,7 @@ struct memory_buffer_writer : pugi::xml_writer
   virtual void write(const void *data, size_t size)
   {
     result.append(reinterpret_cast<const Char *>(data),
-      reinterpret_cast<const Char *>(reinterpret_cast<const uint8_t *>(data) + size));
+      reinterpret_cast<const Char *>(reinterpret_cast<const unsigned char *>(data) + size));
   }
 };
 

@@ -52,6 +52,13 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   ULONG NewProtect,
   PULONG OldProtect);
 
+extern decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
+NTSTATUS NTAPI NtSetInformationThread_hook(
+  HANDLE ThreadHandle,
+  THREADINFOCLASS ThreadInformationClass,
+  PVOID ThreadInformation,
+  ULONG ThreadInformationLength);
+
 extern decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
 NTSTATUS NTAPI NtQueryInformationProcess_hook(
   HANDLE ProcessHandle,
