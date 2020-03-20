@@ -9,7 +9,7 @@
 namespace ntapi
 {
   template<class T>
-  class basic_string_span : private T
+  class basic_string : private T
   {
   public:
 #pragma region Member types
@@ -38,7 +38,7 @@ namespace ntapi
 
   public:
 #pragma region Constructors
-    constexpr basic_string_span(const_pointer s)
+    constexpr basic_string(const_pointer s)
     {
       if ( s ) {
         this->Length = SafeInt(std::char_traits<char_type>::length(s) * sizeof(char_type));
@@ -49,7 +49,7 @@ namespace ntapi
       this->Buffer = const_cast<pointer>(s);
     }
 
-    constexpr basic_string_span(const_pointer s, size_type count) noexcept
+    constexpr basic_string(const_pointer s, size_type count) noexcept
     {
       this->Length = count * sizeof(char_type);
       this->MaximumLength = this->Length;
@@ -175,18 +175,18 @@ namespace ntapi
     {
     }
 
-    constexpr basic_string_span substr(size_type pos = 0, size_type count = npos) const
+    constexpr basic_string substr(size_type pos = 0, size_type count = npos) const
     {
     }
 
-    constexpr int compare(basic_string_span s) const noexcept;
-    constexpr int compare(size_type pos1, size_type count1, basic_string_span s) const;
-    constexpr int compare(size_type pos1, size_type count1, basic_string_span s, size_type pos2, size_type count2) const;
+    constexpr int compare(basic_string s) const noexcept;
+    constexpr int compare(size_type pos1, size_type count1, basic_string s) const;
+    constexpr int compare(size_type pos1, size_type count1, basic_string s, size_type pos2, size_type count2) const;
     constexpr int compare(const_pointer s) const;
     constexpr int compare(size_type pos1, size_type count1, const_pointer s) const;
     constexpr int compare(size_type pos1, size_type count1, const_pointer s, size_type count2) const;
 
-    constexpr bool equals(const basic_string_span &other) const
+    constexpr bool equals(const basic_string &other) const
     {
       size_t n1 = size_bytes();
       size_t n2 = other.size_bytes();
@@ -220,7 +220,7 @@ namespace ntapi
       return false;
     }
 
-    constexpr bool iequals(const basic_string_span &other) const
+    constexpr bool iequals(const basic_string &other) const
     {
       const auto &facet = std::use_facet<std::ctype<char_type>>(std::locale());
 
@@ -255,7 +255,7 @@ namespace ntapi
       return false;
     }
 
-    constexpr bool istarts_with(const basic_string_span &other) const noexcept
+    constexpr bool istarts_with(const basic_string &other) const noexcept
     {
       const auto &facet = std::use_facet<std::ctype<char_type>>(std::locale());
 
@@ -278,7 +278,7 @@ namespace ntapi
       return true;
     }
 
-    constexpr bool starts_with(const basic_string_span &other) const noexcept
+    constexpr bool starts_with(const basic_string &other) const noexcept
     {
       auto s1 = begin();
       auto s2 = other.begin();
@@ -296,7 +296,7 @@ namespace ntapi
       return true;
     }
 
-    constexpr bool ends_with(const basic_string_span &other) const noexcept
+    constexpr bool ends_with(const basic_string &other) const noexcept
     {
       auto s1 = rbegin();
       auto s2 = other.rbegin();
@@ -364,7 +364,7 @@ namespace ntapi
     //constexpr size_type find_last_not_of(const CharT *s, size_type pos = npos) const;
 #pragma endregion
 
-    bool operator==(const basic_string_span &rhs) const
+    bool operator==(const basic_string &rhs) const
     {
       return this->equals(rhs);
     }
@@ -385,6 +385,6 @@ namespace ntapi
     }
   };
 
-  using ustring_span = basic_string_span<UNICODE_STRING>;
-  using string_span = basic_string_span<STRING>;
+  using unicode_string = basic_string<UNICODE_STRING>;
+  using ansi_string = basic_string<ANSI_STRING>;
 }

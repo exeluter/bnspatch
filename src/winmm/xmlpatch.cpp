@@ -13,7 +13,11 @@ namespace fs = std::filesystem;
 #include <fnv1a.h>
 #include <magic_enum.hpp>
 #include <pugixml/pugixml.hpp>
+#ifdef NDEBUG
 #include <xorstr.hpp>
+#else
+#define xorstr_(str) (str)
+#endif
 
 #include "pe/module.h"
 

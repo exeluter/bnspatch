@@ -19,7 +19,11 @@ namespace fs = std::filesystem;
 #include <magic_enum.hpp>
 #include <pugixml/pugixml.hpp>
 #include <SafeInt.hpp>
+#ifdef NDEBUG
 #include <xorstr.hpp>
+#else
+#define xorstr_(str) (str)
+#endif
 
 #include "detours/detours.h"
 #include "ntapi/string_span.h"
@@ -42,7 +46,7 @@ VOID CALLBACK DllNotification(
   switch ( NotificationReason ) {
     case LDR_DLL_NOTIFICATION_REASON_LOADED: {
       const auto module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
-      const auto base_name = reinterpret_cast<const ntapi::ustring_span *>(NotificationData->Loaded.BaseDllName);
+      const auto base_name = reinterpret_cast<const ntapi::unicode_string *>(NotificationData->Loaded.BaseDllName);
 
 #ifdef _M_X64
       if ( base_name->iequals(xorstr_(L"XmlReader_cl64.dll"))
@@ -102,7 +106,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock()
-    && reinterpret_cast<ntapi::ustring_span *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
+    && reinterpret_cast<ntapi::unicode_string *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -121,7 +125,7 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock() ) {
-    if ( reinterpret_cast<ntapi::ustring_span *>(DllName)->iequals(
+    if ( reinterpret_cast<ntapi::unicode_string *>(DllName)->iequals(
 #ifdef _M_X64
       xorstr_(L"aegisty64.bin")
 #else
@@ -172,7 +176,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
 {
   if ( ObjectAttributes
     && ObjectAttributes->ObjectName
-    && reinterpret_cast<ntapi::ustring_span *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
+    && reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
 
     ObjectAttributes->ObjectName = nullptr;
     ObjectAttributes->Attributes &= ~OBJ_OPENIF;

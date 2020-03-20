@@ -4,14 +4,33 @@
 #include <queue>
 #include <Shlwapi.h>
 
+#include <sstream>
+
+#include <fmt/format.h>
 #include <fastwildcompare.hpp>
 #include <gsl/span>
 #include <gsl/span_ext>
 #include <safeint.hpp>
+#ifdef NDEBUG
 #include <xorstr.hpp>
+#else
+#define xorstr_(str) (str)
+#endif
 
 #include "xmlpatch.h"
 #include "xmlreader.h"
+
+template<class Char>
+struct memory_buffer_writer : pugi::xml_writer
+{
+  fmt::basic_memory_buffer<Char> result;
+
+  virtual void write(const void *data, size_t size)
+  {
+    result.append(reinterpret_cast<const Char *>(data),
+      reinterpret_cast<const Char *>(reinterpret_cast<const uint8_t *>(data) + size));
+  }
+};
 
 template <class XmlElement>
 void Convert(XmlElement const *src, pugi::xml_node &dst)
@@ -24,7 +43,7 @@ void Convert(XmlElement const *src, pugi::xml_node &dst)
 }
 
 template <class XmlElement>
-bool Patch(wchar_t const *DocumentName, XmlElement *root, wchar_t const *file, std::array<WCHAR, MAX_PATH> &tempFile)
+bool Patch(wchar_t const *DocumentName, XmlElement *root, wchar_t const *file, pugi::xml_writer &writer)
 {
   std::queue<pugi::xml_node> queue;
   for ( auto const &x : g_PatchesDocument.select_nodes(xorstr_(L"/patches/patch")) ) {
@@ -35,21 +54,8 @@ bool Patch(wchar_t const *DocumentName, XmlElement *root, wchar_t const *file, s
     pugi::xml_document doc;
     auto decl = doc.prepend_child(pugi::node_declaration);
     decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
+    decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"UTF-16");
 
-#ifdef NDEBUG
-    int flags = pugi::format_raw;
-#else
-    int flags = pugi::format_default;
-#endif
-    auto encoding = pugi::xml_encoding::encoding_auto;
-
-    if ( file && !_wcsicmp(PathFindExtensionW(file), xorstr_(L".x16")) ) {
-      decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
-      flags |= pugi::format_write_bom;
-      encoding = pugi::xml_encoding::encoding_utf16;
-    } else {
-      decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-8");
-    }
     if ( DocumentName )
       doc.append_child(pugi::node_comment).set_value(DocumentName);
 
@@ -61,11 +67,8 @@ bool Patch(wchar_t const *DocumentName, XmlElement *root, wchar_t const *file, s
       queue.pop();
     } while ( !queue.empty() );
 
-    std::array<WCHAR, MAX_PATH> TempPath;
-
-    return GetTempPathW(SafeInt(TempPath.size()), TempPath.data())
-      && GetTempFileNameW(TempPath.data(), xorstr_(L"bns"), 0, tempFile.data())
-      && doc.save_file(tempFile.data(), xorstr_(L"  "), flags, encoding);
+    doc.save(writer, L"", pugi::format_raw, pugi::xml_encoding::encoding_utf16);
+    return true;
   }
   return false;
 }
@@ -81,17 +84,13 @@ v13::XmlDoc *__fastcall Read13_hook(
   wchar_t const *file)
 {
   auto Document = g_pfnRead13(thisptr, data, size, file);
-  std::array<WCHAR, MAX_PATH> tempFile;
 
-  if ( Document
-    && Document->IsValid()
-    && Patch(Document->Name(), Document->Root(), file, tempFile) ) {
-
-    thisptr->Close(Document);
-    Document = thisptr->Read(tempFile.data());
-#ifdef NDEBUG
-    DeleteFileW(tempFile.data());
-#endif
+  if ( Document && Document->IsValid() ) {
+    memory_buffer_writer<unsigned char> writer;
+    if ( Patch(Document->Name(), Document->Root(), file, writer) ) {
+      thisptr->Close(Document);
+      Document = g_pfnRead13(thisptr, writer.result.data(), SafeInt(writer.result.size()), file);
+    }
   }
   return Document;
 }
@@ -107,17 +106,14 @@ v14::XmlDoc *__fastcall Read14_hook(
   wchar_t const *file,
   class v14::XmlPieceReader *arg4)
 {
-  std::array<WCHAR, MAX_PATH> tempFile;
   auto Document = g_pfnRead14(thisptr, data, size, file, arg4);
 
-  if ( Document
-    && Document->IsValid()
-    && Patch(Document->Name(), Document->Root(), file, tempFile) ) {
-    thisptr->Close(Document);
-    Document = thisptr->Read(tempFile.data(), arg4);
-#ifdef NDEBUG
-    DeleteFileW(tempFile.data());
-#endif
+  if ( Document && Document->IsValid() ) {
+    memory_buffer_writer<unsigned char> writer;
+    if ( Patch(Document->Name(), Document->Root(), file, writer) ) {
+      thisptr->Close(Document);
+      Document = g_pfnRead14(thisptr, writer.result.data(), SafeInt(writer.result.size()), file, arg4);
+    }
   }
   return Document;
 }
@@ -133,17 +129,14 @@ v15::XmlDoc *__fastcall Read15_hook(
   wchar_t const *file,
   class v15::XmlPieceReader *arg4)
 {
-  std::array<WCHAR, MAX_PATH> tempFile;
   auto Document = g_pfnRead15(thisptr, data, size, file, arg4);
 
-  if ( Document
-    && Document->IsValid()
-    && Patch(Document->Name(), Document->Root(), file, tempFile) ) {
-    thisptr->Close(Document);
-    Document = thisptr->Read(tempFile.data(), arg4);
-#ifdef NDEBUG
-    DeleteFileW(tempFile.data());
-#endif
+  if ( Document && Document->IsValid() ) {
+    memory_buffer_writer<unsigned char> writer;
+    if ( Patch(Document->Name(), Document->Root(), file, writer) ) {
+      thisptr->Close(Document);
+      Document = g_pfnRead15(thisptr, writer.result.data(), SafeInt(writer.result.size()), file, arg4);
+    }
   }
   return Document;
 }
