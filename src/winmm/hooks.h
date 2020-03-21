@@ -36,6 +36,13 @@ NTSTATUS NTAPI NtCreateFile_hook(
   PVOID EaBuffer,
   ULONG EaLength);
 
+extern decltype(&NtOpenKeyEx) g_pfnNtOpenKeyEx;
+NTSTATUS NTAPI NtOpenKeyEx_hook(
+  PHANDLE KeyHandle,
+  ACCESS_MASK DesiredAccess,
+  POBJECT_ATTRIBUTES ObjectAttributes,
+  ULONG OpenOptions);
+
 extern decltype(&NtCreateMutant) g_pfnNtCreateMutant;
 NTSTATUS NTAPI NtCreateMutant_hook(
   PHANDLE MutantHandle,
@@ -73,11 +80,6 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
   PVOID SystemInformation,
   ULONG SystemInformationLength,
   PULONG ReturnLength);
-
-extern decltype(&GetProcAddress) g_pfnGetProcAddress;
-FARPROC WINAPI GetProcAddress_hook(
-  HMODULE hModule,
-  LPCSTR lpProcName);
 
 extern decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(

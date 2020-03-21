@@ -152,6 +152,16 @@ NTSTATUS NTAPI NtCreateFile_hook(
   PVOID EaBuffer,
   ULONG EaLength)
 {
+#ifdef _M_IX86
+  if ( auto const ObjectName = reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName) ) {
+    switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
+      case L"\\\\.\\SICE"_fnv1au:
+      case L"\\\\.\\SIWVID"_fnv1au:
+      case L"\\\\.\\NTICE"_fnv1au:
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+  }
+#endif
   return g_pfnNtCreateFile(
     FileHandle,
     DesiredAccess,
@@ -164,6 +174,23 @@ NTSTATUS NTAPI NtCreateFile_hook(
     CreateOptions,
     EaBuffer,
     EaLength);
+}
+
+decltype(&NtOpenKeyEx) g_pfnNtOpenKeyEx;
+NTSTATUS NTAPI NtOpenKeyEx_hook(
+  PHANDLE KeyHandle,
+  ACCESS_MASK DesiredAccess,
+  POBJECT_ATTRIBUTES ObjectAttributes,
+  ULONG OpenOptions)
+{
+  if ( auto const ObjectName = reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName) ) {
+    switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
+      case L"Software\\Wine"_fnv1au:
+      case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+  }
+  return g_pfnNtOpenKeyEx(KeyHandle, DesiredAccess, ObjectAttributes, OpenOptions);
 }
 
 decltype(&NtCreateMutant) g_pfnNtCreateMutant;

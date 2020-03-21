@@ -58,11 +58,34 @@ struct basic_fnv1a
   }
 
   template <class Char>
+  static constexpr T make_hash(const Char *s, std::size_t length)
+  {
+    T hash = OffsetBasis;
+
+    for ( std::size_t i = 0; i < length; ++i) {
+      hash ^= static_cast<T>(s[i]);
+      hash *= Prime;
+    }
+    return hash;
+  }
+
+  template <class Char>
   static constexpr T make_hash_lower(const Char *s)
   {
     T hash = OffsetBasis;
     while ( *s ) {
       hash ^= static_cast<T>(details::tolower(*s++));
+      hash *= Prime;
+    }
+    return hash;
+  }
+
+  template <class Char>
+  static constexpr T make_hash_lower(const Char *s, std::size_t length)
+  {
+    T hash = OffsetBasis;
+    for ( std::size_t i = 0; i < length; ++i) {
+      hash ^= static_cast<T>(details::tolower(s[i]));
       hash *= Prime;
     }
     return hash;
@@ -78,41 +101,52 @@ struct basic_fnv1a
     }
     return hash;
   }
+
+  template <class Char>
+  static constexpr T make_hash_upper(const Char *s, std::size_t length)
+  {
+    T hash = OffsetBasis;
+    for ( std::size_t i = 0; i < length; ++i) {
+      hash ^= static_cast<T>(details::toupper(s[i]));
+      hash *= Prime;
+    }
+    return hash;
+  }
 };
 using fnv1a32 = basic_fnv1a<std::uint32_t, 0x1000193UL, 2166136261UL>;
 using fnv1a64 = basic_fnv1a<std::uint64_t, 0x100000001b3ULL, 14695981039346656037ULL>;
 
 constexpr auto operator"" _fnv1a32(const char *s, std::size_t len)
 {
-  return fnv1a32::make_hash(s);
+  return fnv1a32::make_hash(s, len);
 }
 constexpr auto operator"" _fnv1a32(const wchar_t *s, std::size_t len)
 {
-  return fnv1a32::make_hash(s);
+  return fnv1a32::make_hash(s, len);
 }
 constexpr auto operator"" _fnv1a32l(const wchar_t *s, std::size_t len)
 {
-  return fnv1a32::make_hash_lower(s);
+  return fnv1a32::make_hash_lower(s, len);
 }
 constexpr auto operator"" _fnv1a32u(const wchar_t *s, std::size_t len)
 {
-  return fnv1a32::make_hash_upper(s);
+  return fnv1a32::make_hash_upper(s, len);
 }
 constexpr auto operator"" _fnv1a64(const char *s, std::size_t len)
 {
-  return fnv1a64::make_hash(s);
+  return fnv1a64::make_hash(s, len);
 }
 constexpr auto operator"" _fnv1a64(const wchar_t *s, std::size_t len)
 {
-  return fnv1a64::make_hash(s);
+  return fnv1a64::make_hash(s, len);
 }
 constexpr auto operator"" _fnv1a64l(const wchar_t *s, std::size_t len)
 {
-  return fnv1a64::make_hash_lower(s);
+  return fnv1a64::make_hash_lower(s, len);
 }
 constexpr auto operator"" _fnv1a64u(const wchar_t *s, std::size_t len)
 {
-  return fnv1a64::make_hash_upper(s);
+  return fnv1a64::make_hash_upper(s, len);
 }
 
 #ifdef _M_X64
@@ -123,26 +157,26 @@ using fnv1a = fnv1a32;
 
 constexpr auto operator"" _fnv1a(const char *s, std::size_t len)
 {
-  return fnv1a::make_hash(s);
+  return fnv1a::make_hash(s, len);
 }
 constexpr auto operator"" _fnv1al(const char *s, std::size_t len)
 {
-  return fnv1a::make_hash_lower(s);
+  return fnv1a::make_hash_lower(s, len);
 }
 constexpr auto operator"" _fnv1au(const char *s, std::size_t len)
 {
-  return fnv1a::make_hash_upper(s);
+  return fnv1a::make_hash_upper(s, len);
 }
 
 constexpr auto operator"" _fnv1a(const wchar_t *s, std::size_t len)
 {
-  return fnv1a::make_hash(s);
+  return fnv1a::make_hash(s, len);
 }
 constexpr auto operator"" _fnv1al(const wchar_t *s, std::size_t len)
 {
-  return fnv1a::make_hash_lower(s);
+  return fnv1a::make_hash_lower(s, len);
 }
 constexpr auto operator"" _fnv1au(const wchar_t *s, std::size_t len)
 {
-  return fnv1a::make_hash_upper(s);
+  return fnv1a::make_hash_upper(s, len);
 }

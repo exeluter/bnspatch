@@ -36,9 +36,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
   if ( fdwReason == DLL_PROCESS_ATTACH ) {
     const auto name = pe::get_module()->base_name();
-    switch ( fnv1a::make_hash_lower(name.c_str()) ) {
-      case L"Client.exe"_fnv1al:
-      case L"BNSR.exe"_fnv1al:
+    switch ( fnv1a::make_hash_upper(name.c_str()) ) {
+      case L"Client.exe"_fnv1au:
+      case L"BNSR.exe"_fnv1au:
         NtCurrentPeb()->BeingDebugged = FALSE;
 
         DetourTransactionBegin();
@@ -58,6 +58,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 #endif
           DetourAttachApi(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
           DetourAttachApi(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
+          DetourAttachApi(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
           DetourAttachApi(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
           DetourAttachApi(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
           DetourAttachApi(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
