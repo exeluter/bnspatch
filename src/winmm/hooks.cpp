@@ -54,36 +54,35 @@ VOID CALLBACK DllNotification(
 #else
       if ( base_name->iequals(xorstr_(L"XmlReader_cl32.dll")) ) {
 #endif
-        if ( auto pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(
-          module->find_function(xorstr_("GetInterfaceVersion"))) ) {
+        auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
+        auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
+        auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
+        if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
           DetourTransactionBegin();
           DetourUpdateThread(NtCurrentThread());
+          auto xmlReader = pfnCreateXmlReader();
+          auto vftable = *reinterpret_cast<void ***>(xmlReader);
           switch ( _wtoi(pfnGetInterfaceVersion()) ) {
             case 13:
-              g_pfnCreateXmlReader13 = reinterpret_cast<decltype(g_pfnCreateXmlReader13)>(
-                module->find_function(xorstr_("CreateXmlReader")));
-              DetourAttach(&(PVOID &)g_pfnCreateXmlReader13, &CreateXmlReader13_hook);
-              g_pfnDestroyXmlReader13 = reinterpret_cast<decltype(g_pfnDestroyXmlReader13)>(
-                module->find_function(xorstr_("DestroyXmlReader")));
-              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader13, &DestroyXmlReader13_hook);
+              g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vftable[6]);
+              DetourAttach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
+              g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vftable[7]);
+              DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
               break;
             case 14:
-              g_pfnCreateXmlReader14 = reinterpret_cast<decltype(g_pfnCreateXmlReader14)>(
-                module->find_function(xorstr_("CreateXmlReader")));
-              DetourAttach(&(PVOID &)g_pfnCreateXmlReader14, &CreateXmlReader14_hook);
-              g_pfnDestroyXmlReader14 = reinterpret_cast<decltype(g_pfnDestroyXmlReader14)>(
-                module->find_function(xorstr_("DestroyXmlReader")));
-              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader14, &DestroyXmlReader14_hook);
+              g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vftable[6]);
+              DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
+              g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vftable[7]);
+              DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
               break;
             case 15:
-              g_pfnCreateXmlReader15 = reinterpret_cast<decltype(g_pfnCreateXmlReader15)>(
-                module->find_function(xorstr_("CreateXmlReader")));
-              DetourAttach(&(PVOID &)g_pfnCreateXmlReader15, &CreateXmlReader15_hook);
-              g_pfnDestroyXmlReader15 = reinterpret_cast<decltype(g_pfnDestroyXmlReader15)>(
-                module->find_function(xorstr_("DestroyXmlReader")));
-              DetourAttach(&(PVOID &)g_pfnDestroyXmlReader15, &DestroyXmlReader15_hook);
+              g_pfnReadFromFile15 = reinterpret_cast<decltype(g_pfnReadFromFile15)>(vftable[6]);
+              DetourAttach(&(PVOID &)g_pfnReadFromFile15, ReadFromFile15_hook);
+              g_pfnReadFromBuffer15 = reinterpret_cast<decltype(g_pfnReadFromBuffer15)>(vftable[7]);
+              DetourAttach(&(PVOID &)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
               break;
           }
+          pfnDestroyXmlReader(xmlReader);
           DetourTransactionCommit();
         }
       }
