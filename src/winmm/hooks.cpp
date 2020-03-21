@@ -26,11 +26,28 @@ namespace fs = std::filesystem;
 #endif
 
 #include "detours/detours.h"
+#include "ntapi/mprotect.h"
 #include "ntapi/string_span.h"
 #include "thread_local_lock.h"
 #include "pe/module.h"
+#include "pe/export_directory.h"
 #include "xmlhooks.h"
 #include "xmlpatch.h"
+
+void prevent_tmd_apiw(pe::module *module)
+{
+#ifdef _M_IX86
+  if ( module ) {
+    auto exportDir = module->export_directory();
+    auto functions = module->rva_to<uint32_t>(exportDir->AddressOfFunctions);
+    for ( uint32_t i = 0; i < exportDir->NumberOfFunctions; ++i ) {
+      auto fn = module->rva_to<int16_t>(functions[i]);
+      if ( auto mp = ntapi::mprotect(fn, sizeof(int16_t), PAGE_EXECUTE_READWRITE) )
+        InterlockedCompareExchange16(fn, 0x00EBi16, 0xFF8Bi16);
+    }
+  }
+#endif
+}
 
 void *g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -48,43 +65,54 @@ VOID CALLBACK DllNotification(
       const auto module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
       const auto base_name = reinterpret_cast<const ntapi::unicode_string *>(NotificationData->Loaded.BaseDllName);
 
+      switch ( fnv1a::make_hash_upper(base_name->data(), base_name->size()) ) {
+        case L"iphlpapi.dll"_fnv1au:
+        case L"msvcp80.dll"_fnv1au:
+        case L"netapi.dll"_fnv1au:
+        case L"mswsock.dll"_fnv1au:
+        case L"netapi32.dll"_fnv1au:
+        case L"version.dll"_fnv1au:
+        case L"wininet.dll"_fnv1au:
+        case L"ws2_32.dll"_fnv1au:
+          prevent_tmd_apiw(module);
+          break;
 #ifdef _M_X64
-      if ( base_name->iequals(xorstr_(L"XmlReader_cl64.dll"))
-        || base_name->iequals(xorstr_(L"XmlReader2017_cl64.dll")) ) {
+        case L"XmlReader_cl64.dll"_fnv1au:
+        case L"XmlReader2017_cl64.dll"_fnv1au:
 #else
-      if ( base_name->iequals(xorstr_(L"XmlReader_cl32.dll")) ) {
+        case L"XmlReader_cl32.dll"_fnv1au:
 #endif
-        auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
-        auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
-        auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
-        if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
-          DetourTransactionBegin();
-          DetourUpdateThread(NtCurrentThread());
-          auto xmlReader = pfnCreateXmlReader();
-          auto vftable = *reinterpret_cast<void ***>(xmlReader);
-          switch ( _wtoi(pfnGetInterfaceVersion()) ) {
-            case 13:
-              g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vftable[6]);
-              DetourAttach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
-              g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vftable[7]);
-              DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
-              break;
-            case 14:
-              g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vftable[6]);
-              DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
-              g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vftable[7]);
-              DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
-              break;
-            case 15:
-              g_pfnReadFromFile15 = reinterpret_cast<decltype(g_pfnReadFromFile15)>(vftable[6]);
-              DetourAttach(&(PVOID &)g_pfnReadFromFile15, ReadFromFile15_hook);
-              g_pfnReadFromBuffer15 = reinterpret_cast<decltype(g_pfnReadFromBuffer15)>(vftable[7]);
-              DetourAttach(&(PVOID &)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
-              break;
+          auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
+          auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
+          auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
+          if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
+            DetourTransactionBegin();
+            DetourUpdateThread(NtCurrentThread());
+            auto xmlReader = pfnCreateXmlReader();
+            auto vftable = *reinterpret_cast<void ***>(xmlReader);
+            switch ( _wtoi(pfnGetInterfaceVersion()) ) {
+              case 13:
+                g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vftable[6]);
+                DetourAttach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
+                g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vftable[7]);
+                DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
+                break;
+              case 14:
+                g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vftable[6]);
+                DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
+                g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vftable[7]);
+                DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
+                break;
+              case 15:
+                g_pfnReadFromFile15 = reinterpret_cast<decltype(g_pfnReadFromFile15)>(vftable[6]);
+                DetourAttach(&(PVOID &)g_pfnReadFromFile15, ReadFromFile15_hook);
+                g_pfnReadFromBuffer15 = reinterpret_cast<decltype(g_pfnReadFromBuffer15)>(vftable[7]);
+                DetourAttach(&(PVOID &)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
+                break;
+            }
+            pfnDestroyXmlReader(xmlReader);
+            DetourTransactionCommit();
           }
-          pfnDestroyXmlReader(xmlReader);
-          DetourTransactionCommit();
-        }
       }
       break;
     } case LDR_DLL_NOTIFICATION_REASON_UNLOADED: {

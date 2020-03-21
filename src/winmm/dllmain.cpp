@@ -17,7 +17,7 @@ namespace fs = std::filesystem;
 #include "pe/module.h"
 #include "pe/export_directory.h"
 
-LONG DetourAttachApi(
+LONG detour_attach_api(
   pe::module *module,
   const char *pProcName,
   PVOID *pPointer,
@@ -44,28 +44,31 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
         DetourTransactionBegin();
         DetourUpdateThread(NtCurrentThread());
         if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
+          prevent_tmd_apiw(module);
           if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
             module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
             pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
           }
 #ifdef _M_IX86
-          DetourAttachApi(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
+          detour_attach_api(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
 #endif
-          DetourAttachApi(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
-          DetourAttachApi(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
-          DetourAttachApi(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
-          DetourAttachApi(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
+          detour_attach_api(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
+          detour_attach_api(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
+          detour_attach_api(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
+          detour_attach_api(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
           g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgBreakPoint")));
           g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgUiRemoteBreakin")));
-          DetourAttachApi(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
-          DetourAttachApi(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
+          detour_attach_api(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
+          detour_attach_api(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
 #ifdef _M_X64
           DetourAttachApi(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
           DetourAttachApi(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
 #endif
         }
+        prevent_tmd_apiw(pe::get_module(xorstr_(L"kernel32.dll")));
         if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) ) {
-          DetourAttachApi(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
+          prevent_tmd_apiw(module);
+          detour_attach_api(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
         }
         DetourTransactionCommit();
         break;

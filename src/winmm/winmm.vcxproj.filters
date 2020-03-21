@@ -105,6 +105,9 @@
     <ClInclude Include="xmlhooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ntapi\mprotect.h">
+      <Filter>Header Files\ntapi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\natvis\pugixml.natvis">

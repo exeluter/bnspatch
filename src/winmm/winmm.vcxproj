@@ -140,6 +140,7 @@
     <ClInclude Include="detours\detver.h" />
     <ClInclude Include="ic_char_traits.h" />
     <ClInclude Include="ntapi\critical_section.h" />
+    <ClInclude Include="ntapi\mprotect.h" />
     <ClInclude Include="ntapi\string_span.h" />
     <ClInclude Include="pe\export_directory.h" />
     <ClInclude Include="pe\module.h" />

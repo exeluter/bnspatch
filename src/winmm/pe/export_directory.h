@@ -3,7 +3,7 @@
 
 namespace pe
 {
-  class export_directory : private IMAGE_EXPORT_DIRECTORY
+  class export_directory : public IMAGE_EXPORT_DIRECTORY
   {
   public:
     export_directory() = delete;
