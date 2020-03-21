@@ -36,19 +36,19 @@ NTSTATUS NTAPI NtCreateFile_hook(
   PVOID EaBuffer,
   ULONG EaLength);
 
-extern decltype(&NtOpenKeyEx) g_pfnNtOpenKeyEx;
-NTSTATUS NTAPI NtOpenKeyEx_hook(
-  PHANDLE KeyHandle,
-  ACCESS_MASK DesiredAccess,
-  POBJECT_ATTRIBUTES ObjectAttributes,
-  ULONG OpenOptions);
-
 extern decltype(&NtCreateMutant) g_pfnNtCreateMutant;
 NTSTATUS NTAPI NtCreateMutant_hook(
   PHANDLE MutantHandle,
   ACCESS_MASK DesiredAccess,
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner);
+
+extern decltype(&NtOpenKeyEx) g_pfnNtOpenKeyEx;
+NTSTATUS NTAPI NtOpenKeyEx_hook(
+  PHANDLE KeyHandle,
+  ACCESS_MASK DesiredAccess,
+  POBJECT_ATTRIBUTES ObjectAttributes,
+  ULONG OpenOptions);
 
 extern std::vector<void const *> g_ReadOnlyAddresses;
 extern decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
@@ -58,13 +58,6 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   PSIZE_T RegionSize,
   ULONG NewProtect,
   PULONG OldProtect);
-
-extern decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
-NTSTATUS NTAPI NtSetInformationThread_hook(
-  HANDLE ThreadHandle,
-  THREADINFOCLASS ThreadInformationClass,
-  PVOID ThreadInformation,
-  ULONG ThreadInformationLength);
 
 extern decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
 NTSTATUS NTAPI NtQueryInformationProcess_hook(
@@ -80,6 +73,13 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
   PVOID SystemInformation,
   ULONG SystemInformationLength,
   PULONG ReturnLength);
+
+extern decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
+NTSTATUS NTAPI NtSetInformationThread_hook(
+  HANDLE ThreadHandle,
+  THREADINFOCLASS ThreadInformationClass,
+  PVOID ThreadInformation,
+  ULONG ThreadInformationLength);
 
 extern decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(

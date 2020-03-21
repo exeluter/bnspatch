@@ -176,23 +176,6 @@ NTSTATUS NTAPI NtCreateFile_hook(
     EaLength);
 }
 
-decltype(&NtOpenKeyEx) g_pfnNtOpenKeyEx;
-NTSTATUS NTAPI NtOpenKeyEx_hook(
-  PHANDLE KeyHandle,
-  ACCESS_MASK DesiredAccess,
-  POBJECT_ATTRIBUTES ObjectAttributes,
-  ULONG OpenOptions)
-{
-  if ( auto const ObjectName = reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName) ) {
-    switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
-      case L"Software\\Wine"_fnv1au:
-      case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
-        return STATUS_OBJECT_NAME_NOT_FOUND;
-    }
-  }
-  return g_pfnNtOpenKeyEx(KeyHandle, DesiredAccess, ObjectAttributes, OpenOptions);
-}
-
 decltype(&NtCreateMutant) g_pfnNtCreateMutant;
 NTSTATUS NTAPI NtCreateMutant_hook(
   PHANDLE MutantHandle,
@@ -209,6 +192,23 @@ NTSTATUS NTAPI NtCreateMutant_hook(
     ObjectAttributes->RootDirectory = nullptr;
   }
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
+}
+
+decltype(&NtOpenKeyEx) g_pfnNtOpenKeyEx;
+NTSTATUS NTAPI NtOpenKeyEx_hook(
+  PHANDLE KeyHandle,
+  ACCESS_MASK DesiredAccess,
+  POBJECT_ATTRIBUTES ObjectAttributes,
+  ULONG OpenOptions)
+{
+  if ( auto const ObjectName = reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName) ) {
+    switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
+      case L"Software\\Wine"_fnv1au:
+      case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
+        return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+  }
+  return g_pfnNtOpenKeyEx(KeyHandle, DesiredAccess, ObjectAttributes, OpenOptions);
 }
 
 std::vector<void const *> g_ReadOnlyAddresses;
@@ -242,26 +242,6 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
     }
   }
   return g_pfnNtProtectVirtualMemory(ProcessHandle, BaseAddress, RegionSize, NewProtect, OldProtect);
-}
-
-decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
-NTSTATUS NTAPI NtSetInformationThread_hook(
-  HANDLE ThreadHandle,
-  THREADINFOCLASS ThreadInformationClass,
-  PVOID ThreadInformation,
-  ULONG ThreadInformationLength)
-{
-  THREAD_BASIC_INFORMATION tbi;
-
-  if ( ThreadInformationClass == ThreadHideFromDebugger
-    && ThreadInformationLength == 0 ) {
-    if ( ThreadHandle == NtCurrentThread()
-      || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0))
-        && tbi.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
-      return STATUS_SUCCESS;
-    }
-  }
-  return g_pfnNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 }
 
 decltype(&NtQueryInformationProcess) g_pfnNtQueryInformationProcess;
@@ -336,6 +316,27 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
     SystemInformationLength,
     ReturnLength);
 }
+
+decltype(&NtSetInformationThread) g_pfnNtSetInformationThread;
+NTSTATUS NTAPI NtSetInformationThread_hook(
+  HANDLE ThreadHandle,
+  THREADINFOCLASS ThreadInformationClass,
+  PVOID ThreadInformation,
+  ULONG ThreadInformationLength)
+{
+  THREAD_BASIC_INFORMATION tbi;
+
+  if ( ThreadInformationClass == ThreadHideFromDebugger
+    && ThreadInformationLength == 0 ) {
+    if ( ThreadHandle == NtCurrentThread()
+      || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0))
+        && tbi.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+      return STATUS_SUCCESS;
+    }
+  }
+  return g_pfnNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
+}
+
 
 decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(

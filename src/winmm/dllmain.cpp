@@ -48,20 +48,21 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
             module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
             pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
           }
-          g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgBreakPoint")));
-          g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgUiRemoteBreakin")));
 #ifdef _M_IX86
           DetourAttachApi(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
-#else
-          DetourAttachApi(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
-          DetourAttachApi(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
 #endif
           DetourAttachApi(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
           DetourAttachApi(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
-          DetourAttachApi(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
           DetourAttachApi(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
+          DetourAttachApi(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
+          g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgBreakPoint")));
+          g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgUiRemoteBreakin")));
           DetourAttachApi(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
           DetourAttachApi(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
+#ifdef _M_X64
+          DetourAttachApi(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
+          DetourAttachApi(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
+#endif
         }
         if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) ) {
           DetourAttachApi(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
@@ -74,12 +75,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC {
-  std::array<WCHAR, MAX_PATH> Buffer;
 
   switch ( dliNotify ) {
     case dliStartProcessing:
       break;
-    case dliNotePreLoadLibrary:
+    case dliNotePreLoadLibrary: {
+      std::array<WCHAR, MAX_PATH> Buffer;
       if ( !_stricmp(pdli->szDll, pe::instance_module()->export_directory()->name())
         && GetSystemDirectoryW(Buffer.data(), SafeInt(Buffer.size())) ) {
 
@@ -91,6 +92,7 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
         return reinterpret_cast<FARPROC>(Module);
       }
       break;
+    }
     case dliNotePreGetProcAddress:
     case dliFailLoadLib:
     case dliFailGetProc:
