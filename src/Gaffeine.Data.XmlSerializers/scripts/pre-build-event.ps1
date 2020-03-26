@@ -44,3 +44,12 @@ if ( $BaseDir ) {
     & "$env:MSBuildSolutionDir\tools\monomod\MonoMod.exe" "$BaseDir\$file" "$env:MSBuildProjectDir\lib\ncLauncherW\$file"
   }
 }
+
+$directoryInfo = [System.IO.DirectoryInfo]::new("$env:MSBuildProjectDir\lib")
+:loop foreach ( $assembly in $directoryInfo.EnumerateFiles('*.dll', [System.IO.SearchOption]::AllDirectories) ) {
+    switch ( $assembly.Directory.Name ) {
+      'ncLauncherW' { continue loop }
+      'SevenZip' { continue loop }
+    }
+    & "$env:MSBuildSolutionDir\tools\lzma\lzma.exe" e $assembly.FullName "$env:MSBuildProjectDir\Resources\$($assembly.Name).lzma"
+}

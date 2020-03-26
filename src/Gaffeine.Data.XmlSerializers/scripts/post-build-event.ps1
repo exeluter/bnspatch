@@ -65,7 +65,7 @@ if ( !$env:CI -or [System.IO.File]::Exists("$env:MSBuildProjectDir\scripts\postb
   if ( ![System.IO.Directory]::Exists($NCLauncherWBaseDir) ) {
     $NCLauncherWBaseDir = Get-InstallLocation -ProductCode 'NCLauncherW_plaync'
   }
-  if ( [System.IO.Directory]::Exists($NCLauncherWBaseDir) -and $env:MSBuildPlatformTarget -eq 'x64' ) {
+  if ( [System.IO.Directory]::Exists($NCLauncherWBaseDir) ) {
     Copy-Item "$env:MSBuildTargetPath" -Destination "$NCLauncherWBaseDir\" -Force
   }
 }
