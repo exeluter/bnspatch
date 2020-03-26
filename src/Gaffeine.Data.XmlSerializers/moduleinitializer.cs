@@ -1,7 +1,7 @@
-﻿using MonoMod.RuntimeDetour;
+using MonoMod.RuntimeDetour;
+using SevenZip.Compression.LZMA;
 using System;
 using System.IO;
-using System.IO.Compression;
 using System.Reflection;
 
 namespace Gaffeine.Data.XmlSerializers
@@ -22,17 +22,22 @@ namespace Gaffeine.Data.XmlSerializers
       }
     }
 
-    private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+    static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
     {
       var assemblyName = new AssemblyName(args.Name);
-      var stream = Assembly.GetExecutingAssembly()
-                           .GetManifestResourceStream(assemblyName.Name + ".dll.deflate");
+      var executingAssembly = Assembly.GetExecutingAssembly();
+      var stream = executingAssembly.GetManifestResourceStream(assemblyName.Name + ".dll.lzma");
       if ( stream != null ) {
-        using ( var binaryReader = new BinaryReader(stream) )
-        using ( var deflateStream = new DeflateStream(stream, CompressionMode.Decompress) )
-        using ( var memoryStream = new MemoryStream(binaryReader.ReadInt32()) ) {
-          deflateStream.CopyTo(memoryStream);
-          return Assembly.Load(memoryStream.GetBuffer());
+        using ( var binaryReader = new BinaryReader(stream) ) {
+          var lzmaDecoder = new Decoder();
+          lzmaDecoder.SetDecoderProperties(binaryReader.ReadBytes(5));
+          ulong decompressedSize = binaryReader.ReadUInt64();
+          long compressedSize = stream.Length - stream.Position;
+          int capacity = decompressedSize != ulong.MaxValue ? Convert.ToInt32(decompressedSize) : 0;
+          using ( var memoryStream = new MemoryStream(capacity) ) {
+            lzmaDecoder.Code(stream, memoryStream, compressedSize, Convert.ToInt64(decompressedSize), null);
+            return Assembly.Load(memoryStream.GetBuffer());
+          }
         }
       }
       return null;

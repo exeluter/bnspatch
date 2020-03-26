@@ -54,17 +54,14 @@
       <HintPath>lib\MonoMod\MonoMod.RuntimeDetour.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>lib\MonoMod\MonoMod.Utils.dll</HintPath>
+    <Reference Include="SevenZip">
+      <HintPath>lib\SevenZip\SevenZip.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="moduleinitializer.cs" />
@@ -78,14 +75,14 @@
     <Compile Include="xmlserializercontract.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Mono.Cecil.dll.deflate">
-      <LogicalName>Mono.Cecil.dll.deflate</LogicalName>
+    <EmbeddedResource Include="Resources\Mono.Cecil.dll.lzma">
+      <LogicalName>Mono.Cecil.dll.lzma</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\MonoMod.RuntimeDetour.dll.deflate">
-      <LogicalName>MonoMod.RuntimeDetour.dll.deflate</LogicalName>
+    <EmbeddedResource Include="Resources\MonoMod.RuntimeDetour.dll.lzma">
+      <LogicalName>MonoMod.RuntimeDetour.dll.lzma</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\MonoMod.Utils.dll.deflate">
-      <LogicalName>MonoMod.Utils.dll.deflate</LogicalName>
+    <EmbeddedResource Include="Resources\MonoMod.Utils.dll.lzma">
+      <LogicalName>MonoMod.Utils.dll.lzma</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
