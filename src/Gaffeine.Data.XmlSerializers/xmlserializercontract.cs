@@ -1,4 +1,4 @@
-﻿using Gaffeine.Data.XmlSerializers;
+using Gaffeine.Data.XmlSerializers;
 using System;
 using System.Collections;
 using System.Xml.Serialization;
@@ -7,7 +7,11 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
 {
   public class XmlSerializerContract : XmlSerializerImplementation
   {
-    static XmlSerializerContract() => ModuleInitializer.Initialize();
+    static XmlSerializerContract()
+    {
+      AppDomain.CurrentDomain.AssemblyResolve += ModuleInitializer.OnAssemblyResolve;
+      ModuleInitializer.Initialize();
+    }
 
     public override XmlSerializationReader Reader => null;
 

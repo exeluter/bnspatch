@@ -68,7 +68,6 @@
     <Compile Include="assemblydefinitionextensions.cs" />
     <Compile Include="urlutility.cs" />
     <Compile Include="ignoreaccesschecksto.cs" />
-    <Compile Include="monomodhookattribute.cs" />
     <Compile Include="Properties\assemblyinfo.cs" />
     <Compile Include="hooks.cs" />
     <Compile Include="stringextensions.cs" />
