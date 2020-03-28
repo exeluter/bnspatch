@@ -9,7 +9,6 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
   {
     static XmlSerializerContract()
     {
-      AppDomain.CurrentDomain.AssemblyResolve += ModuleInitializer.OnAssemblyResolve;
       ModuleInitializer.Initialize();
     }
 

@@ -12,6 +12,28 @@ namespace Gaffeine.Data.XmlSerializers
 {
   internal static class ModuleInitializer
   {
+    static ModuleInitializer()
+    {
+      AppDomain.CurrentDomain.AssemblyResolve += (sender, e) => {
+        var assemblyName = new AssemblyName(e.Name);
+        var executingAssembly = Assembly.GetExecutingAssembly();
+        var stream = executingAssembly.GetManifestResourceStream(assemblyName.Name + ".dll.lzma");
+        if ( stream != null ) {
+          using ( var binaryReader = new BinaryReader(stream) ) {
+            var lzmaDecoder = new Decoder();
+            lzmaDecoder.SetDecoderProperties(binaryReader.ReadBytes(5));
+            long decompressedSize = binaryReader.ReadInt64();
+            int capacity = decompressedSize > 0 ? Convert.ToInt32(decompressedSize) : 0;
+            using ( var memoryStream = new MemoryStream(capacity) ) {
+              lzmaDecoder.Code(stream, memoryStream, -1, Convert.ToInt64(decompressedSize), null);
+              return Assembly.Load(memoryStream.GetBuffer());
+            }
+          }
+        }
+        return null;
+      };
+    }
+
     internal static void Initialize()
     {
       HookEndpointManager.Add(
@@ -53,27 +75,6 @@ namespace Gaffeine.Data.XmlSerializers
                              .Select(y => y.ParameterType)
                              .SequenceEqual(new[] { typeof(UIElement), typeof(bool) })),
         (Action<Action<object, UIElement, bool>, object, UIElement, bool>)Hooks.ca8de357b76a2339a41ee639eb04cc454);
-    }
-
-    internal static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
-    {
-      var assemblyName = new AssemblyName(args.Name);
-      var executingAssembly = Assembly.GetExecutingAssembly();
-      var stream = executingAssembly.GetManifestResourceStream(assemblyName.Name + ".dll.lzma");
-      if ( stream != null ) {
-        using ( var binaryReader = new BinaryReader(stream) ) {
-          var lzmaDecoder = new Decoder();
-          lzmaDecoder.SetDecoderProperties(binaryReader.ReadBytes(5));
-          ulong decompressedSize = binaryReader.ReadUInt64();
-          long compressedSize = stream.Length - stream.Position;
-          int capacity = decompressedSize != ulong.MaxValue ? Convert.ToInt32(decompressedSize) : 0;
-          using ( var memoryStream = new MemoryStream(capacity) ) {
-            lzmaDecoder.Code(stream, memoryStream, compressedSize, Convert.ToInt64(decompressedSize), null);
-            return Assembly.Load(memoryStream.GetBuffer());
-          }
-        }
-      }
-      return null;
     }
   }
 }
