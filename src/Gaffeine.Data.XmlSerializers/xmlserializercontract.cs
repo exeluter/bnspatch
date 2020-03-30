@@ -9,7 +9,7 @@ namespace Microsoft.Xml.Serialization.GeneratedAssembly
   {
     static XmlSerializerContract()
     {
-      ModuleInitializer.Initialize();
+      Bootstrapper.Setup();
     }
 
     public override XmlSerializationReader Reader => null;

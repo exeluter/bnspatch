@@ -77,6 +77,36 @@ namespace Gaffeine.Data.XmlSerializers
       return @delegate(@this);
     }
 
+    //public static string get_PresenceId(Func<Game, string> @delegate, Game @this)
+    //{
+    //  var presenceId = @delegate(@this);
+    //  if ( !string.IsNullOrEmpty(presenceId) ) {
+    //    var gameRegion = @this.SelectedGameRegion ?? @this.GameRegions.FirstOrDefault();
+    //    if ( gameRegion != null )
+    //      presenceId = string.Join(":", presenceId, gameRegion.Code.ToString("d"));
+    //  }
+    //  return presenceId;
+    //}
+
+    //public static void set_PresenceId(Action<Game, string> @delegate, Game @this, string value)
+    //{
+    //  var array = value.Split(':');
+    //  if ( array.Length > 2 )
+    //    value = string.Join(":", array[0], array[1]);
+
+    //  @delegate(@this, value);
+    //}
+
+    //public static bool get_IsRunning(Func<Game, bool> @delegate, Game @this)
+    //{
+    //  if ( @this.GameUpdater.CheckInstalled()
+    //    && Mutex.TryOpenExisting(@this.PresenceId, out var mtx) ) {
+    //    mtx.Close();
+    //    return true;
+    //  }
+    //  return @delegate(@this);
+    //}
+
     public static string get_AllowMultiClient(Func<Game, string> @delegate, Game @this) => "1";
 
     public static bool MakeGameShortcut(Func<Game, bool> @delegate, Game game)
@@ -95,12 +125,5 @@ namespace Gaffeine.Data.XmlSerializers
     public static void ca8de357b76a2339a41ee639eb04cc454(Action<object, UIElement, bool> @delegate, object @this, UIElement A_1, bool A_2)
     {
     }
-
-#if DEBUG
-    [MonoModHook("NCLog.RSAEncrytor, NCLog",
-      BindingFlags = BindingFlags.Instance | BindingFlags.Public)]
-    public
-      static string EncryptMessage(Func<object, string, string> @delegate, object @this, string msg) => msg;
-#endif
   }
 }

@@ -53,3 +53,4 @@ $directoryInfo = [System.IO.DirectoryInfo]::new("$env:MSBuildProjectDir\lib")
     }
     & "$env:MSBuildSolutionDir\tools\lzma\lzma.exe" e $assembly.FullName "$env:MSBuildProjectDir\Resources\$($assembly.Name).lzma"
 }
+& "$env:MSBuildSolutionDir\tools\lzma\lzma.exe" e "$env:MSBuildProjectDir\Resources\whitespy.xaml" "$env:MSBuildProjectDir\Resources\whitespy.xaml.lzma"
