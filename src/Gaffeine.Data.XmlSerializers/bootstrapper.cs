@@ -54,6 +54,7 @@ namespace Gaffeine.Data.XmlSerializers
         var logoImage = splashWindow.FindName("LogoImage") as Image;
         if ( logoImage != null ) {
           logoImage.Height = logoImage.ActualHeight;
+          logoImage.Margin = new Thickness(1);
           logoImage.Stretch = Stretch.Uniform;
           logoImage.Source = LoadLzmaResource("whitespy.xaml.lzma", s => XamlReader.Load(s) as DrawingImage);
         }
