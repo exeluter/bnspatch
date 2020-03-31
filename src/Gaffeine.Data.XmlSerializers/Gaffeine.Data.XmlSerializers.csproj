@@ -8,6 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AssemblyName>Gaffeine.Data.XmlSerializers</AssemblyName>
+    <RootNamespace>Gaffeine.Data.XmlSerializers</RootNamespace>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <IntermediateOutputPath>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntermediateOutputPath>
     <OutputPath>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutputPath>
@@ -69,6 +70,7 @@
   <ItemGroup>
     <Compile Include="bootstrapper.cs" />
     <Compile Include="assemblydefinitionextensions.cs" />
+    <Compile Include="lzmaresource.cs" />
     <Compile Include="urlutility.cs" />
     <Compile Include="ignoreaccesschecksto.cs" />
     <Compile Include="Properties\assemblyinfo.cs" />

@@ -1,17 +1,13 @@
 using Gaffeine.Data.Models;
 using GameUpdateService.Updaters.US4Updater.US4UpdateMode;
 using MonoMod.RuntimeDetour.HookGen;
-using SevenZip.Compression.LZMA;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media;
-using System.Xml;
 
 namespace Gaffeine.Data.XmlSerializers
 {
@@ -21,28 +17,8 @@ namespace Gaffeine.Data.XmlSerializers
     {
       AppDomain.CurrentDomain.AssemblyResolve += (sender, e) => {
         var assemblyName = new AssemblyName(e.Name);
-        return LoadLzmaResource(assemblyName.Name + ".dll.lzma", s => Assembly.Load(s.GetBuffer()));
+        return LzmaResource.Load(assemblyName.Name + ".dll.lzma", s => Assembly.Load(s.GetBuffer()));
       };
-    }
-
-    static T LoadLzmaResource<T>(string name, Func<MemoryStream, T> func)
-    {
-      var executingAssembly = Assembly.GetExecutingAssembly();
-      var stream = executingAssembly.GetManifestResourceStream(name);
-      if ( stream != null ) {
-        using ( var binaryReader = new BinaryReader(stream) ) {
-          var lzmaDecoder = new Decoder();
-          lzmaDecoder.SetDecoderProperties(binaryReader.ReadBytes(5));
-          long decompressedSize = binaryReader.ReadInt64();
-          int capacity = decompressedSize > 0 ? Convert.ToInt32(decompressedSize) : 0;
-          using ( var memoryStream = new MemoryStream(capacity) ) {
-            lzmaDecoder.Code(stream, memoryStream, -1, decompressedSize, null);
-            memoryStream.Seek(0, SeekOrigin.Begin);
-            return func(memoryStream);
-          }
-        }
-      }
-      return default;
     }
 
     internal static void Setup()
@@ -56,7 +32,7 @@ namespace Gaffeine.Data.XmlSerializers
           logoImage.MaxHeight = logoImage.ActualHeight;
           logoImage.Margin = new Thickness(1);
           logoImage.Stretch = Stretch.Uniform;
-          logoImage.Source = LoadLzmaResource("whitespy.xaml.lzma", s => XamlReader.Load(s) as DrawingImage);
+          logoImage.Source = LzmaResource.Load("whitespy.xaml.lzma", s => XamlReader.Load(s) as DrawingImage);
         }
       }
 
