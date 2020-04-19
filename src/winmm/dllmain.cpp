@@ -49,7 +49,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
         DetourTransactionBegin();
         DetourUpdateThread(NtCurrentThread());
         if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
-          prevent_tmd_apiw(module);
           if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
             module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
             pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
@@ -70,9 +69,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
           detour_attach_api(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
 #endif
         }
-        prevent_tmd_apiw(pe::get_module(xorstr_(L"kernel32.dll")));
         if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) ) {
-          prevent_tmd_apiw(module);
           detour_attach_api(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
         }
         DetourTransactionCommit();

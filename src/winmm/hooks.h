@@ -3,8 +3,6 @@
 #include <vector>
 #include "pe/module.h"
 
-void prevent_tmd_apiw(pe::module *module);
-
 extern PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
   ULONG NotificationReason,
