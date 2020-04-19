@@ -9,7 +9,7 @@ namespace pe
 {
   class module;
 
-  class segment : private IMAGE_SECTION_HEADER
+  class segment : public IMAGE_SECTION_HEADER
   {
   public:
     segment() = delete;

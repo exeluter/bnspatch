@@ -2,8 +2,8 @@
 #include "module.h"
 #include "segment.h"
 #include "..\ic_char_traits.h"
-#include "..\ntapi\string_span.h"
-#include "..\ntapi\critical_section.h"
+#include "..\ntapi\string.h"
+#include "..\ntapi\critsec.h"
 #include <ntdll.h>
 #include <string>
 #include <mutex>
@@ -17,22 +17,17 @@ namespace pe
     return reinterpret_cast<uintptr_t>(this);
   }
 
-  module::operator HINSTANCE() const
-  {
-    return reinterpret_cast<HINSTANCE>(const_cast<module *>(this));
-  }
-
   ic_wstring module::base_name() const
   {
-    ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
-    std::lock_guard<ntapi::critical_section> guard(crit);
+    ntapi::critsec crit(NtCurrentPeb()->LoaderLock);
+    std::lock_guard<ntapi::critsec> guard(crit);
 
     auto const Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
     for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
       if ( Module->DllBase == this ) {
-        const auto name = reinterpret_cast<ntapi::unicode_string *>(&Module->BaseDllName);
+        const auto name = static_cast<ntapi::ustring *>(&Module->BaseDllName);
         return ic_wstring(name->begin(), name->end());
       }
     }
@@ -41,15 +36,15 @@ namespace pe
 
   ic_wstring module::full_name() const
   {
-    ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
-    std::lock_guard<ntapi::critical_section> guard(crit);
+    ntapi::critsec crit(NtCurrentPeb()->LoaderLock);
+    std::lock_guard<ntapi::critsec> guard(crit);
 
     const auto Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
     for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
       if ( Module->DllBase == this ) {
-        const auto name = reinterpret_cast<ntapi::unicode_string *>(&Module->FullDllName);
+        const auto name = static_cast<ntapi::ustring *>(&Module->FullDllName);
         return ic_wstring(name->begin(), name->end());
       }
     }
@@ -68,10 +63,11 @@ namespace pe
 
   IMAGE_NT_HEADERS *module::nt_header()
   {
-    if ( this->e_magic != IMAGE_DOS_SIGNATURE )
+    const auto dosheader = this->dos_header();
+    if ( dosheader->e_magic != IMAGE_DOS_SIGNATURE )
       return nullptr;
 
-    const auto ntheader = this->rva_to<IMAGE_NT_HEADERS>(this->e_lfanew);
+    const auto ntheader = this->rva_to<IMAGE_NT_HEADERS>(dosheader->e_lfanew);
     if ( ntheader->Signature != IMAGE_NT_SIGNATURE )
       return nullptr;
 
@@ -85,7 +81,8 @@ namespace pe
 
   size_t module::size() const
   {
-    if ( this->e_magic != IMAGE_DOS_SIGNATURE )
+    const auto dosheader = this->dos_header();
+    if ( dosheader->e_magic != IMAGE_DOS_SIGNATURE )
       return 0;
 
     const auto ntheader = this->nt_header();
@@ -104,7 +101,7 @@ namespace pe
       return {};
 
     return gsl::make_span(
-      reinterpret_cast<class segment *>(IMAGE_FIRST_SECTION(ntheader)),
+      static_cast<class segment *>(IMAGE_FIRST_SECTION(ntheader)),
       ntheader->FileHeader.NumberOfSections);
   }
 
@@ -154,7 +151,7 @@ namespace pe
     if ( !name ) return nullptr;
 
     if ( PVOID ProcedureAddress;
-      NT_SUCCESS(LdrGetProcedureAddress(const_cast<module *>(this), ntapi::ansi_string(name), 0, &ProcedureAddress)) ) {
+      NT_SUCCESS(LdrGetProcedureAddress(const_cast<module *>(this), ntapi::string(name), 0, &ProcedureAddress)) ) {
       return ProcedureAddress;
     }
     return nullptr;
@@ -173,12 +170,12 @@ namespace pe
 
   module *get_module(wchar_t const *name)
   {
-    ntapi::critical_section crit(NtCurrentPeb()->LoaderLock);
+    ntapi::critsec crit(NtCurrentPeb()->LoaderLock);
 
     if ( !name ) {
-      return reinterpret_cast<module *>(NtCurrentPeb()->ImageBaseAddress);
+      return static_cast<module *>(NtCurrentPeb()->ImageBaseAddress);
     } else {
-      std::lock_guard<ntapi::critical_section> guard(crit);
+      std::lock_guard<ntapi::critsec> guard(crit);
 
       auto const Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
       for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
@@ -186,8 +183,8 @@ namespace pe
         if ( !Module->InMemoryOrderLinks.Flink )
           continue;
 
-        if ( reinterpret_cast<ntapi::unicode_string *>(&Module->BaseDllName)->iequals(name) ) {
-          return reinterpret_cast<module *>(Module->DllBase);
+        if ( static_cast<ntapi::ustring *>(&Module->BaseDllName)->iequals(name) ) {
+          return static_cast<module *>(Module->DllBase);
         }
       }
     }
@@ -197,7 +194,7 @@ namespace pe
   module *get_module_from_address(void *pc)
   {
     void *Unused;
-    return reinterpret_cast<module *>(RtlPcToFileHeader(pc, &Unused));
+    return static_cast<module *>(RtlPcToFileHeader(pc, &Unused));
   }
 
   const module *get_module_from_address(const void *pc)

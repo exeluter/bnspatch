@@ -4,7 +4,7 @@
 
 namespace ntapi
 {
-  class critical_section
+  class critsec
   {
   public:
     using native_handle_type = RTL_CRITICAL_SECTION *;
@@ -13,14 +13,14 @@ namespace ntapi
     native_handle_type handle;
 
   public:
-    critical_section(RTL_CRITICAL_SECTION *crit)
+    critsec(RTL_CRITICAL_SECTION *crit)
     {
       this->handle = crit;
     }
 
     void lock()
     {
-      (void)RtlEnterCriticalSection(this->handle);
+      RtlEnterCriticalSection(this->handle);
     }
 
     bool try_lock()
@@ -30,7 +30,7 @@ namespace ntapi
 
     void unlock()
     {
-      (void)RtlLeaveCriticalSection(this->handle);
+      RtlLeaveCriticalSection(this->handle);
     }
 
     native_handle_type native_handle()

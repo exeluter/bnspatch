@@ -19,6 +19,8 @@ namespace fs = std::filesystem;
 #include <magic_enum.hpp>
 #include <pugixml/pugixml.hpp>
 #include <SafeInt.hpp>
+#include <wil/stl.h>
+#include <wil/win32_helpers.h>
 #ifdef NDEBUG
 #include <xorstr.hpp>
 #else
@@ -27,29 +29,15 @@ namespace fs = std::filesystem;
 
 #include "detours/detours.h"
 #include "ntapi/mprotect.h"
-#include "ntapi/string_span.h"
+#include "ntapi/string.h"
 #include "thread_local_lock.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"
 #include "xmlhooks.h"
 #include "xmlpatch.h"
+#include "versioninfo.h"
 
-void prevent_tmd_apiw(pe::module *module)
-{
-#ifdef _M_IX86
-  if ( module ) {
-    auto exportDir = module->export_directory();
-    auto functions = module->rva_to<uint32_t>(exportDir->AddressOfFunctions);
-    for ( uint32_t i = 0; i < exportDir->NumberOfFunctions; ++i ) {
-      auto fn = module->rva_to<int16_t>(functions[i]);
-      if ( auto mp = ntapi::mprotect(fn, sizeof(int16_t), PAGE_EXECUTE_READWRITE) )
-        InterlockedCompareExchange16(fn, 0x00EBi16, 0xFF8Bi16);
-    }
-  }
-#endif
-}
-
-void *g_pvDllNotificationCookie;
+PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
   ULONG NotificationReason,
   PCLDR_DLL_NOTIFICATION_DATA NotificationData,
@@ -62,64 +50,68 @@ VOID CALLBACK DllNotification(
 
   switch ( NotificationReason ) {
     case LDR_DLL_NOTIFICATION_REASON_LOADED: {
-      const auto module = reinterpret_cast<pe::module *>(NotificationData->Loaded.DllBase);
-      const auto base_name = reinterpret_cast<const ntapi::unicode_string *>(NotificationData->Loaded.BaseDllName);
+      const auto module = static_cast<pe::module *>(NotificationData->Loaded.DllBase);
+      const auto BaseDllName = static_cast<ntapi::ustring *>(NotificationData->Loaded.BaseDllName);
+      const auto FullDllName = static_cast<ntapi::ustring *>(NotificationData->Loaded.FullDllName);
 
-      switch ( fnv1a::make_hash_upper(base_name->data(), base_name->size()) ) {
-        case L"iphlpapi.dll"_fnv1au:
-        case L"msvcp80.dll"_fnv1au:
-        case L"netapi.dll"_fnv1au:
-        case L"mswsock.dll"_fnv1au:
-        case L"netapi32.dll"_fnv1au:
-        case L"version.dll"_fnv1au:
-        case L"wininet.dll"_fnv1au:
-        case L"ws2_32.dll"_fnv1au:
-          prevent_tmd_apiw(module);
-          break;
-#ifdef _M_X64
-        case L"XmlReader_cl64.dll"_fnv1au:
-        case L"XmlReader2017_cl64.dll"_fnv1au:
-#else
-        case L"XmlReader_cl32.dll"_fnv1au:
+      LPCWSTR CompanyName;
+      if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\CompanyName", &(LPCVOID &)CompanyName) >= 0
+        && !wcscmp(CompanyName, xorstr_(L"Microsoft Corporation")) ) {
+#ifdef _M_IX86
+        auto exportDir = module->export_directory();
+        auto functions = module->rva_to<uint32_t>(exportDir->AddressOfFunctions);
+        for ( uint32_t i = 0; i < exportDir->NumberOfFunctions; ++i ) {
+          auto fn = module->rva_to<int16_t>(functions[i]);
+          if ( auto mp = ntapi::mprotect(fn, sizeof(int16_t), PAGE_EXECUTE_READWRITE) )
+            InterlockedCompareExchange16(fn, 0x00EBi16, 0xFF8Bi16);
+        }
 #endif
-          auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
-          auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
-          auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
-          if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
-            DetourTransactionBegin();
-            DetourUpdateThread(NtCurrentThread());
-            auto xmlReader = pfnCreateXmlReader();
-            auto vftable = *reinterpret_cast<void ***>(xmlReader);
-            switch ( _wtoi(pfnGetInterfaceVersion()) ) {
-              case 13:
-                g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vftable[6]);
-                DetourAttach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
-                g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vftable[7]);
-                DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
-                break;
-              case 14:
-                g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vftable[6]);
-                DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
-                g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vftable[7]);
-                DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
-                break;
-              case 15:
-                g_pfnReadFromFile15 = reinterpret_cast<decltype(g_pfnReadFromFile15)>(vftable[6]);
-                DetourAttach(&(PVOID &)g_pfnReadFromFile15, ReadFromFile15_hook);
-                g_pfnReadFromBuffer15 = reinterpret_cast<decltype(g_pfnReadFromBuffer15)>(vftable[7]);
-                DetourAttach(&(PVOID &)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
-                break;
+      }
+
+      LPCWSTR OriginalFilename;
+      if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)OriginalFilename) >= 0 ) {
+        switch ( fnv1a::make_hash_upper(OriginalFilename) ) {
+          case L"XmlReader.dll"_fnv1au: {
+            auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
+            auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
+            auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
+            if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
+              DetourTransactionBegin();
+              DetourUpdateThread(NtCurrentThread());
+              auto xmlReader = pfnCreateXmlReader();
+              auto vfptr = *reinterpret_cast<void ***>(xmlReader);
+              switch ( _wtoi(pfnGetInterfaceVersion()) ) {
+                case 13:
+                  g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vfptr[6]);
+                  DetourAttach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
+                  g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vfptr[7]);
+                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
+                  break;
+                case 14:
+                  g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vfptr[6]);
+                  DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
+                  g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vfptr[7]);
+                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
+                  break;
+                case 15:
+                  g_pfnReadFromFile15 = reinterpret_cast<decltype(g_pfnReadFromFile15)>(vfptr[6]);
+                  DetourAttach(&(PVOID &)g_pfnReadFromFile15, ReadFromFile15_hook);
+                  g_pfnReadFromBuffer15 = reinterpret_cast<decltype(g_pfnReadFromBuffer15)>(vfptr[7]);
+                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
+                  break;
+              }
+              pfnDestroyXmlReader(xmlReader);
+              DetourTransactionCommit();
             }
-            pfnDestroyXmlReader(xmlReader);
-            DetourTransactionCommit();
           }
+        }
       }
       break;
-    } case LDR_DLL_NOTIFICATION_REASON_UNLOADED: {
+      } case LDR_DLL_NOTIFICATION_REASON_UNLOADED: {
       break;
     }
+    }
   }
-}
 
 #ifdef _M_IX86
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
@@ -133,7 +125,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock()
-    && reinterpret_cast<ntapi::unicode_string *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
+    && static_cast<ntapi::ustring *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -152,13 +144,7 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   std::unique_lock lock(mtx, std::try_to_lock);
 
   if ( lock.owns_lock() ) {
-    if ( reinterpret_cast<ntapi::unicode_string *>(DllName)->iequals(
-#ifdef _M_X64
-      xorstr_(L"aegisty64.bin")
-#else
-      xorstr_(L"aegisty.bin")
-#endif
-    ) ) {
+    if ( static_cast<ntapi::ustring *>(DllName)->istarts_with(xorstr_(L"aegisty")) ) {
       *DllHandle = nullptr;
       return STATUS_DLL_NOT_FOUND;
     }
@@ -181,7 +167,7 @@ NTSTATUS NTAPI NtCreateFile_hook(
   ULONG EaLength)
 {
 #ifdef _M_IX86
-  if ( auto const ObjectName = reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName) ) {
+  if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
     switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
       case L"\\\\.\\SICE"_fnv1au:
       case L"\\\\.\\SIWVID"_fnv1au:
@@ -202,7 +188,7 @@ NTSTATUS NTAPI NtCreateFile_hook(
     CreateOptions,
     EaBuffer,
     EaLength);
-}
+  }
 
 decltype(&NtCreateMutant) g_pfnNtCreateMutant;
 NTSTATUS NTAPI NtCreateMutant_hook(
@@ -213,7 +199,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
 {
   if ( ObjectAttributes
     && ObjectAttributes->ObjectName
-    && reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
+    && static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
 
     ObjectAttributes->ObjectName = nullptr;
     ObjectAttributes->Attributes &= ~OBJ_OPENIF;
@@ -229,7 +215,7 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   ULONG OpenOptions)
 {
-  if ( auto const ObjectName = reinterpret_cast<ntapi::unicode_string *>(ObjectAttributes->ObjectName) ) {
+  if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
     switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
       case L"Software\\Wine"_fnv1au:
       case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
@@ -364,7 +350,6 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
   }
   return g_pfnNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
 }
-
 
 decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(

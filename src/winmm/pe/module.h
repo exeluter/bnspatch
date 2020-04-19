@@ -7,12 +7,11 @@
 
 namespace pe
 {
-  class module : private IMAGE_DOS_HEADER
+  class module : public HINSTANCE__
   {
   public:
     module() = delete;
     uintptr_t handle() const;
-    operator HINSTANCE() const;
     template <class T>
     inline auto rva_to(uint32_t rva)
     {

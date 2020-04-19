@@ -16,6 +16,9 @@ namespace fs = std::filesystem;
 #include "hooks.h"
 #include "pe/module.h"
 #include "pe/export_directory.h"
+#include <wil/stl.h>
+#include <wil/win32_helpers.h>
+#include "versioninfo.h"
 
 LONG detour_attach_api(
   pe::module *module,
@@ -34,9 +37,11 @@ LONG detour_attach_api(
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
-  if ( fdwReason == DLL_PROCESS_ATTACH ) {
-    const auto name = pe::get_module()->base_name();
-    switch ( fnv1a::make_hash_upper(name.c_str()) ) {
+  PCWSTR OriginalFilename;
+
+  if ( fdwReason == DLL_PROCESS_ATTACH
+    && GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) >= 0 ) {
+    switch ( fnv1a::make_hash_upper(OriginalFilename) ) {
       case L"Client.exe"_fnv1au:
       case L"BNSR.exe"_fnv1au:
         NtCurrentPeb()->BeingDebugged = FALSE;
@@ -77,30 +82,45 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
   return TRUE;
 }
 
-ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC {
-
+ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC
+{
   switch ( dliNotify ) {
     case dliStartProcessing:
       break;
     case dliNotePreLoadLibrary: {
-      std::array<WCHAR, MAX_PATH> Buffer;
-      if ( !_stricmp(pdli->szDll, pe::instance_module()->export_directory()->name())
-        && GetSystemDirectoryW(Buffer.data(), SafeInt(Buffer.size())) ) {
-
-        auto Path = fs::path(Buffer.data());
-        Path /= pdli->szDll;
-        auto Module = reinterpret_cast<pe::module *>(
-          LoadLibraryExW(Path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH));
-
-        return reinterpret_cast<FARPROC>(Module);
+      if ( !_stricmp(pdli->szDll, pe::instance_module()->export_directory()->name()) ) {
+        auto path = wil::GetModuleFileNameW(pe::instance_module());
+        wchar_t drive[_MAX_DRIVE];
+        wchar_t dir[_MAX_DIR];
+        wchar_t fname[_MAX_FNAME];
+        wchar_t ext[_MAX_EXT];
+        if ( !_wsplitpath_s(path.get(), drive, dir, fname, ext) ) {
+          wchar_t buffer[6];
+          int num = -1;
+          wchar_t next_path[_MAX_PATH];
+          if ( swscanf_s(fname, L"%5ls%3d", buffer, (unsigned int)_countof(buffer), &num) > 0
+            && num < 999
+            && swprintf_s(fname, L"%.5ls%03d", buffer, num + 1) >= 0
+            && !_wmakepath_s(next_path, drive, dir, fname, ext) ) {
+            auto hModule = LoadLibraryExW(next_path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+            if ( hModule )
+              return reinterpret_cast<FARPROC>(hModule);
+          }
+        }
+        std::wstring result;
+        if ( SUCCEEDED(wil::GetSystemDirectoryW(result)) ) {
+          auto Path = fs::path(result);
+          Path /= pdli->szDll;
+          return reinterpret_cast<FARPROC>(LoadLibraryExW(Path.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH));
+        }
+        break;
       }
-      break;
-    }
     case dliNotePreGetProcAddress:
     case dliFailLoadLib:
     case dliFailGetProc:
     case dliNoteEndProcessing:
       break;
+    }
   }
   return nullptr;
 };

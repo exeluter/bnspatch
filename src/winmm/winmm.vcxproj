@@ -86,7 +86,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>UNICODE;_UNICODE;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -97,7 +97,7 @@
   <!-- Release -->
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>UNICODE;_UNICODE;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>MaxSpeed</Optimization>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -132,6 +132,7 @@
     <ClCompile Include="pe\export_directory.cpp" />
     <ClCompile Include="pe\module.cpp" />
     <ClCompile Include="pe\segment.cpp" />
+    <ClCompile Include="versioninfo.c" />
     <ClCompile Include="xmlhooks.cpp" />
     <ClCompile Include="xmlpatch.cpp" />
   </ItemGroup>
@@ -139,12 +140,13 @@
     <ClInclude Include="detours\detours.h" />
     <ClInclude Include="detours\detver.h" />
     <ClInclude Include="ic_char_traits.h" />
-    <ClInclude Include="ntapi\critical_section.h" />
+    <ClInclude Include="ntapi\critsec.h" />
     <ClInclude Include="ntapi\mprotect.h" />
-    <ClInclude Include="ntapi\string_span.h" />
+    <ClInclude Include="ntapi\string.h" />
     <ClInclude Include="pe\export_directory.h" />
     <ClInclude Include="pe\module.h" />
     <ClInclude Include="pe\segment.h" />
+    <ClInclude Include="versioninfo.h" />
     <ClInclude Include="xmlhooks.h" />
     <ClInclude Include="xmlpatch.h" />
     <ClInclude Include="xmlreader.h" />

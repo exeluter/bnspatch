@@ -9,7 +9,7 @@
 namespace ntapi
 {
   template<class T>
-  class basic_string : private T
+  class basic_string : public T
   {
   public:
 #pragma region Member types
@@ -31,20 +31,11 @@ namespace ntapi
 
     static constexpr size_type npos = size_type(-1);
 
-  //private:
-  //  size_type Length;
-  //  size_type MaximumLength;
-  //  pointer Buffer;
-
   public:
 #pragma region Constructors
     constexpr basic_string(const_pointer s)
     {
-      if ( s ) {
-        this->Length = SafeInt(std::char_traits<char_type>::length(s) * sizeof(char_type));
-      } else {
-        this->Length = 0;
-      }
+      this->Length = s ? size_type(std::char_traits<char_type>::length(s) * sizeof(char_type)) : 0;
       this->MaximumLength = this->Length;
       this->Buffer = const_cast<pointer>(s);
     }
@@ -385,6 +376,6 @@ namespace ntapi
     }
   };
 
-  using unicode_string = basic_string<UNICODE_STRING>;
-  using ansi_string = basic_string<ANSI_STRING>;
+  using ustring = basic_string<UNICODE_STRING>;
+  using string = basic_string<ANSI_STRING>;
 }
