@@ -36,7 +36,7 @@ void convert_impl(XmlElement const *src, pugi::xml_node &dst)
   auto node = dst.append_child(src->Name());
   for ( int i = 0; i < src->AttributeCount(); ++i )
     node.append_attribute(src->AttributeName(i)) = src->Attribute(i);
-
+  // TODO: text
   for ( auto child = src->FirstChildElement(); child; child = child->NextElement() )
     convert_impl(child, node);
 }
@@ -87,19 +87,19 @@ v13::XmlDoc *__fastcall ReadFromFile13_hook(
 #ifdef _M_IX86
   intptr_t unused__, // edx
 #endif
-  wchar_t const *file)
+  wchar_t const *xmlFileNameForLogging)
 {
-  auto queue = get_xml_patches(file);
+  auto queue = get_xml_patches(xmlFileNameForLogging);
   if ( queue.empty() )
-    return g_pfnReadFromFile13(thisptr, file);
+    return g_pfnReadFromFile13(thisptr, xmlFileNameForLogging);
 
   pugi::xml_document doc;
-  if ( !doc.load_file(file) )
+  if ( !doc.load_file(xmlFileNameForLogging) )
     return nullptr;
 
   memory_buffer_writer<unsigned char> writer;
   patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), file);
+  return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging);
 }
 
 v14::XmlDoc *(__thiscall *g_pfnReadFromFile14)(v14::XmlReader const *, wchar_t const *, class v14::XmlPieceReader *);
@@ -108,20 +108,20 @@ v14::XmlDoc *__fastcall ReadFromFile14_hook(
 #ifdef _M_IX86
   intptr_t unused__, // edx
 #endif
-  wchar_t const *file,
-  class v14::XmlPieceReader *arg2)
+  wchar_t const *xmlFileNameForLogging,
+  class v14::XmlPieceReader *xmlPieceReader)
 {
-  auto queue = get_xml_patches(file);
+  auto queue = get_xml_patches(xmlFileNameForLogging);
   if ( queue.empty() )
-    return g_pfnReadFromFile14(thisptr, file, arg2);
+    return g_pfnReadFromFile14(thisptr, xmlFileNameForLogging, xmlPieceReader);
 
   pugi::xml_document doc;
-  if ( !doc.load_file(file) )
+  if ( !doc.load_file(xmlFileNameForLogging) )
     return nullptr;
 
   memory_buffer_writer<unsigned char> writer;
   patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), file, arg2);
+  return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
 }
 
 v15::XmlDoc *(__thiscall *g_pfnReadFromFile15)(v15::XmlReader const *, wchar_t const *, class v15::XmlPieceReader *);
@@ -130,22 +130,21 @@ v15::XmlDoc *__fastcall ReadFromFile15_hook(
 #ifdef _M_IX86
   intptr_t unused__, // edx
 #endif
-  wchar_t const *file,
-  class v15::XmlPieceReader *arg2)
+  wchar_t const *xmlFileNameForLogging,
+  class v15::XmlPieceReader *xmlPieceReader)
 {
-  auto queue = get_xml_patches(file);
+  auto queue = get_xml_patches(xmlFileNameForLogging);
   if ( queue.empty() )
-    return g_pfnReadFromFile15(thisptr, file, arg2);
+    return g_pfnReadFromFile15(thisptr, xmlFileNameForLogging, xmlPieceReader);
 
   pugi::xml_document doc;
-  if ( !doc.load_file(file) )
+  if ( !doc.load_file(xmlFileNameForLogging) )
     return nullptr;
 
   memory_buffer_writer<unsigned char> writer;
   patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer15(thisptr, writer.result.data(), SafeInt(writer.result.size()), file, arg2);
+  return g_pfnReadFromBuffer15(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
 }
-
 
 v13::XmlDoc *(__thiscall *g_pfnReadFromBuffer13)(v13::XmlReader const *, unsigned char const *, unsigned int, wchar_t const *);
 v13::XmlDoc *__fastcall ReadFromBuffer13_hook(
@@ -153,32 +152,32 @@ v13::XmlDoc *__fastcall ReadFromBuffer13_hook(
 #ifdef _M_IX86
   intptr_t unused__, // edx
 #endif
-  unsigned char const *data,
+  unsigned char const *mem,
   unsigned int size,
-  wchar_t const *file)
+  wchar_t const *xmlFileNameForLogging)
 {
-  if ( !data || !size )
+  if ( !mem || !size )
     return nullptr;
 
-  auto queue = get_xml_patches(file);
+  auto queue = get_xml_patches(xmlFileNameForLogging);
   if ( queue.empty() )
-    return g_pfnReadFromBuffer13(thisptr, data, size, file);
+    return g_pfnReadFromBuffer13(thisptr, mem, size, xmlFileNameForLogging);
 
   pugi::xml_document doc;
   if ( size >= sizeof(int64_t)
-    && *reinterpret_cast<int64_t const *>(data) == 0x424C534F42584D4Ci64 ) {
-    auto xmlDoc = g_pfnReadFromBuffer13(thisptr, data, size, file);
+    && *reinterpret_cast<int64_t const *>(mem) == 0x424C534F42584D4Ci64 ) {
+    auto xmlDoc = g_pfnReadFromBuffer13(thisptr, mem, size, xmlFileNameForLogging);
     if ( !xmldoc_to_pugixml(xmlDoc, doc) )
       return xmlDoc;
     thisptr->Close(xmlDoc);
   } else {
-    if ( !doc.load_buffer(data, size) )
+    if ( !doc.load_buffer(mem, size) )
       return nullptr;
   }
 
   memory_buffer_writer<unsigned char> writer;
   patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), file);
+  return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging);
 }
 
 v14::XmlDoc *(__thiscall *g_pfnReadFromBuffer14)(v14::XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class v14::XmlPieceReader *);
@@ -187,33 +186,33 @@ v14::XmlDoc *__fastcall ReadFromBuffer14_hook(
 #ifdef _M_IX86
   intptr_t unused__, // edx
 #endif
-  unsigned char const *data,
+  unsigned char const *mem,
   unsigned int size,
-  wchar_t const *file,
-  class v14::XmlPieceReader *arg4)
+  wchar_t const *xmlFileNameForLogging,
+  class v14::XmlPieceReader *xmlPieceReader)
 {
-  if ( !data || !size )
+  if ( !mem || !size )
     return nullptr;
 
-  auto queue = get_xml_patches(file);
+  auto queue = get_xml_patches(xmlFileNameForLogging);
   if ( queue.empty() )
-    return g_pfnReadFromBuffer14(thisptr, data, size, file, arg4);
+    return g_pfnReadFromBuffer14(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
 
   pugi::xml_document doc;
   if ( size >= sizeof(int64_t)
-    && *reinterpret_cast<int64_t const *>(data) == 0x424C534F42584D4Ci64 ) {
-    auto xmlDoc = g_pfnReadFromBuffer14(thisptr, data, size, file, arg4);
+    && *reinterpret_cast<int64_t const *>(mem) == 0x424C534F42584D4Ci64 ) {
+    auto xmlDoc = g_pfnReadFromBuffer14(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
     if ( !xmldoc_to_pugixml(xmlDoc, doc) )
       return xmlDoc;
     thisptr->Close(xmlDoc);
   } else {
-    if ( !doc.load_buffer(data, size) )
+    if ( !doc.load_buffer(mem, size) )
       return nullptr;
   }
 
   memory_buffer_writer<unsigned char> writer;
   patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), file, arg4);
+  return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
 }
 
 v15::XmlDoc *(__thiscall *g_pfnReadFromBuffer15)(v15::XmlReader const *, unsigned char const *, unsigned int, wchar_t const *, class v15::XmlPieceReader *);
@@ -222,31 +221,31 @@ v15::XmlDoc *__fastcall ReadFromBuffer15_hook(
 #ifdef _M_IX86
   intptr_t unused__, // edx
 #endif
-  unsigned char const *data,
+  unsigned char const *mem,
   unsigned int size,
-  wchar_t const *file,
-  class v15::XmlPieceReader *arg4)
+  wchar_t const *xmlFileNameForLogging,
+  class v15::XmlPieceReader *xmlPieceReader)
 {
-  if ( !data || !size )
+  if ( !mem || !size )
     return nullptr;
 
-  auto queue = get_xml_patches(file);
+  auto queue = get_xml_patches(xmlFileNameForLogging);
   if ( queue.empty() )
-    return g_pfnReadFromBuffer15(thisptr, data, size, file, arg4);
+    return g_pfnReadFromBuffer15(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
 
   pugi::xml_document doc;
   if ( size >= sizeof(int64_t)
-    && *reinterpret_cast<int64_t const *>(data) == 0x424C534F42584D4Ci64 ) {
-    auto xmlDoc = g_pfnReadFromBuffer15(thisptr, data, size, file, arg4);
+    && *reinterpret_cast<int64_t const *>(mem) == 0x424C534F42584D4Ci64 ) {
+    auto xmlDoc = g_pfnReadFromBuffer15(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
     if ( !xmldoc_to_pugixml(xmlDoc, doc) )
       return xmlDoc;
     thisptr->Close(xmlDoc);
   } else {
-    if ( !doc.load_buffer(data, size) )
+    if ( !doc.load_buffer(mem, size) )
       return nullptr;
   }
 
   memory_buffer_writer<unsigned char> writer;
   patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer15(thisptr, writer.result.data(), SafeInt(writer.result.size()), file, arg4);
+  return g_pfnReadFromBuffer15(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
 }

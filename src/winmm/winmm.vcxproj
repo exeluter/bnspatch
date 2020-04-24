@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClInclude Include="detours\detours.h" />
     <ClInclude Include="detours\detver.h" />
+    <ClInclude Include="hooks.h" />
     <ClInclude Include="ic_char_traits.h" />
     <ClInclude Include="ntapi\critsec.h" />
     <ClInclude Include="ntapi\mprotect.h" />

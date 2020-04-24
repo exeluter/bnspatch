@@ -122,7 +122,7 @@ namespace Gaffeine.Data.XmlSerializers
         && @this.Exists(x => fileName.Contains(x.FileName, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static void ca8de357b76a2339a41ee639eb04cc454(Action<object, UIElement, bool> @delegate, object @this, UIElement A_1, bool A_2)
+    public static void SetFocusAndSelectText(Action<object, UIElement, bool> @delegate, object @this, UIElement element, bool A_2)
     {
     }
   }

@@ -4,6 +4,7 @@ using MonoMod.RuntimeDetour.HookGen;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
@@ -78,11 +79,12 @@ namespace Gaffeine.Data.XmlSerializers
         Type.GetType("NCLauncherW.Views.SignInWindow, NCLauncher2")
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
             .Single(x => x.Name.Length == 0x21
+                         && x.Name.StartsWith("c")
                          && x.ReturnType == typeof(void)
                          && x.GetParameters()
                              .Select(y => y.ParameterType)
                              .SequenceEqual(new[] { typeof(UIElement), typeof(bool) })),
-        new Action<Action<object, UIElement, bool>, object, UIElement, bool>(Hooks.ca8de357b76a2339a41ee639eb04cc454));
+        new Action<Action<object, UIElement, bool>, object, UIElement, bool>(Hooks.SetFocusAndSelectText));
     }
   }
 }
