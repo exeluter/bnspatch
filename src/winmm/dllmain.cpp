@@ -39,7 +39,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
   PCWSTR OriginalFilename;
 
-  if ( fdwReason == DLL_PRrOCESS_ATTACH
+  if ( fdwReason == DLL_PROCESS_ATTACH
     && GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) >= 0 ) {
     switch ( fnv1a::make_hash(OriginalFilename, false) ) {
       case L"Client.exe"_fnv1ai:
