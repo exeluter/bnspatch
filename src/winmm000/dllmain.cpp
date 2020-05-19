@@ -13,45 +13,30 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC
 {
   pe::module* module;
-  const char* name;
-  wchar_t drive[_MAX_DRIVE];
-  wchar_t dir[_MAX_DIR];
   wchar_t fname[_MAX_FNAME];
   wchar_t ext[_MAX_EXT];
   wchar_t path[_MAX_PATH];
   wchar_t buffer[_MAX_FNAME];
-  unsigned num = UINT_MAX;
+  int num = -1;
   HMODULE result;
   UINT count;
 
-  switch (dliNotify) {
-  case dliStartProcessing:
-    break;
-  case dliNotePreLoadLibrary:
+  if (dliNotify == dliNotePreLoadLibrary) {
     module = pe::instance_module();
-    name = module->export_directory()->name();
-    if (!_stricmp(pdli->szDll, name)) {
+    if (!_stricmp(pdli->szDll, module->export_directory()->name())) {
       if (GetModuleFileNameW(module, path, _countof(path))
-        && !_wsplitpath_s(path, drive, dir, fname, ext)
-        && swscanf_s(fname, L"%ls%u", buffer, (unsigned int)_countof(buffer), &num) > 0
-        && swprintf_s(fname, L"%ls%03u", buffer, num + 1) >= 0
-        && !_wmakepath_s(path, drive, dir, fname, ext)) {
-        result = LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+        && !_wsplitpath_s(path, nullptr, 0, nullptr, 0, fname, _countof(fname), ext, _countof(ext))
+        && swscanf_s(fname, L"%[^0-9]%d", buffer, (unsigned int)_countof(buffer), &num) > 0
+        && swprintf_s(fname, L"%s%03d", buffer, num + 1) >= 0
+        && !_wmakepath_s(path, _countof(path), nullptr, nullptr, fname, ext)) {
+        result = LoadLibraryExW(path, nullptr, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
         if (result)
           return (FARPROC)result;
       }
-      count = GetSystemDirectoryW(path, (UINT)_countof(path));
-      if (count
-        && swprintf_s(path + count, _countof(path) - count, L"\\%hs", name) >= 0) {
+      count = GetSystemDirectoryW(path, _countof(path));
+      if (count && swprintf_s(path + count, _countof(path) - count, L"\\%hs", pdli->szDll))
         return (FARPROC)LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
-      }
     }
-    break;
-  case dliNotePreGetProcAddress:
-  case dliFailLoadLib:
-  case dliFailGetProc:
-  case dliNoteEndProcessing:
-    break;
   }
   return nullptr;
 };
