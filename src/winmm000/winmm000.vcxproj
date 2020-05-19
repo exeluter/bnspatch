@@ -42,7 +42,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup>
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <TargetName>winmm</TargetName>
+    <GenerateManifest>false</GenerateManifest>
+    <EmbedManifest>false</EmbedManifest>
+    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\$(ProjectName)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(PlatformShortName)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -59,12 +62,13 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ntdll.lib;delayimp.lib;shlwapi.lib;$(SolutionDir)lib\$(PlatformShortName)\$(ProjectName).lib;$(SolutionDir)lib\$(PlatformShortName)\libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;delayimp.lib;shlwapi.lib;$(SolutionDir)lib\$(PlatformShortName)\$(TargetName).lib;$(SolutionDir)lib\$(PlatformShortName)\libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>$(TargetFileName);%(DelayLoadDLLs)</DelayLoadDLLs>
-      <ModuleDefinitionFile>$(ProjectName)_$(PlatformShortName).def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>$(TargetName)_$(PlatformShortName).def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
       <Command>
+        set "MSBuildProjectName=$(ProjectName)"
         set "MSBuildProgramFiles32=$(MSBuildProgramFiles32)"
         set "MSBuildTargetFileName=$(TargetFileName)"
         set "MSBuildTargetPath=$(TargetPath)"
@@ -76,10 +80,6 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <PropertyGroup>
-    <GenerateManifest>false</GenerateManifest>
-    <EmbedManifest>false</EmbedManifest>
-  </PropertyGroup>
   <!-- Debug -->
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>

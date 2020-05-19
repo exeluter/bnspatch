@@ -1,4 +1,4 @@
-#include <Windows.h>
+#include <ntdll.h>
 #include <stdio.h>
 #include <delayimp.h>
 
@@ -22,7 +22,8 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
   wchar_t buffer[_MAX_FNAME];
   unsigned num = UINT_MAX;
   HMODULE result;
-  
+  UINT count;
+
   switch (dliNotify) {
   case dliStartProcessing:
     break;
@@ -39,8 +40,9 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
         if (result)
           return (FARPROC)result;
       }
-      if (GetSystemDirectoryW(path, (UINT)_countof(path))
-        && swprintf_s(path, L"\\%hs", name) >= 0) {
+      count = GetSystemDirectoryW(path, (UINT)_countof(path));
+      if (count
+        && swprintf_s(path + count, _countof(path) - count, L"\\%hs", name) >= 0) {
         return (FARPROC)LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
       }
     }

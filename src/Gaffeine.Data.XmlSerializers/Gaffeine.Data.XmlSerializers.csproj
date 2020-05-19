@@ -11,7 +11,7 @@
     <RootNamespace>Gaffeine.Data.XmlSerializers</RootNamespace>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <IntermediateOutputPath>$(SolutionDir)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntermediateOutputPath>
-    <OutputPath>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutputPath>
+    <OutputPath>$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName)\</OutputPath>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
