@@ -189,6 +189,10 @@ using internal::printf;  // For printing into memory_buffer.
 
 template <typename Range> class printf_arg_formatter;
 
+template <typename Char>
+class basic_printf_parse_context : public basic_format_parse_context<Char> {
+  using basic_format_parse_context<Char>::basic_format_parse_context;
+};
 template <typename OutputIt, typename Char> class basic_printf_context;
 
 /**
@@ -303,6 +307,8 @@ class printf_arg_formatter : public internal::arg_formatter_base<Range> {
 };
 
 template <typename T> struct printf_formatter {
+  printf_formatter() = delete;
+
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin()) {
     return ctx.begin();
@@ -320,7 +326,9 @@ template <typename OutputIt, typename Char> class basic_printf_context {
  public:
   /** The character type for the output. */
   using char_type = Char;
+  using iterator = OutputIt;
   using format_arg = basic_format_arg<basic_printf_context>;
+  using parse_context_type = basic_printf_parse_context<Char>;
   template <typename T> using formatter_type = printf_formatter<T>;
 
  private:
@@ -328,7 +336,7 @@ template <typename OutputIt, typename Char> class basic_printf_context {
 
   OutputIt out_;
   basic_format_args<basic_printf_context> args_;
-  basic_format_parse_context<Char> parse_ctx_;
+  parse_context_type parse_ctx_;
 
   static void parse_flags(format_specs& specs, const Char*& it,
                           const Char* end);
@@ -355,9 +363,11 @@ template <typename OutputIt, typename Char> class basic_printf_context {
   OutputIt out() { return out_; }
   void advance_to(OutputIt it) { out_ = it; }
 
+  internal::locale_ref locale() { return {}; }
+
   format_arg arg(int id) const { return args_.get(id); }
 
-  basic_format_parse_context<Char>& parse_context() { return parse_ctx_; }
+  parse_context_type& parse_context() { return parse_ctx_; }
 
   FMT_CONSTEXPR void on_error(const char* message) {
     parse_ctx_.on_error(message);
