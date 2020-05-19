@@ -31,8 +31,8 @@ namespace fs = std::filesystem;
 #include "ntapi/mprotect.h"
 #include "ntapi/string.h"
 #include "thread_local_lock.h"
-#include "pe/module.h"
-#include "pe/export_directory.h"
+#include <pe/module.h>
+#include <pe/export_directory.h>
 #include "xmlhooks.h"
 #include "xmlpatch.h"
 #include "versioninfo.h"
@@ -70,8 +70,8 @@ VOID CALLBACK DllNotification(
 
       LPCWSTR OriginalFilename;
       if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)OriginalFilename) >= 0 ) {
-        switch ( fnv1a::make_hash_upper(OriginalFilename) ) {
-          case L"XmlReader.dll"_fnv1au: {
+        switch ( fnv1a::make_hash(OriginalFilename, false) ) {
+          case L"XmlReader.dll"_fnv1ai: {
             auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
             auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
             auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
@@ -168,10 +168,10 @@ NTSTATUS NTAPI NtCreateFile_hook(
 {
 #ifdef _M_IX86
   if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
-    switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
-      case L"\\\\.\\SICE"_fnv1au:
-      case L"\\\\.\\SIWVID"_fnv1au:
-      case L"\\\\.\\NTICE"_fnv1au:
+    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), false) ) {
+      case L"\\\\.\\SICE"_fnv1ai:
+      case L"\\\\.\\SIWVID"_fnv1ai:
+      case L"\\\\.\\NTICE"_fnv1ai:
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
   }
@@ -216,9 +216,9 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   ULONG OpenOptions)
 {
   if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
-    switch ( fnv1a::make_hash_upper(ObjectName->data(), ObjectName->size()) ) {
-      case L"Software\\Wine"_fnv1au:
-      case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
+    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), false) ) {
+      case L"Software\\Wine"_fnv1ai:
+      case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1ai:
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
   }
@@ -357,16 +357,16 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
-    switch ( fnv1a::make_hash_upper(lpClassName) ) {
+    switch ( fnv1a::make_hash(lpClassName, false) ) {
 #ifdef _M_IX86
-      case "OLLYDBG"_fnv1au:
-      case "GBDYLLO"_fnv1au:
-      case "pediy06"_fnv1au:
+      case "OLLYDBG"_fnv1ai:
+      case "GBDYLLO"_fnv1ai:
+      case "pediy06"_fnv1ai:
 #endif         
-      case "FilemonClass"_fnv1au:
-      case "PROCMON_WINDOW_CLASS"_fnv1au:
-      case "RegmonClass"_fnv1au:
-      case "18467-41"_fnv1au:
+      case "FilemonClass"_fnv1ai:
+      case "PROCMON_WINDOW_CLASS"_fnv1ai:
+      case "RegmonClass"_fnv1ai:
+      case "18467-41"_fnv1ai:
         return nullptr;
     }
   }

@@ -13,3 +13,5 @@ namespace pe
     const char *name() const;
   };
 }
+
+#include "export_directory.inl"

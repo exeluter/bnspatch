@@ -1,7 +1,6 @@
 #pragma once
 #include <ntdll.h>
 #include <vector>
-#include "pe/module.h"
 
 extern PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(

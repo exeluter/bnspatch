@@ -21,11 +21,11 @@
   </ItemGroup>
   <!-- Common settings -->
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{ADE1873B-9AB0-43BF-BC98-D1A14FF4F8C3}</ProjectGuid>
+    <ProjectGuid>{FC173100-02FD-4AFA-BEFD-85D55ADBE5AE}</ProjectGuid>
     <VCProjectVersion>15.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>winmm</ProjectName>
+    <ProjectName>winmm000</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -122,27 +122,6 @@
   </ImportGroup>
   <!-- Items -->
   <ItemGroup>
-    <ClCompile Include="detours\creatwth.cpp" />
-    <ClCompile Include="detours\detours.cpp" />
-    <ClCompile Include="detours\disasm.cpp" />
-    <ClCompile Include="detours\image.cpp" />
-    <ClCompile Include="detours\modules.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="hooks.cpp" />
-    <ClCompile Include="versioninfo.c" />
-    <ClCompile Include="xmlhooks.cpp" />
-    <ClCompile Include="xmlpatch.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="detours\detours.h" />
-    <ClInclude Include="detours\detver.h" />
-    <ClInclude Include="hooks.h" />
-    <ClInclude Include="versioninfo.h" />
-    <ClInclude Include="xmlhooks.h" />
-    <ClInclude Include="xmlpatch.h" />
-    <ClInclude Include="xmlreader.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="..\..\natvis\pugixml.natvis" />
   </ItemGroup>
 </Project>

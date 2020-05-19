@@ -32,7 +32,7 @@ struct basic_fnv1a
     template <class Char>
     static constexpr Char tolower(Char c)
     {
-      if ( c >= 'A' && c <= 'Z' )
+      if (c >= 'A' && c <= 'Z')
         return c - ('A' - 'a');
       return c;
     }
@@ -40,74 +40,55 @@ struct basic_fnv1a
     template <class Char>
     static constexpr Char toupper(Char c)
     {
-      if ( c >= 'a' && c <= 'z' )
+      if (c >= 'a' && c <= 'z')
         return c - ('a' - 'A');
       return c;
     }
   };
 
-  template <class Char>
-  static constexpr T make_hash(const Char *s)
+  static constexpr T make_hash(const char* s, bool case_sensitive = true)
   {
     T hash = OffsetBasis;
-    while ( *s ) {
+    for (; *s; ++s) {
+      char c = case_sensitive ? *s : details::toupper(*s);
       hash ^= static_cast<T>(*s++);
       hash *= Prime;
     }
     return hash;
   }
 
-  template <class Char>
-  static constexpr T make_hash(const Char *s, std::size_t length)
+  static constexpr T make_hash(const char* s, std::size_t length, bool case_sensitive = true)
   {
     T hash = OffsetBasis;
-
-    for ( std::size_t i = 0; i < length; ++i) {
-      hash ^= static_cast<T>(s[i]);
+    for (std::size_t i = 0; i < length; ++i) {
+      char c = case_sensitive ? s[i] : details::toupper(s[i]);
+      hash ^= static_cast<T>(c);
       hash *= Prime;
     }
     return hash;
   }
 
-  template <class Char>
-  static constexpr T make_hash_lower(const Char *s)
+  static constexpr T make_hash(const wchar_t* s, bool case_sensitive = true)
   {
     T hash = OffsetBasis;
-    while ( *s ) {
-      hash ^= static_cast<T>(details::tolower(*s++));
+    for (; *s; ++s) {
+      wchar_t c = case_sensitive ? *s : details::toupper(*s);
+      hash ^= static_cast<T>(c & 0xff);
+      hash *= Prime;
+      hash ^= static_cast<T>(c >> CHAR_BIT);
       hash *= Prime;
     }
     return hash;
   }
 
-  template <class Char>
-  static constexpr T make_hash_lower(const Char *s, std::size_t length)
+  static constexpr T make_hash(const wchar_t* s, std::size_t length, bool case_sensitive = true)
   {
     T hash = OffsetBasis;
-    for ( std::size_t i = 0; i < length; ++i) {
-      hash ^= static_cast<T>(details::tolower(s[i]));
+    for (std::size_t i = 0; i < length; ++i) {
+      wchar_t c = case_sensitive ? s[i] : details::toupper(s[i]);
+      hash ^= static_cast<T>(c & 0xff);
       hash *= Prime;
-    }
-    return hash;
-  }
-
-  template <class Char>
-  static constexpr T make_hash_upper(const Char *s)
-  {
-    T hash = OffsetBasis;
-    while ( *s ) {
-      hash ^= static_cast<T>(details::toupper(*s++));
-      hash *= Prime;
-    }
-    return hash;
-  }
-
-  template <class Char>
-  static constexpr T make_hash_upper(const Char *s, std::size_t length)
-  {
-    T hash = OffsetBasis;
-    for ( std::size_t i = 0; i < length; ++i) {
-      hash ^= static_cast<T>(details::toupper(s[i]));
+      hash ^= static_cast<T>(c >> CHAR_BIT);
       hash *= Prime;
     }
     return hash;
@@ -116,37 +97,29 @@ struct basic_fnv1a
 using fnv1a32 = basic_fnv1a<std::uint32_t, 0x1000193UL, 2166136261UL>;
 using fnv1a64 = basic_fnv1a<std::uint64_t, 0x100000001b3ULL, 14695981039346656037ULL>;
 
-constexpr auto operator"" _fnv1a32(const char *s, std::size_t len)
+constexpr auto operator"" _fnv1a32(const char* s, std::size_t len)
 {
   return fnv1a32::make_hash(s, len);
 }
-constexpr auto operator"" _fnv1a32(const wchar_t *s, std::size_t len)
+constexpr auto operator"" _fnv1a32(const wchar_t* s, std::size_t len)
 {
   return fnv1a32::make_hash(s, len);
 }
-constexpr auto operator"" _fnv1a32l(const wchar_t *s, std::size_t len)
+constexpr auto operator"" _fnv1a32i(const wchar_t* s, std::size_t len)
 {
-  return fnv1a32::make_hash_lower(s, len);
+  return fnv1a32::make_hash(s, len, false);
 }
-constexpr auto operator"" _fnv1a32u(const wchar_t *s, std::size_t len)
-{
-  return fnv1a32::make_hash_upper(s, len);
-}
-constexpr auto operator"" _fnv1a64(const char *s, std::size_t len)
+constexpr auto operator"" _fnv1a64(const char* s, std::size_t len)
 {
   return fnv1a64::make_hash(s, len);
 }
-constexpr auto operator"" _fnv1a64(const wchar_t *s, std::size_t len)
+constexpr auto operator"" _fnv1a64(const wchar_t* s, std::size_t len)
 {
   return fnv1a64::make_hash(s, len);
 }
-constexpr auto operator"" _fnv1a64l(const wchar_t *s, std::size_t len)
+constexpr auto operator"" _fnv1a64i(const wchar_t* s, std::size_t len)
 {
-  return fnv1a64::make_hash_lower(s, len);
-}
-constexpr auto operator"" _fnv1a64u(const wchar_t *s, std::size_t len)
-{
-  return fnv1a64::make_hash_upper(s, len);
+  return fnv1a64::make_hash(s, len, false);
 }
 
 #ifdef _M_X64
@@ -155,28 +128,20 @@ using fnv1a = fnv1a64;
 using fnv1a = fnv1a32;
 #endif
 
-constexpr auto operator"" _fnv1a(const char *s, std::size_t len)
+constexpr auto operator"" _fnv1a(const char* s, std::size_t len)
 {
   return fnv1a::make_hash(s, len);
 }
-constexpr auto operator"" _fnv1al(const char *s, std::size_t len)
+constexpr auto operator"" _fnv1ai(const char* s, std::size_t len)
 {
-  return fnv1a::make_hash_lower(s, len);
-}
-constexpr auto operator"" _fnv1au(const char *s, std::size_t len)
-{
-  return fnv1a::make_hash_upper(s, len);
+  return fnv1a::make_hash(s, len, false);
 }
 
-constexpr auto operator"" _fnv1a(const wchar_t *s, std::size_t len)
+constexpr auto operator"" _fnv1a(const wchar_t* s, std::size_t len)
 {
   return fnv1a::make_hash(s, len);
 }
-constexpr auto operator"" _fnv1al(const wchar_t *s, std::size_t len)
+constexpr auto operator"" _fnv1ai(const wchar_t* s, std::size_t len)
 {
-  return fnv1a::make_hash_lower(s, len);
-}
-constexpr auto operator"" _fnv1au(const wchar_t *s, std::size_t len)
-{
-  return fnv1a::make_hash_upper(s, len);
+  return fnv1a::make_hash(s, len, false);
 }

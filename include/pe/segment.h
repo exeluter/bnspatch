@@ -4,7 +4,6 @@
 #include <gsl/span_ext>
 #include "module.h"
 
-
 namespace pe
 {
   class module;
@@ -33,4 +32,4 @@ namespace pe
   };
 }
 
-
+#include "segment.inl"

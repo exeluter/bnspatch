@@ -1,9 +1,6 @@
 #pragma once
 #include <ntdll.h>
-#include <string_view>
 #include <gsl/span>
-
-#include "..\ic_char_traits.h"
 
 namespace pe
 {
@@ -22,8 +19,8 @@ namespace pe
     {
       return reinterpret_cast<const T *>(reinterpret_cast<uintptr_t>(this) + rva);
     }
-    ic_wstring base_name() const;
-    ic_wstring full_name() const;
+    std::wstring base_name() const;
+    std::wstring full_name() const;
     IMAGE_DOS_HEADER *dos_header();
     const IMAGE_DOS_HEADER *dos_header() const;
     IMAGE_NT_HEADERS *nt_header();
@@ -31,8 +28,8 @@ namespace pe
     size_t size() const;
     gsl::span<class segment> segments();
     gsl::span<const class segment> segments() const;
-    class segment *segment(const std::string_view &name);
-    const class segment *segment(const std::string_view &name) const;
+    class segment *segment(const char* namename);
+    const class segment *segment(const char* name) const;
     class export_directory *export_directory();
     const class export_directory *export_directory() const;
     void *find_function(const char *name) const;
@@ -43,3 +40,5 @@ namespace pe
   const class module *get_module_from_address(const void *pc);
   class module *instance_module();
 }
+
+#include "module.inl"

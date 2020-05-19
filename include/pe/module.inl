@@ -1,23 +1,22 @@
 #pragma once
-#include "module.h"
-#include "segment.h"
-#include "..\ic_char_traits.h"
-#include "..\ntapi\string.h"
-#include "..\ntapi\critsec.h"
+#include <ntapi\string.h>
+#include <ntapi\critsec.h>
 #include <ntdll.h>
 #include <string>
 #include <mutex>
+#include "module.h"
+#include "segment.h"
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 namespace pe
 {
-  uintptr_t module::handle() const
+  inline uintptr_t module::handle() const
   {
     return reinterpret_cast<uintptr_t>(this);
   }
 
-  ic_wstring module::base_name() const
+  inline std::wstring module::base_name() const
   {
     ntapi::critsec crit(NtCurrentPeb()->LoaderLock);
     std::lock_guard<ntapi::critsec> guard(crit);
@@ -26,15 +25,13 @@ namespace pe
     for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-      if ( Module->DllBase == this ) {
-        const auto name = static_cast<ntapi::ustring *>(&Module->BaseDllName);
-        return ic_wstring(name->begin(), name->end());
-      }
+      if ( Module->DllBase == this )
+          return std::wstring(Module->BaseDllName.Buffer, Module->BaseDllName.Length / sizeof(wchar_t));
     }
     return {};
   }
 
-  ic_wstring module::full_name() const
+  inline std::wstring module::full_name() const
   {
     ntapi::critsec crit(NtCurrentPeb()->LoaderLock);
     std::lock_guard<ntapi::critsec> guard(crit);
@@ -43,25 +40,23 @@ namespace pe
     for ( auto Entry = Head->Flink; Entry != Head; Entry = Entry->Flink ) {
       auto Module = CONTAINING_RECORD(Entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-      if ( Module->DllBase == this ) {
-        const auto name = static_cast<ntapi::ustring *>(&Module->FullDllName);
-        return ic_wstring(name->begin(), name->end());
-      }
+      if ( Module->DllBase == this )
+        return std::wstring(Module->FullDllName.Buffer, Module->FullDllName.Length / sizeof(wchar_t));
     }
     return {};
   }
 
-  IMAGE_DOS_HEADER *module::dos_header()
+  inline IMAGE_DOS_HEADER *module::dos_header()
   {
     return reinterpret_cast<IMAGE_DOS_HEADER *>(this);
   }
 
-  const IMAGE_DOS_HEADER *module::dos_header() const
+  inline const IMAGE_DOS_HEADER *module::dos_header() const
   {
     return reinterpret_cast<const IMAGE_DOS_HEADER *>(this);
   }
 
-  IMAGE_NT_HEADERS *module::nt_header()
+  inline IMAGE_NT_HEADERS *module::nt_header()
   {
     const auto dosheader = this->dos_header();
     if ( dosheader->e_magic != IMAGE_DOS_SIGNATURE )
@@ -74,12 +69,12 @@ namespace pe
     return ntheader;
   }
 
-  const IMAGE_NT_HEADERS *module::nt_header() const
+  inline const IMAGE_NT_HEADERS *module::nt_header() const
   {
     return const_cast<module *>(this)->nt_header();
   }
 
-  size_t module::size() const
+  inline size_t module::size() const
   {
     const auto dosheader = this->dos_header();
     if ( dosheader->e_magic != IMAGE_DOS_SIGNATURE )
@@ -94,7 +89,7 @@ namespace pe
     return ntheader->OptionalHeader.SizeOfImage;
   }
 
-  gsl::span<segment> module::segments()
+  inline gsl::span<segment> module::segments()
   {
     const auto ntheader = this->nt_header();
     if ( !ntheader )
@@ -105,29 +100,26 @@ namespace pe
       ntheader->FileHeader.NumberOfSections);
   }
 
-  gsl::span<const class segment> module::segments() const
+  inline gsl::span<const class segment> module::segments() const
   {
     return const_cast<module *>(this)->segments();
   }
 
-  class segment *module::segment(const std::string_view &name)
+  inline class segment *module::segment(const char *name)
   {
     const auto segments = this->segments();
     const auto &it = std::find_if(segments.begin(), segments.end(), [&](const class segment &x) {
-      return x.name() == name;
+      return !x.name().compare(name);
     });
-    if ( it != segments.end() )
-      return &*it;
-
-    throw nullptr;
+    return it != segments.end() ? &*it : nullptr;
   }
 
-  const class segment *module::segment(const std::string_view &name) const
+  inline const class segment *module::segment(const char* name) const
   {
     return const_cast<module *>(this)->segment(name);
   }
 
-  class export_directory *module::export_directory()
+  inline class export_directory *module::export_directory()
   {
     const auto ntheader = this->nt_header();
     if ( !ntheader
@@ -141,12 +133,12 @@ namespace pe
       ntheader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
   }
 
-  const class export_directory *module::export_directory() const
+  inline const class export_directory *module::export_directory() const
   {
     return const_cast<module *>(this)->export_directory();
   }
 
-  void *module::find_function(const char *name) const
+  inline void *module::find_function(const char *name) const
   {
     if ( !name ) return nullptr;
 
@@ -157,7 +149,7 @@ namespace pe
     return nullptr;
   }
 
-  void *module::find_function(uint32_t num) const
+  inline void *module::find_function(uint32_t num) const
   {
     if ( !num ) return nullptr;
 
@@ -168,7 +160,7 @@ namespace pe
     return nullptr;
   };
 
-  module *get_module(wchar_t const *name)
+  inline module *get_module(wchar_t const *name)
   {
     ntapi::critsec crit(NtCurrentPeb()->LoaderLock);
 
@@ -191,18 +183,18 @@ namespace pe
     return nullptr;
   }
 
-  module *get_module_from_address(void *pc)
+  inline module *get_module_from_address(void *pc)
   {
     void *Unused;
     return static_cast<module *>(RtlPcToFileHeader(pc, &Unused));
   }
 
-  const module *get_module_from_address(const void *pc)
+  inline const module *get_module_from_address(const void *pc)
   {
     return get_module_from_address(const_cast<void *>(pc));
   }
 
-  module *instance_module()
+  inline module *instance_module()
   {
     return reinterpret_cast<module *>(&__ImageBase);
   }

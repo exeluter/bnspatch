@@ -17,20 +17,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\ntapi">
-      <UniqueIdentifier>{8be2e784-2af7-46f1-9ef9-f95b0dab746a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\pe">
-      <UniqueIdentifier>{171a7e66-b951-484f-a927-0cf71a8e60c2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\detours">
       <UniqueIdentifier>{848c6380-e69b-46e0-b1be-2472a83d8be2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\detours">
       <UniqueIdentifier>{76499094-ef0a-4443-ae3a-552d13079271}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\pe">
-      <UniqueIdentifier>{12a418fe-f7e1-47bb-93c6-4a0f34cccfae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -58,15 +49,6 @@
     <ClCompile Include="detours\image.cpp">
       <Filter>Source Files\detours</Filter>
     </ClCompile>
-    <ClCompile Include="pe\export_directory.cpp">
-      <Filter>Source Files\pe</Filter>
-    </ClCompile>
-    <ClCompile Include="pe\module.cpp">
-      <Filter>Source Files\pe</Filter>
-    </ClCompile>
-    <ClCompile Include="pe\segment.cpp">
-      <Filter>Source Files\pe</Filter>
-    </ClCompile>
     <ClCompile Include="xmlhooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,19 +60,7 @@
     <ClInclude Include="xmlreader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pe\export_directory.h">
-      <Filter>Header Files\pe</Filter>
-    </ClInclude>
-    <ClInclude Include="pe\module.h">
-      <Filter>Header Files\pe</Filter>
-    </ClInclude>
-    <ClInclude Include="pe\segment.h">
-      <Filter>Header Files\pe</Filter>
-    </ClInclude>
     <ClInclude Include="xmlpatch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ic_char_traits.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="detours\detours.h">
@@ -101,15 +71,6 @@
     </ClInclude>
     <ClInclude Include="xmlhooks.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ntapi\mprotect.h">
-      <Filter>Header Files\ntapi</Filter>
-    </ClInclude>
-    <ClInclude Include="ntapi\critsec.h">
-      <Filter>Header Files\ntapi</Filter>
-    </ClInclude>
-    <ClInclude Include="ntapi\string.h">
-      <Filter>Header Files\ntapi</Filter>
     </ClInclude>
     <ClInclude Include="versioninfo.h">
       <Filter>Header Files</Filter>
