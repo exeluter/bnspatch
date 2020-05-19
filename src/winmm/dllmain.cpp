@@ -39,7 +39,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
   PCWSTR OriginalFilename;
 
-  if ( fdwReason == DLL_PROCESS_ATTACH
+  if ( fdwReason == DLL_PRrOCESS_ATTACH
     && GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) >= 0 ) {
     switch ( fnv1a::make_hash(OriginalFilename, false) ) {
       case L"Client.exe"_fnv1ai:
@@ -91,6 +91,7 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
   wchar_t buffer[_MAX_FNAME];
   unsigned num = UINT_MAX;
   HMODULE result;
+  UINT count;
 
   switch (dliNotify) {
   case dliStartProcessing:
@@ -108,8 +109,9 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
         if (result)
           return (FARPROC)result;
       }
-      if (GetSystemDirectoryW(path, (UINT)_countof(path))
-        && swprintf_s(path, L"\\%hs", name) >= 0) {
+      count = GetSystemDirectoryW(path, (UINT)_countof(path));
+      if (count
+        && swprintf_s(path + count, _countof(path) - count, L"\\%hs", name) >= 0) {
         return (FARPROC)LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
       }
     }
