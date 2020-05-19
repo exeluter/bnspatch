@@ -103,7 +103,7 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
           return (FARPROC)result;
       }
       count = GetSystemDirectoryW(path, _countof(path));
-      if (count && swprintf_s(path + count, _countof(path) - count, L"\\%hs", pdli->szDll))
+      if (count && swprintf_s(path + count, _countof(path) - count, L"\\%hs", pdli->szDll) >= 0)
         return (FARPROC)LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
     }
   }
