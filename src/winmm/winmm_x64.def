@@ -1,7 +1,7 @@
 LIBRARY WINMM.dll
 EXPORTS
-	_2=PlaySound @2 NONAME
-	mciExecute
+	=PlaySound @2 NONAME
+	mciExecute @3
 	CloseDriver
 	DefDriverProc
 	DriverCallback
@@ -132,7 +132,6 @@ EXPORTS
 	mmioStringToFOURCCA
 	mmioStringToFOURCCW
 	mmioWrite
-	mmsystemGetVersion
 	sndPlaySoundA
 	sndPlaySoundW
 	timeBeginPeriod
