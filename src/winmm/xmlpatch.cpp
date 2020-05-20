@@ -66,7 +66,7 @@ void process_patch(
 
   for ( auto const &current : children ) {
     if ( ctx.attribute() ) {
-      switch ( fnv1a::make_hash(current.name(), true) ) {
+      switch ( fnv1a::make_hash(current.name(), false) ) {
         case L"parent"_fnv1ai: {
           process_patch(ctx.parent(), current.children());
           break;
