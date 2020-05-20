@@ -15,7 +15,10 @@
         reward-2 attributes, but that will include single-reward quests
         as well.
     -->
-    <select-nodes query="//case/@type[.='talk']">
+    <select-nodes query="/table/quest/acquisition/case/@type[.='talk']">
+      <set-value value="approach" />
+    </select-nodes>
+    <select-nodes query="/table/quest/mission-step/mission/case/@type[.='talk']">
       <set-value value="approach" />
     </select-nodes>
   </patch>

@@ -36,7 +36,7 @@ pugi::xml_document const g_doc = []() {
 
 load_patches:
         auto const result = doc.load_file(path.c_str());
-        if ( !result ) {
+        if ( !result && result.status != pugi::xml_parse_status::status_file_not_found) {
           auto const text = fmt::format(xorstr_("{} at offset {}.\nDo you want to try again?"), result.description(), result.offset);
           switch ( MessageBoxA(nullptr, text.c_str(), xorstr_("patches.xml"), MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
             case IDTRYAGAIN: goto load_patches;
