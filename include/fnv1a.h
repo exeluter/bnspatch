@@ -51,7 +51,7 @@ struct basic_fnv1a
     T hash = OffsetBasis;
     for (; *s; ++s) {
       char c = case_sensitive ? *s : details::toupper(*s);
-      hash ^= static_cast<T>(*s++);
+      hash ^= static_cast<T>(c);
       hash *= Prime;
     }
     return hash;
