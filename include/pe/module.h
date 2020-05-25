@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <ntdll.h>
 #include <gsl/span>
 

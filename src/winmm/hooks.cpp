@@ -30,7 +30,7 @@ namespace fs = std::filesystem;
 #include "detours/detours.h"
 #include "ntapi/mprotect.h"
 #include "ntapi/string.h"
-#include "thread_local_lock.h"
+#include <thread_local_lock.h>
 #include <pe/module.h>
 #include <pe/export_directory.h>
 #include "xmlhooks.h"
@@ -54,10 +54,10 @@ VOID CALLBACK DllNotification(
       const auto BaseDllName = static_cast<ntapi::ustring *>(NotificationData->Loaded.BaseDllName);
       const auto FullDllName = static_cast<ntapi::ustring *>(NotificationData->Loaded.FullDllName);
 
+#ifdef _M_IX86
       LPCWSTR CompanyName;
       if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\CompanyName", &(LPCVOID &)CompanyName) >= 0
         && !wcscmp(CompanyName, xorstr_(L"Microsoft Corporation")) ) {
-#ifdef _M_IX86
         auto exportDir = module->export_directory();
         auto functions = module->rva_to<uint32_t>(exportDir->AddressOfFunctions);
         for ( uint32_t i = 0; i < exportDir->NumberOfFunctions; ++i ) {
@@ -65,8 +65,8 @@ VOID CALLBACK DllNotification(
           if ( auto mp = ntapi::mprotect(fn, sizeof(int16_t), PAGE_EXECUTE_READWRITE) )
             InterlockedCompareExchange16(fn, 0x00EBi16, 0xFF8Bi16);
         }
-#endif
       }
+#endif
 
       LPCWSTR OriginalFilename;
       if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)OriginalFilename) >= 0 ) {

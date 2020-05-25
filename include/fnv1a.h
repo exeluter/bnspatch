@@ -73,9 +73,9 @@ struct basic_fnv1a
     T hash = OffsetBasis;
     for (; *s; ++s) {
       wchar_t c = case_sensitive ? *s : details::toupper(*s);
-      hash ^= static_cast<T>(c & 0xff);
+      hash ^= static_cast<T>(HIBYTE(c));
       hash *= Prime;
-      hash ^= static_cast<T>(c >> CHAR_BIT);
+      hash ^= static_cast<T>(LOBYTE(c));
       hash *= Prime;
     }
     return hash;
@@ -86,9 +86,9 @@ struct basic_fnv1a
     T hash = OffsetBasis;
     for (std::size_t i = 0; i < length; ++i) {
       wchar_t c = case_sensitive ? s[i] : details::toupper(s[i]);
-      hash ^= static_cast<T>(c & 0xff);
+      hash ^= static_cast<T>(HIBYTE(c));
       hash *= Prime;
-      hash ^= static_cast<T>(c >> CHAR_BIT);
+      hash ^= static_cast<T>(LOBYTE(c));
       hash *= Prime;
     }
     return hash;

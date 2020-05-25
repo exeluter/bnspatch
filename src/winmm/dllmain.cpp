@@ -82,6 +82,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoadInfo pdli) -> FARPROC
 {
   pe::module* module;
+  wchar_t drive[_MAX_DRIVE];
+  wchar_t dir[_MAX_DIR];
   wchar_t fname[_MAX_FNAME];
   wchar_t ext[_MAX_EXT];
   wchar_t path[_MAX_PATH];
@@ -94,16 +96,16 @@ ExternC const PfnDliHook __pfnDliNotifyHook2 = [](unsigned dliNotify, PDelayLoad
     module = pe::instance_module();
     if (!_stricmp(pdli->szDll, module->export_directory()->name())) {
       if (GetModuleFileNameW(module, path, _countof(path))
-        && !_wsplitpath_s(path, nullptr, 0, nullptr, 0, fname, _countof(fname), ext, _countof(ext))
+        && !_wsplitpath_s(path, drive, dir, fname, ext)
         && swscanf_s(fname, xorstr_(L"%[^0-9]%d"), buffer, (unsigned int)_countof(buffer), &num) > 0
         && swprintf_s(fname, xorstr_(L"%s%03d"), buffer, num + 1) >= 0
-        && !_wmakepath_s(path, _countof(path), nullptr, nullptr, fname, ext)) {
-        result = LoadLibraryExW(path, nullptr, LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
+        && !_wmakepath_s(path, _countof(path), drive, dir, fname, ext)) {
+        result = LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
         if (result)
           return (FARPROC)result;
       }
       count = GetSystemDirectoryW(path, _countof(path));
-      if (count && swprintf_s(path + count, _countof(path) - count, xorstr_(L"\\%hs"), pdli->szDll) >= 0)
+      if (count && swprintf_s(path + count, _countof(path) - count, xorstr_(L"\\%hs"), pdli->szDll))
         return (FARPROC)LoadLibraryExW(path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
     }
   }

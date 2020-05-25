@@ -42,8 +42,8 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup>
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\$(ProjectName)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(PlatformShortName)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)$(PlatformShortName.ToUpper())\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)$(PlatformShortName.ToUpper())\</IntDir>
     <GenerateManifest>false</GenerateManifest>
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>

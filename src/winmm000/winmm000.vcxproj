@@ -45,8 +45,8 @@
     <TargetName>winmm</TargetName>
     <GenerateManifest>false</GenerateManifest>
     <EmbedManifest>false</EmbedManifest>
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\$(ProjectName)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(PlatformShortName)\$(Configuration)\$(ProjectName)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)$(PlatformShortName.ToUpper())\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)$(PlatformShortName.ToUpper())\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
