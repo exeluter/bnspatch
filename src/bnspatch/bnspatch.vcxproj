@@ -61,13 +61,9 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ntdll.lib;delayimp.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformShortName).def</ModuleDefinitionFile>
     </Link>
-    <PostBuildEvent>
-      <Command>
-      </Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <!-- Debug -->
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
