@@ -12,14 +12,12 @@
 #include "hooks.h"
 #include "versioninfo.h"
 
-typedef void(__cdecl* PFN_PLUGIN_INIT)(void);
-struct PLUGIN_INFO {
-  const wchar_t* pwzName;
-  const wchar_t* pwzVersion;
-  const wchar_t* pwzDescription;
-  PFN_PLUGIN_INIT pfnInit;
-};
-typedef bool(__cdecl* PFN_GETPLUGININFO)(PLUGIN_INFO*);
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
+{
+  if (fdwReason == DLL_PROCESS_ATTACH)
+    DisableThreadLibraryCalls(hInstance);
+  return TRUE;
+}
 
 LONG DetourAttach(
   pe::module* module,
@@ -35,6 +33,14 @@ LONG DetourAttach(
   }
   return ERROR_PROC_NOT_FOUND;
 }
+
+typedef void(__cdecl* PFN_PLUGIN_INIT)(void);
+struct PLUGIN_INFO {
+  const wchar_t* pwzName;
+  const wchar_t* pwzVersion;
+  const wchar_t* pwzDescription;
+  PFN_PLUGIN_INIT pfnInit;
+};
 
 void __cdecl PluginInit(void) {
   const wchar_t* fileName;
@@ -82,11 +88,4 @@ void __cdecl GetPluginInfo(PLUGIN_INFO* pluginInfo) {
   pluginInfo->pwzVersion = L"1.0";
   pluginInfo->pwzDescription = L"XML patching, multi-client, and bypasses some Themida/WL protections";
   pluginInfo->pfnInit = &PluginInit;
-}
-
-BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
-{
-  if (fdwReason == DLL_PROCESS_ATTACH)
-    DisableThreadLibraryCalls(hInstance);
-  return TRUE;
 }
