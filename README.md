@@ -47,7 +47,7 @@ Yes it does! In fact, I highly recommend using it.
 No. Each component works individually and may be used together or separately.
 
 #### Q: Isn't this unsafe compared to BnS Buddy?
-TL;DR: No. I've been using some variant of it since I started development in
+No. I've been using some variant of it since I started development in
 2017, and have never been warned nor banned, and neither has anyone else I
 shared it with.
 
