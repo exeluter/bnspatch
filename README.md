@@ -51,34 +51,12 @@ TL;DR: No. I've been using some variant of it since I started development in
 2017, and have never been warned nor banned, and neither has anyone else I
 shared it with.
 
-<details>
-  <summary>Long version</summary>
-
->  BnS Buddy's developer has been known to spread [FUD](https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt)
->  around in an effort to discourage others from using alternative solutions,
->  by using spooky terminology like ["injecting"][2.1], ["bannable" and "exploit"][2.2].
->
->  While bnspatch does make use of DLL hijacking to do what it does, this exact
->  same method is also used by the multi-client feature in BnS Buddy (and the
->  XIGNCODE3 bypass as well, previously).
->
->  In other words, bnspatch isn't any or more (or less) "inject-y" or unsafe
->  than BnS Buddy is. I don't expect its developer to understand any of this
->  though, since they literally copy-pasted both of those features from other
->  people, without giving any credit ([~~dead link~~][2.3] [mirror][2.4], [link][2.5]).
-</details>
-
 #### Q: Is this compatible with BnS Buddy?
 There is some overlapping functionality, but yes. Just make sure the multi-client
 feature in BnS Buddy is **disabled**. Also, understand that `patches.xml` will
 always take priority over conflicting changes made by BnS Buddy add-ons.
 
 [2.0]: https://github.com/megai2/d912pxy
-[2.1]: https://i.imgur.com/rzFEY0F.png
-[2.2]: https://archive.li/XFWdU
-[2.3]: https://github.com/Evengard/bnsnogg
-[2.4]: https://github.com/zeffy/bnsnogg-mirror
-[2.5]: https://github.com/VirtualPuppet/XignCode3-bypass
 
 ## Acknowledgements
 - [microsoft/**Detours**][3.0] (MIT license)
