@@ -34,13 +34,13 @@ LONG DetourAttach(
   return ERROR_PROC_NOT_FOUND;
 }
 
-typedef void(__cdecl* PFN_PLUGIN_INIT)(void);
-struct PLUGIN_INFO {
+typedef struct _PLUGIN_INFO {
   const wchar_t* pwzName;
   const wchar_t* pwzVersion;
   const wchar_t* pwzDescription;
-  PFN_PLUGIN_INIT pfnInit;
-};
+  void(__cdecl* pfnInit)(void);
+} PLUGIN_INFO;
+typedef void(__cdecl* PFN_GETPLUGININFO)(PLUGIN_INFO*);
 
 void __cdecl PluginInit(void) {
   const wchar_t* fileName;
@@ -85,7 +85,7 @@ void __cdecl PluginInit(void) {
 __declspec(dllexport)
 void __cdecl GetPluginInfo(PLUGIN_INFO* pluginInfo) {
   pluginInfo->pwzName = L"bnspatch";
-  pluginInfo->pwzVersion = L"1.0";
+  pluginInfo->pwzVersion = L"20200527";
   pluginInfo->pwzDescription = L"XML patching, multi-client, and bypasses some Themida/WL protections";
   pluginInfo->pfnInit = &PluginInit;
 }
