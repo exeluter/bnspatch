@@ -46,36 +46,17 @@ void __cdecl PluginInit(void) {
   const wchar_t *fileName;
 
   if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
-    switch ( fnv1a::make_hash(fileName, false) ) {
-      case L"Client.exe"_fnv1ai:
-      case L"BNSR.exe"_fnv1ai:
-
-      case L"AccountInventoryDaemon.exe"_fnv1ai:
-      case L"AchievementDaemon.exe"_fnv1ai:
-      case L"ArenaLobby.exe"_fnv1ai:
-      case L"CacheDaemon.exe"_fnv1ai:
-      case L"CacheGate.exe"_fnv1ai:
-      case L"CraftDaemon.exe"_fnv1ai:
-      case L"DuelBotDaemon.exe"_fnv1ai:
-      case L"GameDaemon.exe"_fnv1ai:
-      case L"InfoGateDaemon.exe"_fnv1ai:
-      case L"LobbyDaemon.exe"_fnv1ai:
-      case L"LobbyGate.exe"_fnv1ai:
-      case L"MarketAgent.exe"_fnv1ai:
-      case L"MarketDealerDaemon.exe"_fnv1ai:
-      case L"MarketAgent.exe"_fnv1ai:
-      case L"MarketReaderDaemon.exe"_fnv1ai:
-      case L"PostOfficeDaemon.exe"_fnv1ai:
-      case L"RankingDaemon.exe"_fnv1ai:
-        NtCurrentPeb()->BeingDebugged = FALSE;
-
-        DetourTransactionBegin();
-        DetourUpdateThread(NtCurrentThread());
-        if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
-          if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
-            module->find_function(xorstr_("LdrRegisterDllNotification")))) {
-            pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
-          }
+    if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
+      DetourTransactionBegin();
+      DetourUpdateThread(NtCurrentThread());
+      if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
+        module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
+        pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
+      }
+      switch ( fnv1a::make_hash(fileName, false) ) {
+        case L"Client.exe"_fnv1ai:
+        case L"BNSR.exe"_fnv1ai:
+          NtCurrentPeb()->BeingDebugged = FALSE;
 #ifdef _M_IX86
           DetourAttach(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
 #endif
@@ -91,19 +72,19 @@ void __cdecl PluginInit(void) {
           DetourAttach(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
           DetourAttach(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
 #endif
+          if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) )
+            DetourAttach(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
+          break;
+      }
+      DetourTransactionCommit();
     }
-        if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) )
-          DetourAttach(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
-        DetourTransactionCommit();
-        break;
   }
-}
 }
 
 __declspec(dllexport)
 void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo) {
   pluginInfo->pwzName = L"bnspatch";
-  pluginInfo->pwzVersion = L"20200527";
+  pluginInfo->pwzVersion = __DATE__;
   pluginInfo->pwzDescription = L"XML patching, multi-client, and bypasses some Themida/WL protections";
   pluginInfo->pfnInit = &PluginInit;
 }

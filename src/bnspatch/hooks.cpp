@@ -44,43 +44,43 @@ VOID CALLBACK DllNotification(
 {
   static thread_local_lock mtx;
   std::unique_lock lock(mtx, std::try_to_lock);
-  if (!lock.owns_lock())
+  if ( !lock.owns_lock() )
     return;
 
-  switch (NotificationReason) {
+  switch ( NotificationReason ) {
     case LDR_DLL_NOTIFICATION_REASON_LOADED: {
-      const auto module = static_cast<pe::module*>(NotificationData->Loaded.DllBase);
-      const wchar_t* fileName;
+      const auto module = static_cast<pe::module *>(NotificationData->Loaded.DllBase);
+      const wchar_t *fileName;
 
-      if (GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID&)fileName) >= 0) {
-        switch (fnv1a::make_hash(fileName, false)) {
+      if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)fileName) >= 0 ) {
+        switch ( fnv1a::make_hash(fileName, false) ) {
           case L"XmlReader.dll"_fnv1ai: {
-            auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const* (*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
-            auto const pfnCreateXmlReader = reinterpret_cast<void* (*)()>(module->find_function(xorstr_("CreateXmlReader")));
-            auto const pfnDestroyXmlReader = reinterpret_cast<void* (*)(void*)>(module->find_function(xorstr_("DestroyXmlReader")));
-            if (pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader) {
+            auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
+            auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
+            auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
+            if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
               DetourTransactionBegin();
               DetourUpdateThread(NtCurrentThread());
               auto xmlReader = pfnCreateXmlReader();
-              auto vfptr = *reinterpret_cast<void***>(xmlReader);
-              switch (_wtoi(pfnGetInterfaceVersion())) {
+              auto vfptr = *reinterpret_cast<void ***>(xmlReader);
+              switch ( _wtoi(pfnGetInterfaceVersion()) ) {
                 case 13:
                   g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vfptr[6]);
-                  DetourAttach(&(PVOID&)g_pfnReadFromFile13, ReadFromFile13_hook);
+                  DetourAttach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
                   g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vfptr[7]);
-                  DetourAttach(&(PVOID&)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
+                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
                   break;
                 case 14:
                   g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vfptr[6]);
-                  DetourAttach(&(PVOID&)g_pfnReadFromFile14, ReadFromFile14_hook);
+                  DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
                   g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vfptr[7]);
-                  DetourAttach(&(PVOID&)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
+                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
                   break;
                 case 15:
                   g_pfnReadFromFile15 = reinterpret_cast<decltype(g_pfnReadFromFile15)>(vfptr[6]);
-                  DetourAttach(&(PVOID&)g_pfnReadFromFile15, ReadFromFile15_hook);
+                  DetourAttach(&(PVOID &)g_pfnReadFromFile15, ReadFromFile15_hook);
                   g_pfnReadFromBuffer15 = reinterpret_cast<decltype(g_pfnReadFromBuffer15)>(vfptr[7]);
-                  DetourAttach(&(PVOID&)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
+                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
                   break;
               }
               pfnDestroyXmlReader(xmlReader);
@@ -169,7 +169,7 @@ NTSTATUS NTAPI NtCreateFile_hook(
     CreateOptions,
     EaBuffer,
     EaLength);
-  }
+}
 
 decltype(&NtCreateMutant) g_pfnNtCreateMutant;
 NTSTATUS NTAPI NtCreateMutant_hook(
@@ -178,13 +178,14 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner)
 {
-  if ( ObjectAttributes
-    && ObjectAttributes->ObjectName
-    && static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
-
-    ObjectAttributes->ObjectName = nullptr;
-    ObjectAttributes->Attributes &= ~OBJ_OPENIF;
-    ObjectAttributes->RootDirectory = nullptr;
+  if ( ObjectAttributes && ObjectAttributes->ObjectName ) {
+    const auto objectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName);
+    if ( objectName->starts_with(xorstr_(L"BnSGameClient"))
+      || objectName->starts_with(xorstr_(L"Global\\MtxNPG")) ) {
+      ObjectAttributes->ObjectName = nullptr;
+      ObjectAttributes->Attributes &= ~OBJ_OPENIF;
+      ObjectAttributes->RootDirectory = nullptr;
+    }
   }
   return g_pfnNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 }
@@ -227,7 +228,8 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
 
     __try {
       StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)sbi.PageSize - 1);
-    } __except ( EXCEPTION_EXECUTE_HANDLER ) {
+    }
+    __except ( EXCEPTION_EXECUTE_HANDLER ) {
       return GetExceptionCode();
     }
 

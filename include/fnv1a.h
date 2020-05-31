@@ -93,6 +93,14 @@ struct basic_fnv1a
     }
     return hash;
   }
+
+  static constexpr T make_hash(const std::string &s, bool case_sensitive = true) {
+    return make_hash(s.c_str(), s.size(), case_sensitive);
+  }
+
+  static constexpr T make_hash(const std::wstring &s, bool case_sensitive = true) {
+    return make_hash(s.c_str(), s.size(), case_sensitive);
+  }
 };
 using fnv1a32 = basic_fnv1a<std::uint32_t, 0x1000193UL, 2166136261UL>;
 using fnv1a64 = basic_fnv1a<std::uint64_t, 0x100000001b3ULL, 14695981039346656037ULL>;
