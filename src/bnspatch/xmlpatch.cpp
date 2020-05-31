@@ -36,6 +36,7 @@ load_patches:
       default: exit(1);
     }
   }
+  return pugi::xml_document();
 }
 
 pugi::xml_document const g_doc = []() {

@@ -84,7 +84,7 @@ void __cdecl PluginInit(void) {
 __declspec(dllexport)
 void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo) {
   pluginInfo->pwzName = L"bnspatch";
-  pluginInfo->pwzVersion = __DATE__;
+  pluginInfo->pwzVersion = L"20200531";
   pluginInfo->pwzDescription = L"XML patching, multi-client, and bypasses some Themida/WL protections";
   pluginInfo->pfnInit = &PluginInit;
 }
