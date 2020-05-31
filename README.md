@@ -52,9 +52,8 @@ No. I've been using some variant of it since I started development in
 shared it with.
 
 #### Q: Is this compatible with BnS Buddy?
-There is some overlapping functionality, but yes. Just make sure the multi-client
-feature in BnS Buddy is **disabled**. Also, understand that `patches.xml` will
-always take priority over conflicting changes made by BnS Buddy add-ons.
+There is some overlapping functionality, but yes. Just understand that `patches.xml` will
+always take priority over conflicting modifications made by BnS Buddy add-ons.
 
 [2.0]: https://github.com/megai2/d912pxy
 

@@ -40,20 +40,35 @@ load_patches:
 }
 
 pugi::xml_document const g_doc = []() {
+  pugi::xml_document doc;
   std::wstring path;
   wil::unique_cotaskmem_string documents;
 
+  // try the environment variable
+  // this is considered explicit meaning even if the
+  // path in BNS_PROFILE_XML doesn't exist it won't
+  // try to load through other methods
   if ( SUCCEEDED(wil::TryGetEnvironmentVariableW(xorstr_(L"BNS_PROFILE_XML"), path)) )
     return load_profile(path);
+
+  // try load from process directory
+  doc = load_profile(fs::path(pe::get_module()->full_name()).remove_filename().append(xorstr_(L"patches.xml")));
+  if ( doc )
+    return doc;
+
+  // try load from my documents
   if ( SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &documents) == S_OK ) {
-    const auto module = pe::get_module();
-    switch ( fnv1a::make_hash(module->base_name(), false) ) {
+    switch ( fnv1a::make_hash(pe::get_module()->base_name(), false) ) {
       case L"Client.exe"_fnv1ai:
-        return load_profile(fs::path(documents.get()).append(xorstr_(L"BnS\\patches.xml")));
+        doc = load_profile(fs::path(documents.get()).append(xorstr_(L"BnS\\patches.xml")));
+        if ( doc )
+          return doc;
+        break;
       case L"BNSR.exe"_fnv1ai:
-        return load_profile(fs::path(documents.get()).append(xorstr_(L"BNSR\\patches.xml")));
-      default:
-        return load_profile(fs::path(module->full_name()).remove_filename().append(xorstr_(L"patches.xml")));
+        doc = load_profile(fs::path(documents.get()).append(xorstr_(L"BNSR\\patches.xml")));
+        if ( doc )
+          return doc;
+        break;
     }
   }
   return pugi::xml_document();
