@@ -23,24 +23,9 @@ responsibility should you manage to get yourself banned while using it.
 You can check out the [**projects**](https://github.com/zeffy/bnspatch/projects)
 page for an overview of planned and already implemented features.
 
-## Building
-Everything should build as-is except for `Gaffeine.Data.XmlSerializers.dll`,
-which may need a little manual configuration.
-
-1. NC Launcher 2 must be installed.
-2. With each new version of NC Launcher 2, [`assemblyinfo.cs`][1.0] must be
-   updated to match the MVID of `Gaffeine.Data.dll`, or nothing will work. You
-   can find this value with [dnSpy][1.1].
-3. If you update the `MonoMod.Utils.dll` dependency, you need to modify it so
-   that its `System.Runtime.CompilerServices.IgnoresAccessChecksToAttribute`
-   type is `internal` instead of `public`. This can be done easily with [dnSpy][1.1].
-
-[1.0]: https://github.com/zeffy/bnspatch/blob/master/src/Gaffeine.Data.XmlSerializers/Properties/assemblyinfo.cs#L12
-[1.1]: https://github.com/0xd4d/dnSpy
-
 ## FAQ
 
-#### Q: Does this work with [**d912pxy**][2.0]?
+#### Q: Does this work with [**d912pxy**][1.0]?
 Yes it does! In fact, I highly recommend using it.
 
 #### Q: Do I have to use all of the components for this to work?
@@ -55,21 +40,19 @@ shared it with.
 There is some overlapping functionality, but yes. Just understand that `patches.xml` will
 always take priority over conflicting modifications made by BnS Buddy add-ons.
 
-[2.0]: https://github.com/megai2/d912pxy
+[1.0]: https://github.com/megai2/d912pxy
 
 ## Acknowledgements
-- [microsoft/**Detours**][3.0] (MIT license)
-- [microsoft/**GSL**][3.1] (MIT license)
-- [ocornut/**imgui**][3.2] (MIT license)
-- [MonoMod/**MonoMod**][3.3] (MIT license)
-- [zeux/**pugixml**][3.4] (MIT license)
-- [processhacker/**phnt**][3.5] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][3.6] (Apache-2.0 license)
+- [microsoft/**Detours**][2.0] (MIT license)
+- [microsoft/**GSL**][2.1] (MIT license)
+- [ocornut/**imgui**][2.2] (MIT license)
+- [zeux/**pugixml**][2.3] (MIT license)
+- [processhacker/**phnt**][2.4] (CC-BY-4.0 license)
+- [JustasMasiulis/**xorstr**][2.5] (Apache-2.0 license)
 
-[3.0]: https://github.com/microsoft/Detours
-[3.1]: https://github.com/microsoft/GSL
-[3.2]: https://github.com/ocornut/imgui
-[3.3]: https://github.com/MonoMod/MonoMod
-[3.4]: https://github.com/zeux/pugixml
-[3.5]: https://github.com/processhacker/phnt
-[3.6]: https://github.com/JustasMasiulis/xorstr
+[2.0]: https://github.com/microsoft/Detours
+[2.1]: https://github.com/microsoft/GSL
+[2.2]: https://github.com/ocornut/imgui
+[2.3]: https://github.com/zeux/pugixml
+[2.4]: https://github.com/processhacker/phnt
+[2.5]: https://github.com/JustasMasiulis/xorstr

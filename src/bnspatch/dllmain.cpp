@@ -28,7 +28,7 @@ LONG DetourAttach(
   if ( !module ) return ERROR_INVALID_PARAMETER;
   if ( !pPointer ) return ERROR_INVALID_PARAMETER;
 
-  if ( *pPointer = module->find_function(pProcName) ) {
+  if ( *pPointer = module->function(pProcName) ) {
     return DetourAttachEx(pPointer, pDetour, nullptr, nullptr, nullptr);
   }
   return ERROR_PROC_NOT_FOUND;
@@ -50,7 +50,7 @@ void __cdecl PluginInit(void) {
       DetourTransactionBegin();
       DetourUpdateThread(NtCurrentThread());
       if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
-        module->find_function(xorstr_("LdrRegisterDllNotification"))) ) {
+        module->function(xorstr_("LdrRegisterDllNotification"))) ) {
         pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
       }
       switch ( fnv1a::make_hash(fileName, false) ) {
@@ -64,8 +64,8 @@ void __cdecl PluginInit(void) {
           DetourAttach(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
           DetourAttach(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
           DetourAttach(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
-          g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgBreakPoint")));
-          g_ReadOnlyAddresses.push_back(module->find_function(xorstr_("DbgUiRemoteBreakin")));
+          g_ReadOnlyAddresses.push_back(module->function(xorstr_("DbgBreakPoint")));
+          g_ReadOnlyAddresses.push_back(module->function(xorstr_("DbgUiRemoteBreakin")));
           DetourAttach(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
           DetourAttach(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
 #ifdef _M_X64

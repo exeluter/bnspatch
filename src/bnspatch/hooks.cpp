@@ -55,9 +55,9 @@ VOID CALLBACK DllNotification(
       if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)fileName) >= 0 ) {
         switch ( fnv1a::make_hash(fileName, false) ) {
           case L"XmlReader.dll"_fnv1ai: {
-            auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->find_function(xorstr_("GetInterfaceVersion")));
-            auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->find_function(xorstr_("CreateXmlReader")));
-            auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->find_function(xorstr_("DestroyXmlReader")));
+            auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->function(xorstr_("GetInterfaceVersion")));
+            auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->function(xorstr_("CreateXmlReader")));
+            auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->function(xorstr_("DestroyXmlReader")));
             if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
               DetourTransactionBegin();
               DetourUpdateThread(NtCurrentThread());
