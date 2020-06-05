@@ -1,5 +1,5 @@
 #pragma once
-#include <pugixml/pugixml.hpp>
+#include <pugixml.hpp>
 
 extern pugi::xml_document const g_doc;
 

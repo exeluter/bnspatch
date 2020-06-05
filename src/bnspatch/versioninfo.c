@@ -79,10 +79,10 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
 
     index = -1;
     if ( *start == '*' && start + 1 == pwszSubBlock ) {
-        // take first match
+      // take first match
       index = 0;
     } else if ( *start == '#' ) {
-        // take index #n
+      // take index #n
       index = wcstol(start + 1, &endptr, 10);
       if ( endptr != pwszSubBlock )
         index = -1;
@@ -90,11 +90,11 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
 
     ncmp = 0;
     while ( SUCCEEDED(UIntPtrSub(end, (UINT_PTR)sub, &remain))
-      && remain >= sizeof *sub
-      && sub->wTotLen >= sizeof *sub
+      && remain >= sizeof * sub
+      && sub->wTotLen >= sizeof * sub
       && sub->wTotLen <= remain
       && SUCCEEDED(StringCbLengthW(sub->szKey, KEYSIZEMAX(sub), &cb))
-      && (len = (off = DWORDUP(sizeof *sub + cb)) + sub->wValLen) <= sub->wTotLen ) {
+      && (len = (off = DWORDUP(sizeof * sub + cb)) + sub->wValLen) <= sub->wTotLen ) {
 
       if ( index >= 0 ) {
         if ( !index-- )
@@ -106,7 +106,7 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
           start,
           cch,
           sub->szKey,
-          (int)(cb / sizeof *sub->szKey),
+          (int)(cb / sizeof * sub->szKey),
           NULL,
           NULL,
           0);

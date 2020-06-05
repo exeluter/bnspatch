@@ -1,11 +1,12 @@
 #pragma once
-#include <ntdll.h>
+#include <phnt_windows.h>
+#include <phnt.h>
 #include <vector>
 
 extern PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
   ULONG NotificationReason,
-  PCLDR_DLL_NOTIFICATION_DATA NotificationData,
+  LDR_DLL_NOTIFICATION_DATA *NotificationData,
   PVOID Context);
 
 extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;

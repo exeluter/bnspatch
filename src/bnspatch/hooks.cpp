@@ -1,6 +1,7 @@
 #include "hooks.h"
 
-#include <ntdll.h>
+#include <phnt_windows.h>
+#include <phnt.h>
 #include <ShlObj.h>
 #include <KnownFolders.h>
 
@@ -16,7 +17,7 @@ namespace fs = std::filesystem;
 #include <fnv1a.h>
 #include <gsl/span>
 #include <gsl/span_ext>
-#include <pugixml/pugixml.hpp>
+#include <pugixml.hpp>
 #include <SafeInt.hpp>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
@@ -26,7 +27,7 @@ namespace fs = std::filesystem;
 #define xorstr_(str) (str)
 #endif
 
-#include "detours/detours.h"
+#include <detours.h>
 #include "ntapi/mprotect.h"
 #include "ntapi/string.h"
 #include <thread_local_lock.h>
@@ -39,7 +40,7 @@ namespace fs = std::filesystem;
 PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
   ULONG NotificationReason,
-  PCLDR_DLL_NOTIFICATION_DATA NotificationData,
+  PLDR_DLL_NOTIFICATION_DATA NotificationData,
   PVOID Context)
 {
   static thread_local_lock mtx;
@@ -48,13 +49,15 @@ VOID CALLBACK DllNotification(
     return;
 
   switch ( NotificationReason ) {
-    case LDR_DLL_NOTIFICATION_REASON_LOADED: {
+    case LDR_DLL_NOTIFICATION_REASON_LOADED:
+    {
       const auto module = static_cast<pe::module *>(NotificationData->Loaded.DllBase);
       const wchar_t *fileName;
 
-      if ( GetModuleVersionInfo(module, L"\\StringFileInfo\\*\\OriginalFilename", &(LPCVOID &)fileName) >= 0 ) {
-        switch ( fnv1a::make_hash(fileName, false) ) {
-          case L"XmlReader.dll"_fnv1ai: {
+      if ( GetModuleVersionInfo(module, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
+        switch ( fnv1a::make_hash(fileName, towupper) ) {
+          case L"XmlReader.dll"_fnv1au:
+          {
             auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->function(xorstr_("GetInterfaceVersion")));
             auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->function(xorstr_("CreateXmlReader")));
             auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->function(xorstr_("DestroyXmlReader")));
@@ -149,10 +152,10 @@ NTSTATUS NTAPI NtCreateFile_hook(
 {
 #ifdef _M_IX86
   if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
-    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), false) ) {
-      case L"\\\\.\\SICE"_fnv1ai:
-      case L"\\\\.\\SIWVID"_fnv1ai:
-      case L"\\\\.\\NTICE"_fnv1ai:
+    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), towupper) ) {
+      case L"\\\\.\\SICE"_fnv1au:
+      case L"\\\\.\\SIWVID"_fnv1au:
+      case L"\\\\.\\NTICE"_fnv1au:
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
   }
@@ -198,9 +201,9 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   ULONG OpenOptions)
 {
   if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
-    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), false) ) {
-      case L"Software\\Wine"_fnv1ai:
-      case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1ai:
+    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), towupper) ) {
+      case L"Software\\Wine"_fnv1au:
+      case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
         return STATUS_OBJECT_NAME_NOT_FOUND;
     }
   }
@@ -228,8 +231,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
 
     __try {
       StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)sbi.PageSize - 1);
-    }
-    __except ( EXCEPTION_EXECUTE_HANDLER ) {
+    } __except ( EXCEPTION_EXECUTE_HANDLER ) {
       return GetExceptionCode();
     }
 
@@ -294,7 +296,8 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
     case SystemModuleInformationEx:
       return STATUS_ACCESS_DENIED;
 
-    case SystemKernelDebuggerInformation: {
+    case SystemKernelDebuggerInformation:
+    {
       if ( SystemInformationLength < sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION) )
         return STATUS_INFO_LENGTH_MISMATCH;
 
@@ -340,16 +343,16 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
-    switch ( fnv1a::make_hash(lpClassName, false) ) {
+    switch ( fnv1a::make_hash(lpClassName, toupper) ) {
 #ifdef _M_IX86
-      case "OLLYDBG"_fnv1ai:
-      case "GBDYLLO"_fnv1ai:
-      case "pediy06"_fnv1ai:
+      case "OLLYDBG"_fnv1au:
+      case "GBDYLLO"_fnv1au:
+      case "pediy06"_fnv1au:
 #endif         
-      case "FilemonClass"_fnv1ai:
-      case "PROCMON_WINDOW_CLASS"_fnv1ai:
-      case "RegmonClass"_fnv1ai:
-      case "18467-41"_fnv1ai:
+      case "FilemonClass"_fnv1au:
+      case "PROCMON_WINDOW_CLASS"_fnv1au:
+      case "RegmonClass"_fnv1au:
+      case "18467-41"_fnv1au:
         return nullptr;
     }
   }

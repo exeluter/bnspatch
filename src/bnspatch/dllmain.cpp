@@ -1,4 +1,5 @@
-#include <ntdll.h>
+#include <phnt_windows.h>
+#include <phnt.h>
 #ifdef NDEBUG
 #include <xorstr.hpp>
 #else
@@ -8,7 +9,7 @@
 #include <pe/module.h>
 #include <pe/export_directory.h>
 #include <fnv1a.h>
-#include "detours/detours.h"
+#include <detours.h>
 #include "hooks.h"
 #include "versioninfo.h"
 
@@ -34,7 +35,8 @@ LONG DetourAttach(
   return ERROR_PROC_NOT_FOUND;
 }
 
-typedef struct _PLUGIN_INFO {
+typedef struct _PLUGIN_INFO
+{
   const wchar_t *pwzName;
   const wchar_t *pwzVersion;
   const wchar_t *pwzDescription;
@@ -42,7 +44,8 @@ typedef struct _PLUGIN_INFO {
 } PLUGIN_INFO;
 typedef void(__cdecl *PFN_GETPLUGININFO)(PLUGIN_INFO *);
 
-void __cdecl PluginInit(void) {
+void __cdecl PluginInit(void)
+{
   const wchar_t *fileName;
 
   if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
@@ -53,9 +56,9 @@ void __cdecl PluginInit(void) {
         module->function(xorstr_("LdrRegisterDllNotification"))) ) {
         pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
       }
-      switch ( fnv1a::make_hash(fileName, false) ) {
-        case L"Client.exe"_fnv1ai:
-        case L"BNSR.exe"_fnv1ai:
+      switch ( fnv1a::make_hash(fileName, towupper) ) {
+        case L"Client.exe"_fnv1au:
+        case L"BNSR.exe"_fnv1au:
           NtCurrentPeb()->BeingDebugged = FALSE;
 #ifdef _M_IX86
           DetourAttach(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
@@ -82,7 +85,8 @@ void __cdecl PluginInit(void) {
 }
 
 __declspec(dllexport)
-void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo) {
+void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo)
+{
   pluginInfo->pwzName = L"bnspatch";
   pluginInfo->pwzVersion = L"20200531";
   pluginInfo->pwzDescription = L"XML patching, multi-client, and bypasses some Themida/WL protections";
