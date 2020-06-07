@@ -20,6 +20,7 @@
 #else
 #define xorstr_(str) (str)
 #endif
+#include "versioninfo.h"
 
 #include <pe/module.h>
 
@@ -32,9 +33,10 @@ pugi::xml_parse_result try_load_file(
   const auto result = document.load_file(path.c_str(), options, encoding);
 try_again:
   if ( !result && result.status != pugi::xml_parse_status::status_file_not_found ) {
+    const auto text = fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description());
     switch ( MessageBoxA(
       nullptr,
-      fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description()).c_str(),
+      text.c_str(),
       xorstr_("bnspatch"),
       MB_ICONERROR | MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
       case IDTRYAGAIN: goto try_again;
@@ -103,16 +105,19 @@ const std::filesystem::path &patches_file_path()
       }
 
       if ( SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &result)) ) {
-        switch ( fnv1a::make_hash(pe::get_module()->base_name(), towupper) ) {
-          case L"Client.exe"_fnv1au:
-            path = std::filesystem::path(result.get()).append(xorstr_(L"BnS\\patches.xml"));
-            return;
-          case L"BNSR.exe"_fnv1au:
-            path = std::filesystem::path(result.get()).append(xorstr_(L"BNSR\\patches.xml"));
-            return;
+        const wchar_t *fileName;
+        if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
+          switch ( fnv1a::make_hash(fileName, towupper) ) {
+            case L"Client.exe"_fnv1au:
+              path = std::filesystem::path(result.get()).append(xorstr_(L"BnS\\patches.xml"));
+              return;
+            case L"BNSR.exe"_fnv1au:
+              path = std::filesystem::path(result.get()).append(xorstr_(L"BNSR\\patches.xml"));
+              return;
+          }
         }
+        throw std::exception();
       }
-      throw std::exception();
     }, path);
   } catch ( ... ) {}
   return path;
@@ -126,7 +131,7 @@ const pugi::xml_document &patches_document()
 
   try {
     std::call_once(once_flag, [](pugi::xml_document &document) {
-      const auto result = try_load_file(document,patches_file_path(), pugi::parse_default | pugi::parse_pi);
+      const auto result = try_load_file(document, patches_file_path(), pugi::parse_default | pugi::parse_pi);
       if ( result ) {
         preprocess(document, patches_file_path().parent_path());
         if ( _wcsicmp(document.document_element().name(), xorstr_(L"patches")) )
@@ -169,14 +174,20 @@ void process_patch(
           process_patch(pugi::xpath_node(ctx.attribute().next_attribute(), ctx.parent()), current.children(), saved_nodes);
           break;
 
-        case L"insert-attribute-before"_fnv1au: // ok
-          process_patch(pugi::xpath_node(ctx.node().insert_attribute_before(current.attribute(xorstr_(L"name")).value(), ctx.attribute()), ctx.node()), current.children(), saved_nodes);
+        case L"insert-attribute-before"_fnv1au: { // ok
+          auto attribute = ctx.node().insert_attribute_before(current.attribute(xorstr_(L"name")).value(), ctx.attribute());
+          if ( auto value = current.attribute(xorstr_(L"value")) )
+            attribute.set_value(value.value());
+          process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
-
-        case L"insert-attribute-after"_fnv1au: // ok
-          process_patch(pugi::xpath_node(ctx.node().insert_attribute_after(current.attribute(xorstr_(L"name")).value(), ctx.attribute()), ctx.node()), current.children(), saved_nodes);
+        }
+        case L"insert-attribute-after"_fnv1au: { // ok
+          auto attribute = ctx.node().insert_attribute_after(current.attribute(xorstr_(L"name")).value(), ctx.attribute());
+          if ( auto value = current.attribute(xorstr_(L"value")) )
+            attribute.set_value(value.value());
+          process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
-
+        }
         case L"remove"_fnv1au: // ok
           ctx.parent().remove_attribute(ctx.attribute());
           return;
@@ -196,14 +207,20 @@ void process_patch(
             process_patch(node, current.children(), saved_nodes);
           break;
 
-        case L"prepend-attribute"_fnv1au: // ok
-          process_patch(pugi::xpath_node(ctx.node().prepend_attribute(current.attribute(xorstr_(L"name")).value()), ctx.node()), current.children(), saved_nodes);
+        case L"prepend-attribute"_fnv1au: { // ok
+          auto attribute = ctx.node().prepend_attribute(current.attribute(xorstr_(L"name")).value());
+          if ( auto value = current.attribute(xorstr_(L"value")) )
+            attribute.set_value(value.value());
+          process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
-
-        case L"append-attribute"_fnv1au: // ok
-          process_patch(pugi::xpath_node(ctx.node().append_attribute(current.attribute(xorstr_(L"name")).value()), ctx.node()), current.children(), saved_nodes);
+        }
+        case L"append-attribute"_fnv1au: { // ok
+          auto attribute = ctx.node().append_attribute(current.attribute(xorstr_(L"name")).value());
+          if ( auto value = current.attribute(xorstr_(L"value")) )
+            attribute.set_value(value.value());
+          process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
-
+        }
         case L"prepend-child"_fnv1au: // ok
           process_patch(ctx.node().prepend_child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
           break;

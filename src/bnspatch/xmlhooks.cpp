@@ -65,19 +65,26 @@ std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xmlFileNameForLogging)
 {
   auto queue = std::queue<pugi::xml_node>();
 
-  for ( auto const &patch : patches_document().document_element().children(xorstr_(L"patch")) ) {
+  auto xml_path = std::filesystem::path(xmlFileNameForLogging ? xmlFileNameForLogging : L"");
+  auto name = xorstr(L"patch");
+  name.crypt();
+  for ( const auto &patch : patches_document().document_element().children(name.get()) ) {
     auto attribute = patch.attribute(xorstr_(L"file"));
     if ( !attribute )
       attribute = patch.attribute(xorstr_(L"filename"));
 
-    auto file = std::filesystem::path(attribute.value());
-    auto xml_file = std::filesystem::path(xmlFileNameForLogging ? xmlFileNameForLogging : L"");
-    attribute.value();
-
-    if ( (!file.has_parent_path() && FastWildCompare(file.filename().c_str(), xml_file.filename().c_str()))
-      || FastWildCompare(file.c_str(), xml_file.c_str()) )
-      queue.push(patch);
+    wchar_t *str = _wcsdup(attribute.value());
+    wchar_t *next_token;
+    wchar_t *token = wcstok_s(str, xorstr_(L";"), &next_token);
+    while ( token ) {
+      auto file = std::filesystem::path(token);
+      if ( (!file.has_parent_path() && FastWildCompare(file.filename().c_str(), xml_path.filename().c_str()))
+        || FastWildCompare(file.c_str(), xml_path.filename().c_str()) )
+        queue.push(patch);
+      token = wcstok_s(nullptr, xorstr_(L";"), &next_token);
+    }
   }
+  name.crypt();
   return queue;
 }
 
