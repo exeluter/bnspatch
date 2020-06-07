@@ -7,7 +7,6 @@
 
 #include <codecvt>
 #include <filesystem>
-namespace fs = std::filesystem;
 #include <mutex>
 #include <optional>
 #include <queue>
@@ -36,6 +35,7 @@ namespace fs = std::filesystem;
 #include "xmlhooks.h"
 #include "xmlpatch.h"
 #include "versioninfo.h"
+#include <array>
 
 PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -210,7 +210,7 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   return g_pfnNtOpenKeyEx(KeyHandle, DesiredAccess, ObjectAttributes, OpenOptions);
 }
 
-std::vector<void const *> g_ReadOnlyAddresses;
+std::array<ULONG_PTR, 2> g_ReadOnlyAddresses;
 decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
@@ -235,7 +235,7 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
       return GetExceptionCode();
     }
 
-    for ( const auto &Address : g_ReadOnlyAddresses ) {
+    for ( const auto Address : g_ReadOnlyAddresses ) {
       if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)sbi.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }

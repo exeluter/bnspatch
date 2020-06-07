@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <patches>
+  <?include .\patches\*.xml?>
   <patch file="quest\questdata.*.xml">
     <!-- convert all talk quests to approach
 

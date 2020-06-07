@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <codecvt>
 #include <filesystem>
-namespace fs = std::filesystem;
 #include <optional>
 
 #include <fmt/format.h>
@@ -24,273 +23,345 @@ namespace fs = std::filesystem;
 
 #include <pe/module.h>
 
-pugi::xml_document load_profile(const fs::path &path)
+pugi::xml_parse_result try_load_file(
+  pugi::xml_document &document,
+  const std::filesystem::path &path,
+  unsigned int options = pugi::parse_default,
+  pugi::xml_encoding encoding = pugi::encoding_auto)
 {
-  pugi::xml_document doc;
-
-load_patches:
-  const auto result = doc.load_file(path.c_str());
+  const auto result = document.load_file(path.c_str(), options, encoding);
+try_again:
   if ( !result && result.status != pugi::xml_parse_status::status_file_not_found ) {
-    const auto text = fmt::format(xorstr_("{} at offset {}.\nDo you want to try again?"), result.description(), result.offset);
-    switch ( MessageBoxA(nullptr, text.c_str(), xorstr_("bnspatch"), MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
-      case IDTRYAGAIN: goto load_patches;
+    switch ( MessageBoxA(
+      nullptr,
+      fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description()).c_str(),
+      xorstr_("bnspatch"),
+      MB_ICONERROR | MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
+      case IDTRYAGAIN: goto try_again;
       case IDCONTINUE: break;
-      default: exit(1);
+      default: exit(0);
     }
   }
-  return pugi::xml_document();
+  return result;
 }
 
-pugi::xml_document const g_doc = []() {
-  pugi::xml_document doc;
-  std::wstring path;
-  wil::unique_cotaskmem_string documents;
+void preprocess(pugi::xml_node node, const std::filesystem::path &current_directory)
+{
+  for ( auto child = node.first_child(); child; ) {
+    if ( child.type() == pugi::node_pi
+      && !_wcsicmp(child.name(), xorstr_(L"include")) ) {
+      pugi::xml_node include = child;
 
-  // try the environment variable this is considered explicit, meaning even if the
-  // path in BNS_PROFILE_XML doesn't exist, it won't try to load through other methods
-  if ( SUCCEEDED(wil::TryGetEnvironmentVariableW(xorstr_(L"BNS_PROFILE_XML"), path)) )
-    return load_profile(path);
+      auto result = std::wstring();
+      if ( SUCCEEDED(wil::ExpandEnvironmentStringsW(child.value(), result)) ) {
+        auto include_filename = std::filesystem::path(result);
+        if ( include_filename.is_relative() )
+          include_filename = current_directory / include_filename;
 
-  // try load from process directory
-  doc = load_profile(fs::path(pe::get_module()->full_name()).remove_filename().append(xorstr_(L"patches.xml")));
-  if ( doc )
-    return doc;
+        auto find_file_data = WIN32_FIND_DATAW();
+        auto find_file_handle = FindFirstFileW(include_filename.c_str(), &find_file_data);
+        if ( find_file_handle != INVALID_HANDLE_VALUE ) {
+          const auto parent_path = include_filename.parent_path();
+          do {
+            const auto path = parent_path / find_file_data.cFileName;
+            auto doc = pugi::xml_document();
+            if ( try_load_file(doc, path, pugi::parse_default | pugi::parse_pi) ) {
+              preprocess(doc, parent_path);
 
-  // try load from my documents
-  if ( SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &documents) == S_OK ) {
-    switch ( fnv1a::make_hash(pe::get_module()->base_name(), false) ) {
-      case L"Client.exe"_fnv1au:
-        doc = load_profile(fs::path(documents.get()).append(xorstr_(L"BnS\\patches.xml")));
-        if ( doc )
-          return doc;
-        break;
-      case L"BNSR.exe"_fnv1au:
-        doc = load_profile(fs::path(documents.get()).append(xorstr_(L"BNSR\\patches.xml")));
-        if ( doc )
-          return doc;
-        break;
+              // insert the comment marker above include directive
+              node.insert_child_before(pugi::node_comment, include).set_value(path.c_str());
+
+              // copy the document above the include directive (this retains the original order!)
+              for ( auto ic = doc.first_child(); ic; ic = ic.next_sibling() )
+                node.insert_copy_before(ic, child);
+            }
+          } while ( FindNextFileW(find_file_handle, &find_file_data) );
+          FindClose(find_file_handle);
+        }
+      }
+      // remove the include node and move to the next child
+      child = child.next_sibling();
+      node.remove_child(include);
+    } else {
+      preprocess(child, current_directory);
+      child = child.next_sibling();
     }
   }
-  return pugi::xml_document();
-}();
+}
+
+const std::filesystem::path &patches_file_path()
+{
+  static std::once_flag once_flag;
+  static std::filesystem::path path;
+
+  try {
+    std::call_once(once_flag, [](std::filesystem::path &path) {
+      auto result = wil::unique_cotaskmem_string();
+      if ( SUCCEEDED(wil::TryGetEnvironmentVariableW(xorstr_(L"BNS_PROFILE_XML"), result)) && result ) {
+        path = std::filesystem::path(result.get());
+        return;
+      }
+
+      if ( SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &result)) ) {
+        switch ( fnv1a::make_hash(pe::get_module()->base_name(), towupper) ) {
+          case L"Client.exe"_fnv1au:
+            path = std::filesystem::path(result.get()).append(xorstr_(L"BnS\\patches.xml"));
+            return;
+          case L"BNSR.exe"_fnv1au:
+            path = std::filesystem::path(result.get()).append(xorstr_(L"BNSR\\patches.xml"));
+            return;
+        }
+      }
+      throw std::exception();
+    }, path);
+  } catch ( ... ) {}
+  return path;
+}
+
+
+const pugi::xml_document &patches_document()
+{
+  static std::once_flag once_flag;
+  static pugi::xml_document document;
+
+  try {
+    std::call_once(once_flag, [](pugi::xml_document &document) {
+      const auto result = try_load_file(document,patches_file_path(), pugi::parse_default | pugi::parse_pi);
+      if ( result ) {
+        preprocess(document, patches_file_path().parent_path());
+        if ( _wcsicmp(document.document_element().name(), xorstr_(L"patches")) )
+          document.reset();
+#ifdef _DEBUG
+        else
+          document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
+#endif
+      }
+    }, document);
+  } catch ( ... ) {}
+  return document;
+}
 
 void process_patch(
-  pugi::xpath_node const &ctx,
-  pugi::xml_object_range<pugi::xml_node_iterator> const &children)
+  const pugi::xpath_node &ctx,
+  const pugi::xml_object_range<pugi::xml_node_iterator> &children,
+  std::unordered_map<fnv1a::type, pugi::xml_node> &saved_nodes)
 {
-  using pugi::xml_document;
-  using pugi::xml_node;
-  using pugi::xml_node_iterator;
-  using pugi::xml_node_type;
-  using pugi::xml_object_range;
-
   for ( const auto &current : children ) {
     if ( ctx.attribute() ) {
       switch ( fnv1a::make_hash(current.name(), towupper) ) {
-        case L"parent"_fnv1au: {
-          process_patch(ctx.parent(), current.children());
+        case L"parent"_fnv1au: // ok
+          process_patch(ctx.parent(), current.children(), saved_nodes);
           break;
-        } case L"set-name"_fnv1au: {
+
+        case L"set-name"_fnv1au: // ok
           ctx.attribute().set_name(current.attribute(xorstr_(L"name")).value());
           break;
-        } case L"set-value"_fnv1au: {
+
+        case L"set-value"_fnv1au: // ok
           ctx.attribute().set_value(current.attribute(xorstr_(L"value")).value());
           break;
-        } case L"previous-attribute"_fnv1au: {
-          process_patch({ ctx.attribute().previous_attribute(), ctx.parent() }, current.children());
+
+        case L"previous-attribute"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.attribute().previous_attribute(), ctx.parent()), current.children(), saved_nodes);
           break;
-        } case L"next-attribute"_fnv1au: {
-          process_patch({ ctx.attribute().next_attribute(), ctx.parent() }, current.children());
+
+        case L"next-attribute"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.attribute().next_attribute(), ctx.parent()), current.children(), saved_nodes);
           break;
-        } case L"insert-attribute-before"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch({ ctx.node().insert_attribute_before(name, ctx.attribute()), ctx.node() }, current.children());
+
+        case L"insert-attribute-before"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.node().insert_attribute_before(current.attribute(xorstr_(L"name")).value(), ctx.attribute()), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"insert-attribute-after"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch({ ctx.node().insert_attribute_after(name, ctx.attribute()), ctx.node() }, current.children());
+
+        case L"insert-attribute-after"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.node().insert_attribute_after(current.attribute(xorstr_(L"name")).value(), ctx.attribute()), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"remove"_fnv1au: {
+
+        case L"remove"_fnv1au: // ok
           ctx.parent().remove_attribute(ctx.attribute());
-          return; // context attribute is removed, nothing more to do.
-        }
+          return;
       }
     } else {
       switch ( fnv1a::make_hash(current.name(), towupper) ) {
-        case L"parent"_fnv1au: {
-          process_patch(ctx.parent(), current.children());
+        case L"parent"_fnv1au: // ok
+          process_patch(ctx.parent(), current.children(), saved_nodes);
           break;
-        } case L"select-node"_fnv1au: {
-          auto query = current.attribute(xorstr_(L"query")).value();
-          process_patch(ctx.node().select_node(query), current.children());
+
+        case L"select-node"_fnv1au: // ok
+          process_patch(ctx.node().select_node(current.attribute(xorstr_(L"query")).value()), current.children(), saved_nodes);
           break;
-        } case L"select-nodes"_fnv1au: {
-          auto query = current.attribute(xorstr_(L"query")).value();
-          for ( auto &node : ctx.node().select_nodes(query) )
-            process_patch(node, current.children());
+
+        case L"select-nodes"_fnv1au: // ok
+          for ( auto &node : ctx.node().select_nodes(current.attribute(xorstr_(L"query")).value()) )
+            process_patch(node, current.children(), saved_nodes);
           break;
-        } case L"prepend-attribute"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name"));
-          process_patch({ ctx.node().prepend_attribute(name.value()), ctx.node() }, current.children());
+
+        case L"prepend-attribute"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.node().prepend_attribute(current.attribute(xorstr_(L"name")).value()), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"append-attribute"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name"));
-          process_patch({ ctx.node().append_attribute(name.value()), ctx.node() }, current.children());
+
+        case L"append-attribute"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.node().append_attribute(current.attribute(xorstr_(L"name")).value()), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"prepend-child"_fnv1au: {
-          if ( auto name = current.attribute(xorstr_(L"name")) ) {
-            process_patch(ctx.node().prepend_child(name.value()), current.children());
-          } else {
-            std::optional<xml_node_type> t;
-            if ( const auto type = current.attribute(xorstr_(L"type")) ) {
-              std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-              auto s = converter.to_bytes(type.value());
-              t = magic_enum::enum_cast<xml_node_type>(s);
-            }
-            process_patch(ctx.node().append_child(t.value_or(xml_node_type::node_element)), current.children());
-          }
+
+        case L"prepend-child"_fnv1au: // ok
+          process_patch(ctx.node().prepend_child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
           break;
-        } case L"append-buffer"_fnv1au: {
-          const auto s = std::wstring_view(current.text().get());
-          ctx.node().append_buffer(s.data(), s.size(), pugi::parse_default | pugi::parse_fragment);
+
+        case L"append-buffer"_fnv1au: { // ok
+          const auto sv = std::wstring_view(current.text().get());
+          ctx.node().append_buffer(sv.data(), sv.size() * sizeof(wchar_t), pugi::parse_default | pugi::parse_fragment);
           break;
-        } case L"append-child"_fnv1au: {
-          if ( const auto name = current.attribute(xorstr_(L"name")) ) {
-            process_patch(ctx.node().append_child(name.value()), current.children());
-          } else {
-            std::optional<xml_node_type> t;
-            if ( const auto type = current.attribute(xorstr_(L"type")) ) {
-              std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-              auto s = converter.to_bytes(type.value());
-              t = magic_enum::enum_cast<xml_node_type>(s);
-            }
-            process_patch(ctx.node().append_child(t.value_or(xml_node_type::node_element)), current.children());
-          }
+        }
+        case L"append-child"_fnv1au: // ok
+          process_patch(ctx.node().append_child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
           break;
-        } case L"prepend-copy"_fnv1au: {
-          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
-          if ( proto.attribute() ) {
-            process_patch({ ctx.node().prepend_copy(proto.attribute()), ctx.node() }, current.children());
-          } else {
-            process_patch(ctx.node().prepend_copy(proto.node()), current.children());
-          }
+
+        case L"prepend-copy"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(ctx.node().prepend_copy(it->second), current.children(), saved_nodes);
           break;
-        } case L"append-copy"_fnv1au: {
-          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value());
-          if ( proto.attribute() ) {
-            process_patch({ ctx.node().append_copy(proto.attribute()), ctx.node() }, current.children());
-          } else {
-            process_patch(ctx.node().append_copy(proto.node()), current.children());
-          }
+
+        case L"append-copy"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(ctx.node().append_copy(it->second), current.children(), saved_nodes);
           break;
-        } case L"prepend-move"_fnv1au: {
-          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
-          process_patch(ctx.node().prepend_move(moved), current.children());
+
+        case L"prepend-move"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(ctx.node().prepend_move(it->second), current.children(), saved_nodes);
           break;
-        } case L"append-move"_fnv1au: {
-          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
-          process_patch(ctx.node().append_move(moved), current.children());
+
+        case L"append-move"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(ctx.node().append_move(it->second), current.children(), saved_nodes);
           break;
-        } case L"attribute"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch({ ctx.node().attribute(name), ctx.node() }, current.children());
+
+        case L"attribute"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.node().attribute(current.attribute(xorstr_(L"name")).value()), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"attributes"_fnv1au: {
+
+        case L"attributes"_fnv1au: // ok
           for ( auto &attr : ctx.node().attributes() )
-            process_patch({ attr, ctx.node() }, current.children());
+            process_patch(pugi::xpath_node(attr, ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"child"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          process_patch(ctx.node().child(name), current.children());
+
+        case L"child"_fnv1au: // ok
+          process_patch(ctx.node().child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
           break;
-        } case L"children"_fnv1au: {
-          for ( auto &child : ctx.node().children() )
-            process_patch(child, current.children());
+
+        case L"children"_fnv1au: // ok
+          if ( const auto name = current.attribute(xorstr_(L"name")) ) {
+            for ( auto &child : ctx.node().children(name.value()) )
+              process_patch(child, current.children(), saved_nodes);
+          } else {
+            for ( auto &child : ctx.node().children() )
+              process_patch(child, current.children(), saved_nodes);
+          }
           break;
-        } case L"find-child-by-attribute"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          auto attr_name = current.attribute(xorstr_(L"attr-name")).value();
-          auto attr_value = current.attribute(xorstr_(L"attr-value")).value();
-          process_patch(ctx.node().find_child_by_attribute(name, attr_name, attr_value), current.children());
+
+        case L"find-child-by-attribute"_fnv1au: // ok
+          if ( const auto name = current.attribute(xorstr_(L"name")) ) {
+            process_patch(ctx.node().find_child_by_attribute(
+              name.value(),
+              current.attribute(xorstr_(L"attribute-name")).value(),
+              current.attribute(xorstr_(L"attribute-value")).value()),
+              current.children(), saved_nodes);
+          } else {
+            process_patch(ctx.node().find_child_by_attribute(
+              current.attribute(xorstr_(L"attribute-name")).value(),
+              current.attribute(xorstr_(L"attribute-value")).value()),
+              current.children(), saved_nodes);
+          }
           break;
-        } case L"first-attribute"_fnv1au: {
-          process_patch({ ctx.node().first_attribute(), ctx.node() }, current.children());
+
+        case L"first-attribute"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.node().first_attribute(), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"last-attribute"_fnv1au: {
-          process_patch({ ctx.node().last_attribute(), ctx.node() }, current.children());
+
+        case L"last-attribute"_fnv1au: // ok
+          process_patch(pugi::xpath_node(ctx.node().last_attribute(), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"first-child"_fnv1au: {
-          process_patch(ctx.node().first_child(), current.children());
+
+        case L"first-child"_fnv1au: // ok
+          process_patch(ctx.node().first_child(), current.children(), saved_nodes);
           break;
-        } case L"last-child"_fnv1au: {
-          process_patch(ctx.node().last_child(), current.children());
+
+        case L"last-child"_fnv1au: // ok
+          process_patch(ctx.node().last_child(), current.children(), saved_nodes);
           break;
-        } case L"first-element-by-path"_fnv1au: {
-          auto path = current.attribute(xorstr_(L"path")).value();
-          process_patch(ctx.node().first_element_by_path(path), current.children());
+
+        case L"first-element-by-path"_fnv1au: // ok
+          process_patch(ctx.node().first_element_by_path(current.attribute(xorstr_(L"path")).value()), current.children(), saved_nodes);
           break;
-        } case L"insert-child-after"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_child_after(name, node), current.children());
+
+        case L"insert-sibling-after"_fnv1au: // ok
+          process_patch(ctx.node().parent().insert_child_after(current.attribute(xorstr_(L"name")).value(), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"insert-child-before"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_child_before(name, node), current.children());
+
+        case L"insert-sibling-before"_fnv1au: // ok
+          process_patch(ctx.node().parent().insert_child_before(current.attribute(xorstr_(L"name")).value(), ctx.node()), current.children(), saved_nodes);
           break;
-        } case L"insert-copy-after"_fnv1au: {
-          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value()).node();
-          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_copy_after(proto, node), current.children());
+
+        case L"insert-copy-after"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
-        } case L"insert-copy-before"_fnv1au: {
-          auto proto = ctx.node().select_node(current.attribute(xorstr_(L"proto-query")).value()).node();
-          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_copy_before(proto, node), current.children());
+
+        case L"insert-copy-before"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(it->second.parent().insert_copy_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
-        } case L"insert-move-after"_fnv1au: {
-          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
-          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_move_after(moved, node), current.children());
+
+        case L"insert-move-after"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(it->second.parent().insert_move_after(ctx.node(), it->second), current.children(), saved_nodes);
           break;
-        } case L"insert-move-before"_fnv1au: {
-          auto moved = ctx.node().select_node(current.attribute(xorstr_(L"moved-query")).value()).node();
-          auto node = ctx.node().select_node(current.attribute(xorstr_(L"node-query")).value()).node();
-          process_patch(ctx.node().insert_move_before(moved, node), current.children());
+
+        case L"insert-move-before"_fnv1au: // ok
+          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+            process_patch(it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
-        } case L"next-sibling"_fnv1au: {
-          process_patch(ctx.node().next_sibling(), current.children());
+
+        case L"next-sibling"_fnv1au: // ok
+          process_patch(ctx.node().next_sibling(), current.children(), saved_nodes);
           break;
-        } case L"remove-attribute"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          ctx.node().remove_attribute(name);
+
+        case L"remove-attribute"_fnv1au: // ok
+          ctx.node().remove_attribute(current.attribute(xorstr_(L"name")).value());
           break;
-        } case L"remove-attributes"_fnv1au: {
+
+        case L"remove-attributes"_fnv1au: // ok
           ctx.node().remove_attributes();
           break;
-        } case L"remove-child"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          ctx.node().remove_child(name);
+
+        case L"remove-child"_fnv1au: // ok
+          ctx.node().remove_child(current.attribute(xorstr_(L"name")).value());
           break;
-        } case L"remove-children"_fnv1au: {
+
+        case L"remove-children"_fnv1au: // ok
           ctx.node().remove_children();
           break;
-        } case L"root"_fnv1au: {
-          process_patch(ctx.node().root(), current.children());
+
+        case L"root"_fnv1au: // ok
+          process_patch(ctx.node().root(), current.children(), saved_nodes);
           break;
-        } case L"set-name"_fnv1au: {
-          auto name = current.attribute(xorstr_(L"name")).value();
-          ctx.node().set_name(name);
+
+        case L"set-name"_fnv1au: // ok
+          ctx.node().set_name(current.attribute(xorstr_(L"name")).value());
           break;
-        } case L"set-value"_fnv1au: {
-          auto value = current.attribute(xorstr_(L"value")).value();
-          ctx.node().set_value(value);
+
+        case L"set-value"_fnv1au: // ok
+          ctx.node().set_value(current.attribute(xorstr_(L"value")).value());
           break;
-        } case L"remove"_fnv1au: {
+
+        case L"assign-node-key"_fnv1au: // ok
+          saved_nodes.insert_or_assign(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper), ctx.node());
+          break;
+
+        case L"remove"_fnv1au: // ok
           ctx.node().parent().remove_child(ctx.node());
-          return; // context node is removed, nothing more to do.
-        }
+          return;
       }
     }
   }

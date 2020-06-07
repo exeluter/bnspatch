@@ -1,12 +1,12 @@
 #pragma once
 #include <phnt_windows.h>
 #include <phnt.h>
-#include <vector>
+#include <array>
 
 extern PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
   ULONG NotificationReason,
-  LDR_DLL_NOTIFICATION_DATA *NotificationData,
+  PLDR_DLL_NOTIFICATION_DATA NotificationData,
   PVOID Context);
 
 extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
@@ -51,7 +51,7 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   ULONG OpenOptions);
 
-extern std::vector<void const *> g_ReadOnlyAddresses;
+extern std::array<ULONG_PTR, 2> g_ReadOnlyAddresses;
 extern decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,

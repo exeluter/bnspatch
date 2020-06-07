@@ -33,7 +33,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
     if ( !*pTame ) {
       if ( *pWild ) {
         while ( *pWild++ == '*' ) {
-          if ( !*pWild )
+          if ( !*pWild || *pWild == ';' )
             return true; // "ab" matches "ab*".
         }
         return false; // "abcd" doesn't match "abc".
@@ -45,7 +45,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
       while ( *(++pWild) == '*' )
         continue;
 
-      if ( !*pWild )
+      if ( !*pWild || *pWild == ';' )
         return true; // "abc*" matches "abcd".
 
       // Search for the next prospective match.
@@ -75,7 +75,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
       while ( *(++pWild) == '*' )
         continue;
 
-      if ( !*pWild )
+      if ( !*pWild || *pWild == ';' )
         return true; // "ab*c*" matches "abcd".
 
       if ( !*pTame )
@@ -114,7 +114,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
 
     // Another check for the end, at the end.
     if ( !*pTame )
-      return !*pWild;
+      return !*pWild || *pWild == ';';
 
     ++pWild; // Everything's still a match.
     ++pTame;
