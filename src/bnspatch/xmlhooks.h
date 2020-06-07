@@ -1,8 +1,10 @@
 #pragma once
 #include <phnt_windows.h>
 #include <phnt.h>
-#include "xmlreader.h"
+
 #include <cstdint>
+
+#include "xmlreader.h"
 
 #ifdef _M_X64
 #define THISCALL

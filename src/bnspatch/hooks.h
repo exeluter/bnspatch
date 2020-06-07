@@ -1,6 +1,7 @@
 #pragma once
 #include <phnt_windows.h>
 #include <phnt.h>
+
 #include <array>
 
 extern PVOID g_pvDllNotificationCookie;

@@ -1,25 +1,21 @@
 #include "xmlhooks.h"
 #include <phnt_windows.h>
 #include <phnt.h>
-#include <cstring>
-#include <queue>
 #include <Shlwapi.h>
 
+#include <cstring>
+#include <filesystem>
+#include <queue>
 #include <sstream>
 
-#include <fmt/format.h>
 #include <fastwildcompare.hpp>
+#include <fmt/format.h>
 #include <pugixml.hpp>
 #include <safeint.hpp>
-#ifdef NDEBUG
 #include <xorstr.hpp>
-#else
-#define xorstr_(str) (str)
-#endif
 
 #include "xmlpatch.h"
 #include "xmlreader.h"
-#include <filesystem>
 
 template<class Char>
 struct memory_buffer_writer : pugi::xml_writer

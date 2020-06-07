@@ -1,8 +1,9 @@
 #pragma once
-#include <pugixml.hpp>
-#include <fnv1a.h>
-#include <unordered_map>
 #include <filesystem>
+#include <unordered_map>
+
+#include <fnv1a.h>
+#include <pugixml.hpp>
 
 void process_patch(
   pugi::xpath_node const &ctx,

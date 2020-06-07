@@ -1,7 +1,7 @@
 #pragma once
 
-
 #include <cstdint>
+#include <string>
 
 template <typename T, T Prime, T OffsetBasis>
 struct basic_fnv1a

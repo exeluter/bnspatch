@@ -1,17 +1,13 @@
 #include <phnt_windows.h>
 #include <phnt.h>
-#ifdef NDEBUG
-#include <xorstr.hpp>
-#else
-#define xorstr_(str) (str)
-#endif
 
-#include <pe/module.h>
-#include <pe/export_directory.h>
-#include <fnv1a.h>
-#include <detours.h>
 #include "hooks.h"
 #include "versioninfo.h"
+#include <detours.h>
+#include <fnv1a.h>
+#include <pe/export_directory.h>
+#include <pe/module.h>
+#include <xorstr.hpp>
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -48,14 +44,14 @@ void __cdecl PluginInit(void)
 {
   const wchar_t *fileName;
 
-  if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
-    if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
-      DetourTransactionBegin();
-      DetourUpdateThread(NtCurrentThread());
-      if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
-        module->function(xorstr_("LdrRegisterDllNotification"))) ) {
-        pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
-      }
+  if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
+    DetourTransactionBegin();
+    DetourUpdateThread(NtCurrentThread());
+    if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
+      module->function(xorstr_("LdrRegisterDllNotification"))) ) {
+      pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
+    }
+    if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
       switch ( fnv1a::make_hash(fileName, towupper) ) {
         case L"Client.exe"_fnv1au:
         case L"BNSR.exe"_fnv1au:

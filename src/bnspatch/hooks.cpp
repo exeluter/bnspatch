@@ -5,37 +5,32 @@
 #include <ShlObj.h>
 #include <KnownFolders.h>
 
+#include <array>
 #include <codecvt>
 #include <filesystem>
 #include <mutex>
 #include <optional>
 #include <queue>
 
+#include "ntapi/mprotect.h"
+#include "ntapi/string.h"
+#include "versioninfo.h"
+#include "xmlhooks.h"
+#include "xmlpatch.h"
+#include <detours.h>
 #include <fastwildcompare.hpp>
 #include <fmt/format.h>
 #include <fnv1a.h>
-#include <gsl/span>
 #include <gsl/span_ext>
+#include <gsl/span>
+#include <pe/export_directory.h>
+#include <pe/module.h>
 #include <pugixml.hpp>
 #include <SafeInt.hpp>
+#include <thread_local_lock.h>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
-#ifdef NDEBUG
 #include <xorstr.hpp>
-#else
-#define xorstr_(str) (str)
-#endif
-
-#include <detours.h>
-#include "ntapi/mprotect.h"
-#include "ntapi/string.h"
-#include <thread_local_lock.h>
-#include <pe/module.h>
-#include <pe/export_directory.h>
-#include "xmlhooks.h"
-#include "xmlpatch.h"
-#include "versioninfo.h"
-#include <array>
 
 PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -56,8 +51,7 @@ VOID CALLBACK DllNotification(
 
       if ( GetModuleVersionInfo(module, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
         switch ( fnv1a::make_hash(fileName, towupper) ) {
-          case L"XmlReader.dll"_fnv1au:
-          {
+          case L"XmlReader.dll"_fnv1au: {
             auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->function(xorstr_("GetInterfaceVersion")));
             auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->function(xorstr_("CreateXmlReader")));
             auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->function(xorstr_("DestroyXmlReader")));

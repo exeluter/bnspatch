@@ -9,20 +9,15 @@
 #include <filesystem>
 #include <optional>
 
+#include "versioninfo.h"
 #include <fmt/format.h>
 #include <fnv1a.h>
 #include <magic_enum.hpp>
+#include <pe/module.h>
 #include <pugixml.hpp>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
-#ifdef NDEBUG
 #include <xorstr.hpp>
-#else
-#define xorstr_(str) (str)
-#endif
-#include "versioninfo.h"
-
-#include <pe/module.h>
 
 pugi::xml_parse_result try_load_file(
   pugi::xml_document &document,

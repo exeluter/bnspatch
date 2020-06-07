@@ -1,7 +1,9 @@
 #include "versioninfo.h"
-#include <Windows.h>
+#include <phnt_windows.h>
+#include <phnt.h>
 #include <intsafe.h>
 #include <strsafe.h>
+#include <wchar.h>
 
 #define DWORDUP(x) (((x) + 3) & ~3)
 #define KEYSIZEMAX(p) ((p)->wTotLen - FIELD_OFFSET(VERBLOCK, szKey))
