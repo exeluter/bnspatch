@@ -74,13 +74,13 @@ std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xmlFileNameForLogging)
     wchar_t *token = wcstok_s(str, xorstr_(L";"), &next_token);
     while ( token ) {
       auto file = std::filesystem::path(token);
-      if ( (!file.has_parent_path() && FastWildCompare(file.filename().c_str(), xml_path.filename().c_str()))
+      if ( FastWildCompare(file.c_str(), xml_path.c_str())
         || FastWildCompare(file.c_str(), xml_path.filename().c_str()) )
         queue.push(patch);
       token = wcstok_s(nullptr, xorstr_(L";"), &next_token);
     }
+    free(str);
   }
-  name.crypt();
   return queue;
 }
 
