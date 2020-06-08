@@ -83,8 +83,19 @@ void __cdecl PluginInit(void)
 __declspec(dllexport)
 void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo)
 {
-  pluginInfo->pwzName = L"bnspatch";
-  pluginInfo->pwzVersion = L"20200607";
-  pluginInfo->pwzDescription = L"XML patching, multi-client, and bypasses some Themida/WL protections";
+  static std::once_flag once_flag;
+  static auto name = xorstr(L"bnspatch");
+  static auto version = xorstr(L"20200607");
+  static auto description = xorstr(L"XML patching, multi-client, and bypasses some Themida/WL protections");
+
+  std::call_once(once_flag, [](auto &name, auto &version, auto &description) {
+    name.crypt();
+    version.crypt();
+    description.crypt();
+  }, name, version, description);
+
+  pluginInfo->pwzName = name.get();
+  pluginInfo->pwzVersion = version.get();
+  pluginInfo->pwzDescription = description.get();
   pluginInfo->pfnInit = &PluginInit;
 }
