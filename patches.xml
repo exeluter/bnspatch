@@ -36,10 +36,6 @@
       <select-node query="./group[@name='duel']/option[@name='lobby-gamemode-change-interval']/@value">
         <set-value value="0" />
       </select-node>
-      <!-- show gear score -->
-      <select-node query="./group[@name='ui-common']/group[@name='tooltip']/option[@name='show-gear-score-in-item-tooltip-for-debugging']/@value">
-        <set-value value="y" />
-      </select-node>
       <select-node query="./group[@name='inventory']">
         <!-- instantly open chests -->
         <select-node query="./option[@name='self-restraint-gauge-time']/@value">
@@ -66,7 +62,7 @@
       <select-node query="./group[@name='uncategorized']/option[@name='no-use-breast-physics']/@value">
         <set-value value="yes" />
       </select-node>
-      <!-- no retry cooldown in Hongmoon Training Room (F12) -->
+      <!-- no retry cooldown in skill training room -->
       <select-node query="./group[@name='skill-training-room']/option[@name='retry-button-cool-time']/@value">
         <set-value value="0" />
       </select-node>
@@ -75,7 +71,7 @@
         <set-value value="false" />
       </select-node>
       <select-node query="./group[@name='context']">
-        <!-- able to resurrect immediately after wipe  -->
+        <!-- able to resurrect immediately after wipe -->
         <select-node query="./option[@name='instantaneous-dead-context-delay']/@value">
           <set-value value="0" />
         </select-node>
@@ -87,6 +83,10 @@
       <!-- show server delay period for 3 minutes -->
       <select-node query="./group[@name='latency']/option[@name='show-duration']/@value">
         <set-value value="180" />
+      </select-node>
+      <!-- show enrage timer for 30 minutes -->
+      <select-node query="./group[@name='boss']/option[@name='breaker-warning-countdown-start-time']/@value">
+        <set-value value="1800" />
       </select-node>
     </select-node>
   </patch>
