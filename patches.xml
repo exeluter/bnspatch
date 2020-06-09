@@ -32,10 +32,6 @@
           <set-value value="2" />
         </select-nodes>
       </select-node>
-      <!-- switch between lobby modes instantly -->
-      <select-node query="./group[@name='duel']/option[@name='lobby-gamemode-change-interval']/@value">
-        <set-value value="0" />
-      </select-node>
       <select-node query="./group[@name='inventory']">
         <!-- instantly open chests -->
         <select-node query="./option[@name='self-restraint-gauge-time']/@value">
