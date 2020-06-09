@@ -70,4 +70,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\dependencies\pugixml\scripts\natvis\pugixml_compact.natvis">
+      <Filter>Natvis Files</Filter>
+    </Natvis>
+    <Natvis Include="..\..\dependencies\pugixml\scripts\natvis\pugixml.natvis">
+      <Filter>Natvis Files</Filter>
+    </Natvis>
+  </ItemGroup>
 </Project>

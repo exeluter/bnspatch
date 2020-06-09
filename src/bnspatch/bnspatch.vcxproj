@@ -108,7 +108,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
-	<!-- Release -->
+  <!-- Release -->
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -153,5 +153,9 @@
     <ClInclude Include="xmlhooks.h" />
     <ClInclude Include="xmlpatch.h" />
     <ClInclude Include="xmlreader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\dependencies\pugixml\scripts\natvis\pugixml.natvis" />
+    <Natvis Include="..\..\dependencies\pugixml\scripts\natvis\pugixml_compact.natvis" />
   </ItemGroup>
 </Project>

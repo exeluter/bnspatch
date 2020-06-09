@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<patches>
+  <patch file="system.config2.xml">
+    <!-- enable ingame login -->
+    <select-node query="/config/option[@name='use-web-launching']/@value">
+      <set-value value="false" />
+    </select-node>
+  </patch>
+  <patch file="release.config2.xml">
+    <select-node query="/config">
+      <!-- set np program id -->
+      <select-node query="./option[@name='np-program-id']/@value">
+        <set-value value="346" />
+      </select-node>
+      <select-node query="./option[@name='np-program-id-2']/@value">
+        <set-value value="347" />
+      </select-node>
+    </select-node>
+  </patch>
+</patches>

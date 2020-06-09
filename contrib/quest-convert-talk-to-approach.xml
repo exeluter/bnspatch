@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<patches>
+  <patch file="quest\questdata.*.xml">
+    <select-node query="/table">
+      <!-- convert all talk quests to approach -->
+      <select-nodes query="./quest/acquisition/case/@type[.='talk']">
+        <set-value value="approach" />
+      </select-nodes>
+      <select-nodes query="./quest/mission-step/mission[not(@reward-1) and not(@reward-2)]/case/@type[.='talk']">
+        <set-value value="approach" />
+      </select-nodes>
+    </select-node>
+  </patch>
+</patches>

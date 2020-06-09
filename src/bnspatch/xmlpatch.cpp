@@ -28,10 +28,9 @@ pugi::xml_parse_result try_load_file(
   const auto result = document.load_file(path.c_str(), options, encoding);
 try_again:
   if ( !result && result.status != pugi::xml_parse_status::status_file_not_found ) {
-    const auto text = fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description());
     switch ( MessageBoxA(
       nullptr,
-      text.c_str(),
+      fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description()).c_str(),
       xorstr_("bnspatch"),
       MB_ICONERROR | MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
       case IDTRYAGAIN: goto try_again;
@@ -42,11 +41,11 @@ try_again:
   return result;
 }
 
-void preprocess(pugi::xml_node node, const std::filesystem::path &current_directory)
+void preprocess(pugi::xml_document &doc, const std::filesystem::path &current_directory)
 {
-  for ( auto child = node.first_child(); child; ) {
-    if ( child.type() == pugi::node_pi
-      && !_wcsicmp(child.name(), xorstr_(L"include")) ) {
+  const auto &first_child = doc.document_element().first_child();
+  for ( auto &child : doc.children() ) {
+    if ( child.type() == pugi::node_pi && !_wcsicmp(child.name(), xorstr_(L"include")) ) {
       pugi::xml_node include = child;
 
       auto result = std::wstring();
@@ -61,27 +60,20 @@ void preprocess(pugi::xml_node node, const std::filesystem::path &current_direct
           const auto parent_path = include_filename.parent_path();
           do {
             const auto path = parent_path / find_file_data.cFileName;
-            auto doc = pugi::xml_document();
-            if ( try_load_file(doc, path, pugi::parse_default | pugi::parse_pi) ) {
-              preprocess(doc, parent_path);
+            auto document = pugi::xml_document();
+            if ( try_load_file(document, path, pugi::parse_default | pugi::parse_pi)
+              && !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
 
-              // insert the comment marker above include directive
-              node.insert_child_before(pugi::node_comment, include).set_value(path.c_str());
-
-              // copy the document above the include directive (this retains the original order!)
-              for ( auto ic = doc.first_child(); ic; ic = ic.next_sibling() )
-                node.insert_copy_before(ic, child);
+              preprocess(document, parent_path);
+              doc.document_element().insert_child_before(pugi::node_comment, first_child).set_value(path.c_str());
+              for ( const auto &ic : document.document_element().children(xorstr_(L"patch")) )
+                doc.document_element().insert_copy_before(ic, first_child);
             }
           } while ( FindNextFileW(find_file_handle, &find_file_data) );
           FindClose(find_file_handle);
         }
       }
-      // remove the include node and move to the next child
-      child = child.next_sibling();
-      node.remove_child(include);
-    } else {
-      preprocess(child, current_directory);
-      child = child.next_sibling();
+      doc.remove_child(include);
     }
   }
 }
@@ -102,12 +94,13 @@ const std::filesystem::path &patches_file_path()
       if ( SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &result)) ) {
         const wchar_t *fileName;
         if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
+          path = std::filesystem::path(result.get());
           switch ( fnv1a::make_hash(fileName, towupper) ) {
             case L"Client.exe"_fnv1au:
-              path = std::filesystem::path(result.get()).append(xorstr_(L"BnS\\patches.xml"));
+              path.append(xorstr_(L"BnS\\patches.xml"));
               return;
             case L"BNSR.exe"_fnv1au:
-              path = std::filesystem::path(result.get()).append(xorstr_(L"BNSR\\patches.xml"));
+              path.append(xorstr_(L"BNSR\\patches.xml"));
               return;
           }
         }
@@ -128,13 +121,14 @@ const pugi::xml_document &patches_document()
     std::call_once(once_flag, [](pugi::xml_document &document) {
       const auto result = try_load_file(document, patches_file_path(), pugi::parse_default | pugi::parse_pi);
       if ( result ) {
-        preprocess(document, patches_file_path().parent_path());
-        if ( _wcsicmp(document.document_element().name(), xorstr_(L"patches")) )
-          document.reset();
+        if ( !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
+          preprocess(document, patches_file_path().parent_path());
 #ifdef _DEBUG
-        else
           document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
 #endif
+        } else {
+          document.reset();
+        }
       }
     }, document);
   } catch ( ... ) {}

@@ -1,28 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<?include .\patches\*.xml?>
 <patches>
-  <?include .\patches\*.xml?>
-  <patch file="quest\questdata.*.xml">
-    <!-- convert all talk quests to approach
-
-      known issues/bugs:
-
-      - sometimes quest NPCs are invisible, however you can still progress
-        to the next step by walking over their indicator on the minimap.
-        no known work-around.
-
-      - quests that normally give you a choice between multiple rewards,
-        will give you the first reward, with no choice.
-        work-around: add exception for mission-steps with reward-1 or
-        reward-2 attributes, but that will include single-reward quests
-        as well.
-    -->
-    <select-nodes query="/table/quest/acquisition/case/@type[.='talk']">
-      <set-value value="approach" />
-    </select-nodes>
-    <select-nodes query="/table/quest/mission-step/mission/case/@type[.='talk']">
-      <set-value value="approach" />
-    </select-nodes>
-  </patch>
   <patch file="system.config2.xml">
     <select-node query="/config">
       <!-- don't show eula -->
@@ -31,10 +9,6 @@
       </select-node>
       <!-- disable nagle algorithm in arena -->
       <select-node query="./option[@name='use-nagle-arena']/@value">
-        <set-value value="false" />
-      </select-node>
-      <!-- disable auto bias gcd -->
-      <select-node query="./option[@name='use-auto-bias-global-cool-time']/@value">
         <set-value value="false" />
       </select-node>
       <!-- simple mode at lv. 1 -->
@@ -58,14 +32,12 @@
           <set-value value="2" />
         </select-nodes>
       </select-node>
-      <!-- optimized mode option (disabled by default) -->
-      <!-- 
-      <select-node query="./group[@name='option']/option[@name='use-optimal-performance-mode-option']/@value">
-        <set-value value="true" />
+      <!-- switch between lobby modes instantly -->
+      <select-node query="./group[@name='duel']/option[@name='lobby-gamemode-change-interval']/@value">
+        <set-value value="0" />
       </select-node>
-      -->
+      <!-- show gear score -->
       <select-node query="./group[@name='ui-common']/group[@name='tooltip']/option[@name='show-gear-score-in-item-tooltip-for-debugging']/@value">
-        <!-- show gear score -->
         <set-value value="y" />
       </select-node>
       <select-node query="./group[@name='inventory']">
@@ -78,18 +50,18 @@
           <set-value value="0" />
         </select-node>
       </select-node>
-      <!-- show names of silver and bronze players -->
+      <!-- pvp: show names of silver and bronze players -->
       <select-node query="./group[@name='duel']/option[@name='hidden-pc-name-rating']/@value">
         <set-value value="130000" />
       </select-node>
-      <!-- show average team rating -->
+      <!-- pvp: show average team rating -->
       <select-node query="./group[@name='arena']/option[@name='use-team-average-score']/@value">
         <set-value value="true" />
       </select-node>
-      <!-- instant item transmutation -->
-      <select-node query="./group[@name='particle']/option[@name='item-transform-progressing-particle-duration']/@value">
+      <!-- instant transmutation, instant jewel usage, etc. -->
+      <select-nodes query="./group[@name='particle']/option[contains(@name,'-particle-duration')]/@value">
         <set-value value="0" />
-      </select-node>
+      </select-nodes>
       <!-- disable breast physics -->
       <select-node query="./group[@name='uncategorized']/option[@name='no-use-breast-physics']/@value">
         <set-value value="yes" />
@@ -97,6 +69,24 @@
       <!-- no retry cooldown in Hongmoon Training Room (F12) -->
       <select-node query="./group[@name='skill-training-room']/option[@name='retry-button-cool-time']/@value">
         <set-value value="0" />
+      </select-node>
+      <!-- show quest letters in quest log -->
+      <select-node query="./group[@name='quest']/option[@name='quest-talk-to-self-from-quickslot-to-questjournal']/@value">
+        <set-value value="false" />
+      </select-node>
+      <select-node query="./group[@name='context']">
+        <!-- able to resurrect immediately after wipe  -->
+        <select-node query="./option[@name='instantaneous-dead-context-delay']/@value">
+          <set-value value="0" />
+        </select-node>
+        <!-- able to gather chi immediately -->
+        <select-node query="./option[@name='exhaust-context-delay']/@value">
+          <set-value value="0" />
+        </select-node>
+      </select-node>
+      <!-- show server delay period for 3 minutes -->
+      <select-node query="./group[@name='latency']/option[@name='show-duration']/@value">
+        <set-value value="180" />
       </select-node>
     </select-node>
   </patch>
