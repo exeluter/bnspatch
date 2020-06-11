@@ -274,7 +274,7 @@ void patch_xml(pugi::xml_document &src, std::queue<pugi::xml_node> queue, pugi::
   while ( !queue.empty() ) {
     auto const &patch = queue.front();
     std::unordered_map<fnv1a::type, pugi::xml_node> saved_nodes;
-    process_patch(src.document_element(), patch.children(), saved_nodes);
+    process_patch(src, patch.children(), saved_nodes);
     queue.pop();
   }
   src.save(writer, nullptr, pugi::format_raw, pugi::xml_encoding::encoding_utf16);

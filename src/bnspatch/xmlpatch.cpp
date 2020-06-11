@@ -8,6 +8,7 @@
 #include <codecvt>
 #include <filesystem>
 #include <optional>
+#include <unordered_set>
 
 #include "versioninfo.h"
 #include <fmt/format.h>
@@ -41,7 +42,7 @@ try_again:
   return result;
 }
 
-void preprocess(pugi::xml_document &doc, const std::filesystem::path &current_directory)
+void preprocess(pugi::xml_document &doc, const std::filesystem::path &current_directory, std::unordered_set<fnv1a::type> &previously_loaded)
 {
   const auto &first_child = doc.document_element().first_child();
   for ( auto &child : doc.children() ) {
@@ -50,22 +51,24 @@ void preprocess(pugi::xml_document &doc, const std::filesystem::path &current_di
 
       auto result = std::wstring();
       if ( SUCCEEDED(wil::ExpandEnvironmentStringsW(child.value(), result)) ) {
-        auto include_filename = std::filesystem::path(result);
-        if ( include_filename.is_relative() )
-          include_filename = current_directory / include_filename;
+        auto include_filter = std::filesystem::path(result);
+        if ( include_filter.is_relative() )
+          include_filter = current_directory / include_filter;
 
         auto find_file_data = WIN32_FIND_DATAW();
-        auto find_file_handle = FindFirstFileW(include_filename.c_str(), &find_file_data);
+        auto find_file_handle = FindFirstFileW(include_filter.c_str(), &find_file_data);
         if ( find_file_handle != INVALID_HANDLE_VALUE ) {
-          const auto parent_path = include_filename.parent_path();
+          const auto parent_path = include_filter.parent_path();
           do {
-            const auto path = parent_path / find_file_data.cFileName;
+            const auto path = std::filesystem::canonical(parent_path / find_file_data.cFileName);
             auto document = pugi::xml_document();
-            if ( try_load_file(document, path, pugi::parse_default | pugi::parse_pi)
+            if ( previously_loaded.emplace(fnv1a::make_hash(path.c_str(), towupper)).second
+              && try_load_file(document, path, pugi::parse_default | pugi::parse_pi)
               && !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
 
-              preprocess(document, parent_path);
+              preprocess(document, parent_path, previously_loaded);
               doc.document_element().insert_child_before(pugi::node_comment, first_child).set_value(path.c_str());
+
               for ( const auto &ic : document.document_element().children(xorstr_(L"patch")) )
                 doc.document_element().insert_copy_before(ic, first_child);
             }
@@ -87,20 +90,20 @@ const std::filesystem::path &patches_file_path()
     std::call_once(once_flag, [](std::filesystem::path &path) {
       auto result = wil::unique_cotaskmem_string();
       if ( SUCCEEDED(wil::TryGetEnvironmentVariableW(xorstr_(L"BNS_PROFILE_XML"), result)) && result ) {
-        path = std::filesystem::path(result.get());
+        path = std::filesystem::canonical(result.get());
         return;
       }
 
       if ( SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &result)) ) {
         const wchar_t *fileName;
         if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
-          path = std::filesystem::path(result.get());
+          const auto documents = std::filesystem::path(result.get());
           switch ( fnv1a::make_hash(fileName, towupper) ) {
             case L"Client.exe"_fnv1au:
-              path.append(xorstr_(L"BnS\\patches.xml"));
+              path = std::filesystem::canonical(documents / xorstr_(L"BnS\\patches.xml"));
               return;
             case L"BNSR.exe"_fnv1au:
-              path.append(xorstr_(L"BNSR\\patches.xml"));
+              path = std::filesystem::canonical(documents / xorstr_(L"BnS\\patches.xml"));
               return;
           }
         }
@@ -111,7 +114,6 @@ const std::filesystem::path &patches_file_path()
   return path;
 }
 
-
 const pugi::xml_document &patches_document()
 {
   static std::once_flag once_flag;
@@ -119,16 +121,14 @@ const pugi::xml_document &patches_document()
 
   try {
     std::call_once(once_flag, [](pugi::xml_document &document) {
-      const auto result = try_load_file(document, patches_file_path(), pugi::parse_default | pugi::parse_pi);
-      if ( result ) {
-        if ( !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
-          preprocess(document, patches_file_path().parent_path());
+      auto previously_loaded = std::unordered_set<fnv1a::type>();
+      if ( previously_loaded.emplace(fnv1a::make_hash(patches_file_path().c_str(), towupper)).second
+        && try_load_file(document, patches_file_path(), pugi::parse_default | pugi::parse_pi)
+        && !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
+        preprocess(document, patches_file_path().parent_path(), previously_loaded);
 #ifdef _DEBUG
-          document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
+        document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
 #endif
-        } else {
-          document.reset();
-        }
       }
     }, document);
   } catch ( ... ) {}
@@ -218,7 +218,7 @@ void process_patch(
           size_t size;
           const auto text = current.text();
           if ( SUCCEEDED(StringCbLengthW(text.get(), STRSAFE_MAX_CCH * sizeof(wchar_t), &size)) )
-            ctx.node().append_buffer(text.get(), size, pugi::parse_default | pugi::parse_fragment, pugi::encoding_utf16);
+            ctx.node().append_buffer(text.get(), size, pugi::parse_default | pugi::parse_declaration | pugi::parse_fragment | pugi::parse_trim_pcdata, pugi::encoding_utf16);
           break;
         }
         case L"append-child"_fnv1au: // ok
