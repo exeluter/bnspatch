@@ -215,8 +215,10 @@ void process_patch(
           break;
 
         case L"append-buffer"_fnv1au: { // ok
-          const auto sv = std::wstring_view(current.text().get());
-          ctx.node().append_buffer(sv.data(), sv.size() * sizeof(wchar_t), pugi::parse_default | pugi::parse_fragment);
+          size_t size;
+          const auto text = current.text();
+          if ( SUCCEEDED(StringCbLengthW(text.get(), STRSAFE_MAX_CCH * sizeof(wchar_t), &size)) )
+            ctx.node().append_buffer(text.get(), size, pugi::parse_default | pugi::parse_fragment, pugi::encoding_utf16);
           break;
         }
         case L"append-child"_fnv1au: // ok

@@ -229,8 +229,8 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
       return GetExceptionCode();
     }
 
-    for ( const auto Address : g_ReadOnlyAddresses ) {
-      if ( Address && StartingAddress == ((ULONG_PTR)Address & ~((ULONG_PTR)sbi.PageSize - 1)) )
+    for ( const auto Address : std::array { (ULONG_PTR)&DbgBreakPoint, (ULONG_PTR)&DbgUiRemoteBreakin } ) {
+      if ( Address && StartingAddress == (Address & ~((ULONG_PTR)sbi.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }
   }

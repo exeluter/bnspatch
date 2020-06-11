@@ -63,8 +63,6 @@ void __cdecl PluginInit(void)
           DetourAttach(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
           DetourAttach(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
           DetourAttach(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
-          g_ReadOnlyAddresses[0] = (ULONG_PTR)module->function(xorstr_("DbgBreakPoint"));
-          g_ReadOnlyAddresses[1] = (ULONG_PTR)module->function(xorstr_("DbgUiRemoteBreakin"));
           DetourAttach(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
           DetourAttach(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
 #ifdef _M_X64

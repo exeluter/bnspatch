@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<patches>
-  <patch file="client.config2.xml">
-      <!-- enable optimized mode option -->
-      <select-node query="./group[@name='option']/option[@name='use-optimal-performance-mode-option']/@value">
-        <set-value value="true" />
-      </select-node>
-  </patch>
-</patches>
