@@ -55,7 +55,6 @@ inline T read_integer_unaligned_unchecked(const void *&mem, size_t &size)
   mem = reinterpret_cast<const uint8_t *>(mem) + sizeof(T);
   size -= sizeof(T);
   return result;
-
 }
 
 template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
