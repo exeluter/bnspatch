@@ -78,12 +78,15 @@ void __cdecl PluginInit(void)
   }
 }
 
+#define WIDEN2(x) L ## x
+#define WIDEN(x) WIDEN2(x)
+
 __declspec(dllexport)
 void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo)
 {
   static std::once_flag once_flag;
   static auto name = xorstr(L"bnspatch");
-  static auto version = xorstr(L"20200607");
+  static auto version = xorstr(WIDEN(__DATE__));
   static auto description = xorstr(L"XML patching, multi-client, and bypasses some Themida/WL protections");
 
   std::call_once(once_flag, [](auto &name, auto &version, auto &description) {

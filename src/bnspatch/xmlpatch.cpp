@@ -26,8 +26,8 @@ pugi::xml_parse_result try_load_file(
   unsigned int options = pugi::parse_default,
   pugi::xml_encoding encoding = pugi::encoding_auto)
 {
-  const auto result = document.load_file(path.c_str(), options, encoding);
 try_again:
+  const auto result = document.load_file(path.c_str(), options, encoding);
   if ( !result && result.status != pugi::xml_parse_status::status_file_not_found ) {
     switch ( MessageBoxA(
       nullptr,
