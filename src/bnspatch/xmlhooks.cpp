@@ -206,7 +206,7 @@ inline bool deserialize_node(pugi::xml_node &parent, const void *&mem, size_t &s
   return false;
 }
 
-pugi::xml_document deserialize_document(const void *mem, size_t size)
+pugi::xml_document deserialize_document(const void *mem, const size_t size)
 {
   auto document = pugi::xml_document();
   auto size_remaining = size;

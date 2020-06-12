@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <xstring>
 
 template <typename T, T Prime, T OffsetBasis>
 struct basic_fnv1a
@@ -91,20 +92,36 @@ struct basic_fnv1a
     return hash;
   }
 
-  template <std::size_t length>
+  template <std::size_t Size>
   static constexpr T make_hash(
-    wchar_t(&s)[length],
+    wchar_t(&s)[Size],
     std::char_traits<wchar_t>::int_type(*fx)(std::char_traits<wchar_t>::int_type) = nullptr)
   {
-    return make_hash(s, length);
+    return make_hash(s, Size);
   }
 
   template <typename Char, typename Traits, typename Alloc>
   static constexpr T make_hash(
     const std::basic_string<Char, Traits, Alloc> &s,
-    typename std::char_traits<Char>::int_type(*fx)(typename std::char_traits<Char>::int_type) = nullptr)
+    typename Traits::int_type(*fx)(typename Traits::int_type) = nullptr)
   {
     return make_hash(s.c_str(), s.size(), fx);
+  }
+
+  template <typename Char, typename Traits>
+  static constexpr T make_hash(
+    const std::basic_string_view<Char, Traits> &s,
+    typename Traits::int_type(*fx)(typename Traits::int_type) = nullptr)
+  {
+    return make_hash(s.data(), s.size(), fx);
+  }
+
+  template <typename Char, std::size_t Size, typename Traits = std::char_traits<Char>>
+  static constexpr T make_hash(
+    const std::array<Char, Size> &s,
+    typename Traits::int_type(*fx)(typename Traits::int_type) = nullptr)
+  {
+    return make_hash(s.data(), s.size(), fx);
   }
 };
 
