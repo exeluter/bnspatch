@@ -31,3 +31,6 @@
 [submodule "dependencies/processhacker"]
 	path = dependencies/processhacker
 	url = https://github.com/processhacker/processhacker.git
+[submodule "dependencies/fnv1a_constexpr"]
+	path = dependencies/fnv1a_constexpr
+	url = https://github.com/zeffy/fnv1a_constexpr.git
