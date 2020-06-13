@@ -4,7 +4,9 @@
 #include <Shlwapi.h>
 
 #include <array>
+#include <cstdlib>
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <queue>
 #include <string>
@@ -254,9 +256,9 @@ std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
     if ( !attribute )
       attribute = patch.attribute(xorstr_(L"filename"));
 
-    wchar_t *str = _wcsdup(attribute.value());
+    auto str = std::unique_ptr<wchar_t, decltype(&::free)>(::_wcsdup(attribute.value()), ::free);
     wchar_t *next_token;
-    wchar_t *token = wcstok_s(str, xorstr_(L";"), &next_token);
+    wchar_t *token = wcstok_s(str.get(), xorstr_(L";"), &next_token);
     while ( token ) {
       auto file = std::filesystem::path(token);
       if ( FastWildCompare(file.c_str(), xml_path.c_str())
@@ -264,7 +266,6 @@ std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
         queue.push(patch);
       token = wcstok_s(nullptr, xorstr_(L";"), &next_token);
     }
-    free(str);
   }
   return queue;
 }
