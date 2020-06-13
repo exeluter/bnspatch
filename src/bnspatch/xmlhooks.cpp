@@ -112,30 +112,12 @@ std::optional<std::wstring> read_string(const void *&buf, size_t &size)
   // don't need to size-check after this
 
   std::wstring result;
-  if ( length ) {
-    result.reserve(length);
+  result.reserve(length);
 
-    auto data = reinterpret_cast<const uint16_t *>(buf);
-    for ( size_t i = 0; i < length; ++i )
-      result.push_back(data[i] ^ cipherKeys[i & (cipherKeys.size() - 1)]);
-    buf = &data[length];
-
-    //size_t i = 0;
-    //switch ( length & (cipherKeys.size() - 1) ) {
-    //  case 0:
-    //    do {
-    //      result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //  case 7: result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //  case 6: result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //  case 5: result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //  case 4: result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //  case 3: result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //  case 2: result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //  case 1: result.push_back(*data++ ^ cipherKeys[i++ & (cipherKeys.size() - 1)]);
-    //    } while ( i < length );
-    //}
-    //buf = data;
-  }
+  auto data = reinterpret_cast<const uint16_t *>(buf);
+  for ( size_t i = 0; i < length; ++i )
+    result.push_back(data[i] ^ cipherKeys[i & (cipherKeys.size() - 1)]);
+  buf = data + length;
   return result;
 }
 
