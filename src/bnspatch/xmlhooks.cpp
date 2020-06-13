@@ -11,24 +11,24 @@
 #include <queue>
 #include <string>
 
-#include <fastwildcompare.hpp>
 #include <fmt/format.h>
 #include <pugixml.hpp>
 #include <safeint.hpp>
 #include <xorstr.hpp>
 
+#include "fastwildcompare.h"
 #include "xmlpatch.h"
 #include "xmlreader.h"
 
-template<class Char>
-struct memory_buffer_writer : pugi::xml_writer
+struct xml_memory_buffer_writer : pugi::xml_writer
 {
-  fmt::basic_memory_buffer<Char> result;
+  fmt::basic_memory_buffer<unsigned char> result;
 
   virtual void write(const void *data, size_t size)
   {
-    result.append(reinterpret_cast<const Char *>(data),
-      reinterpret_cast<const Char *>(reinterpret_cast<const unsigned char *>(data) + size));
+    result.append(
+      reinterpret_cast<const unsigned char *>(data),
+      reinterpret_cast<const unsigned char *>(reinterpret_cast<const unsigned char *>(data) + size));
   }
 };
 
@@ -39,6 +39,17 @@ inline T read_integer_aligned_unchecked(const void *&mem, uint32_t &size)
   mem = reinterpret_cast<const uint8_t *>(mem) + ((sizeof(T) + 3) & ~3);
   size -= ((sizeof(T) + 3) & ~3);
   return result;
+}
+
+template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
+inline bool compare_integer_aligned_unchecked(const void *&mem, uint32_t &size, const T comparand)
+{
+  if ( *reinterpret_cast<const T *>(mem) == comparand ) {
+    mem = reinterpret_cast<const uint8_t *>(mem) + ((sizeof(T) + 3) & ~3);
+    size -= ((sizeof(T) + 3) & ~3);
+    return true;
+  }
+  return false;
 }
 
 template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
@@ -190,40 +201,42 @@ inline bool deserialize_node(pugi::xml_node &parent, const void *&mem, uint32_t 
   return false;
 }
 
-pugi::xml_document deserialize_document(const void *mem, const uint32_t size)
+pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size, pugi::xml_document &document)
 {
-  auto document = pugi::xml_document();
   auto size_remaining = size;
 
   if ( mem
     && size > 0x50 // rest of the header doesn't need to be size-checked
-    && read_integer_aligned_unchecked<int64_t>(mem, size_remaining) == 0x424C534F42584D4Ci64
-    && read_integer_aligned_unchecked<char>(mem, size_remaining) == 3 ) {
+    && compare_integer_aligned_unchecked<int64_t>(mem, size_remaining, 0x424C534F42584D4Ci64)
+    && compare_integer_aligned_unchecked<char>(mem, size_remaining, 3) ) {
 
     const auto document_size = read_integer_aligned_unchecked<uint32_t>(mem, size_remaining);
     if ( document_size > size )
-      return pugi::xml_document();
+      return pugi::xml_parse_result();
 
     discard_bytes_unchecked(0x40, mem, size_remaining);
 
     // need to size-check after this
     const auto valid = read_integer_unaligned<bool>(mem, size_remaining);
-    if ( !valid ) return pugi::xml_document();
-
+    if ( !valid ) return pugi::xml_parse_result();
+    
     const auto document_name = read_string(mem, size_remaining);
-    if ( !document_name ) return pugi::xml_document();
+    if ( !document_name ) return pugi::xml_parse_result();
 
     auto decl = document.prepend_child(pugi::node_declaration);
     decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
-    decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
+    decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"UTF-16");
     document.append_child(pugi::node_comment).set_value(document_name->c_str());
-    if ( deserialize_element(document, mem, size_remaining) )
-      return document;
+    if ( deserialize_element(document, mem, size_remaining) ) {
+      auto res = pugi::xml_parse_result();
+      res.status = pugi::status_ok;
+      res.encoding = pugi::encoding_utf16;
+      return res;
+    }
   } else {
-    if ( document.load_buffer(mem, size, pugi::parse_default, pugi::encoding_utf16) )
-      return document;
+    return document.load_buffer(mem, size, pugi::parse_full);
   }
-  return pugi::xml_document();
+  return pugi::xml_parse_result();
 }
 
 std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
@@ -252,7 +265,7 @@ std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
   return queue;
 }
 
-void patch_xml(pugi::xml_document &src, std::queue<pugi::xml_node> queue, pugi::xml_writer &writer)
+void patch_xml(pugi::xml_document &src, std::queue<pugi::xml_node> queue)
 {
   while ( !queue.empty() ) {
     auto const &patch = queue.front();
@@ -260,55 +273,44 @@ void patch_xml(pugi::xml_document &src, std::queue<pugi::xml_node> queue, pugi::
     process_patch(src, patch.children(), saved_nodes);
     queue.pop();
   }
-  src.save(writer, nullptr, pugi::format_raw, pugi::xml_encoding::encoding_utf16);
 }
 
 v13::XmlDoc *(__thiscall *g_pfnReadFromFile13)(const v13::XmlReader *a, const wchar_t *);
 v13::XmlDoc *THISCALL ReadFromFile13_hook(THISPTR(const v13::XmlReader *), const wchar_t *xml)
 {
-  auto queue = get_xml_patches(xml);
-  if ( queue.empty() )
-    return g_pfnReadFromFile13(thisptr, xml);
-
-  pugi::xml_document doc;
-  if ( !doc.load_file(xml) )
+  if ( !xml )
     return nullptr;
 
-  memory_buffer_writer<unsigned char> writer;
-  patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xml);
+  auto queue = get_xml_patches(xml);
+  if ( !queue.empty() ) {
+    pugi::xml_document document;
+    if ( const auto res = document.load_file(xml, pugi::parse_full) ) {
+      patch_xml(document, queue);
+      xml_memory_buffer_writer writer;
+      document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
+      return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xml);
+    }
+  }
+  return g_pfnReadFromFile13(thisptr, xml);
 }
 
 v14::XmlDoc *(__thiscall *g_pfnReadFromFile14)(const v14::XmlReader *, const wchar_t *, class v14::XmlPieceReader *);
 v14::XmlDoc *THISCALL ReadFromFile14_hook(THISPTR(const v14::XmlReader *), const wchar_t *xml, class v14::XmlPieceReader *xmlPieceReader)
 {
-  auto queue = get_xml_patches(xml);
-  if ( queue.empty() )
-    return g_pfnReadFromFile14(thisptr, xml, xmlPieceReader);
-
-  pugi::xml_document doc;
-  if ( !doc.load_file(xml) )
+  if ( !xml )
     return nullptr;
 
-  memory_buffer_writer<unsigned char> writer;
-  patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xml, xmlPieceReader);
-}
-
-v15::XmlDoc *(__thiscall *g_pfnReadFromFile15)(const v15::XmlReader *, const wchar_t *, class v15::XmlPieceReader *);
-v15::XmlDoc *THISCALL ReadFromFile15_hook(THISPTR(const v15::XmlReader *), const wchar_t *xml, class v15::XmlPieceReader *xmlPieceReader)
-{
   auto queue = get_xml_patches(xml);
-  if ( queue.empty() )
-    return g_pfnReadFromFile15(thisptr, xml, xmlPieceReader);
-
-  pugi::xml_document doc;
-  if ( !doc.load_file(xml) )
-    return nullptr;
-
-  memory_buffer_writer<unsigned char> writer;
-  patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer15(thisptr, writer.result.data(), SafeInt(writer.result.size()), xml, xmlPieceReader);
+  if ( !queue.empty() ) {
+    pugi::xml_document document;
+    if ( const auto res = document.load_file(xml, pugi::parse_full) ) {
+      patch_xml(document, queue);
+      xml_memory_buffer_writer writer;
+      document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
+      return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xml, xmlPieceReader);
+    }
+  }
+  return g_pfnReadFromFile14(thisptr, xml, xmlPieceReader);
 }
 
 v13::XmlDoc *(__thiscall *g_pfnReadFromBuffer13)(const v13::XmlReader *, const unsigned char *, unsigned int, const wchar_t *);
@@ -318,14 +320,16 @@ v13::XmlDoc *THISCALL ReadFromBuffer13_hook(THISPTR(const v13::XmlReader *), con
     return nullptr;
 
   auto queue = get_xml_patches(xmlFileNameForLogging);
-  if ( queue.empty() )
-    return g_pfnReadFromBuffer13(thisptr, mem, size, xmlFileNameForLogging);
-
-  auto doc = deserialize_document(mem, size);
-
-  memory_buffer_writer<unsigned char> writer;
-  patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging);
+  if ( !queue.empty() ) {
+    pugi::xml_document document;
+    if ( const auto res = deserialize_document(mem, size, document) ) {
+      patch_xml(document, queue);
+      xml_memory_buffer_writer writer;
+      document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
+      return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging);
+    }
+  }
+  return g_pfnReadFromBuffer13(thisptr, mem, size, xmlFileNameForLogging);
 }
 
 v14::XmlDoc *(__thiscall *g_pfnReadFromBuffer14)(const v14::XmlReader *, const unsigned char *, unsigned int, const wchar_t *, class v14::XmlPieceReader *);
@@ -335,39 +339,14 @@ v14::XmlDoc *THISCALL ReadFromBuffer14_hook(THISPTR(const v14::XmlReader *), con
     return nullptr;
 
   auto queue = get_xml_patches(xmlFileNameForLogging);
-  if ( queue.empty() )
-    return g_pfnReadFromBuffer14(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
-
-  auto doc = deserialize_document(mem, size);
-
-  memory_buffer_writer<unsigned char> writer;
-  patch_xml(doc, queue, writer);
-  return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
-}
-
-v15::XmlDoc *(__thiscall *g_pfnReadFromBuffer15)(const v15::XmlReader *, const unsigned char *, unsigned int, const wchar_t *, class v15::XmlPieceReader *);
-v15::XmlDoc *THISCALL ReadFromBuffer15_hook(THISPTR(const v15::XmlReader *), const unsigned char *mem, unsigned int size, const wchar_t *xmlFileNameForLogging, class v15::XmlPieceReader *xmlPieceReader)
-{
-  if ( !mem || !size )
-    return nullptr;
-
-  auto queue = get_xml_patches(xmlFileNameForLogging);
   if ( !queue.empty() ) {
-    if ( auto doc = deserialize_document(mem, size) ) {
-#ifdef _DEBUG
-      auto tmp = patches_file_path().parent_path().append(xorstr_(L"tmp")).append(xmlFileNameForLogging);
-      std::filesystem::create_directories(tmp.parent_path());
-      doc.save_file(tmp.c_str(), L"  ", pugi::format_default, pugi::encoding_utf16);
-#endif
-      memory_buffer_writer<unsigned char> writer;
-      patch_xml(doc, queue, writer);
-#ifdef _DEBUG
-      auto tmp_patched = patches_file_path().parent_path().append(xorstr_(L"tmp_patched")).append(xmlFileNameForLogging);
-      std::filesystem::create_directories(tmp_patched.parent_path());
-      doc.save_file(tmp_patched.c_str(), L"  ", pugi::format_default, pugi::encoding_utf16);
-#endif
-      return g_pfnReadFromBuffer15(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
+    pugi::xml_document document;
+    if ( const auto res = deserialize_document(mem, size, document) ) {
+      patch_xml(document, queue);
+      xml_memory_buffer_writer writer;
+      document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
+      return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
     }
   }
-  return g_pfnReadFromBuffer15(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
+  return g_pfnReadFromBuffer14(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
 }

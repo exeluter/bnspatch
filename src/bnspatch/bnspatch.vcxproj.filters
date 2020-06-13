@@ -52,6 +52,9 @@
     <ClCompile Include="..\..\dependencies\Detours\src\modules.cpp">
       <Filter>Source Files\Detours</Filter>
     </ClCompile>
+    <ClCompile Include="fastwildcompare.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="xmlreader.h">
@@ -67,6 +70,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fastwildcompare.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="thread_local_lock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

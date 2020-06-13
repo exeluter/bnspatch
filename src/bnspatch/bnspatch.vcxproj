@@ -142,13 +142,16 @@
     <ClCompile Include="..\..\dependencies\Detours\src\image.cpp" />
     <ClCompile Include="..\..\dependencies\Detours\src\modules.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="fastwildcompare.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="versioninfo.c" />
     <ClCompile Include="xmlhooks.cpp" />
     <ClCompile Include="xmlpatch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="fastwildcompare.h" />
     <ClInclude Include="hooks.h" />
+    <ClInclude Include="thread_local_lock.h" />
     <ClInclude Include="versioninfo.h" />
     <ClInclude Include="xmlhooks.h" />
     <ClInclude Include="xmlpatch.h" />

@@ -1,30 +1,11 @@
-// Copyright 2018 IBM Corporation
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//     http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Compares two text strings.  Accepts '?' as a single-character wildcard.  
-// For each '*' wildcard, seeks out a matching sequence of any characters 
-// beyond it.  Otherwise compares the strings a character at a time. 
-//
-#pragma once
-#include <locale>
+#include <cctype>
 
-template <class Char>
-bool FastWildCompare(Char const *pWild, Char const *pTame)
+#include "fastwildcompare.h"
+
+bool FastWildCompare(const wchar_t *pWild, const wchar_t *pTame)
 {
-  Char const *pWildSequence; // Points to prospective wild string match after '*'
-  Char const *pTameSequence; // Points to prospective tame string match
-  auto const &facet = std::use_facet<std::ctype<Char>>(std::locale());
+  const wchar_t *pWildSequence; // Points to prospective wild string match after '*'
+  const wchar_t *pTameSequence; // Points to prospective tame string match
 
   // Find a first wildcard, if one exists, and the beginning of any  
   // prospectively matching sequence after it.
@@ -50,7 +31,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
 
       // Search for the next prospective match.
       if ( *pWild != '?' ) {
-        while ( facet.toupper(*pWild) != facet.toupper(*pTame) ) {
+        while ( __ascii_towupper(*pWild) != __ascii_towupper(*pTame) ) {
           if ( !*(++pTame) )
             return false; // "a*bc" doesn't match "ab".
         }
@@ -60,7 +41,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
       pWildSequence = pWild;
       pTameSequence = pTame;
       break;
-    } else if ( facet.toupper(*pWild) != facet.toupper(*pTame) && *pWild != '?' ) {
+    } else if ( __ascii_towupper(*pWild) != __ascii_towupper(*pTame) && *pWild != '?' ) {
       return false; // "abc" doesn't match "abd".
     }
 
@@ -83,7 +64,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
 
       // Search for the next prospective match.
       if ( *pWild != '?' ) {
-        while ( facet.toupper(*pWild) != facet.toupper(*pTame) ) {
+        while ( __ascii_towupper(*pWild) != __ascii_towupper(*pTame) ) {
           if ( !*(++pTame) )
             return false; // "a*b*c" doesn't match "ab".
         }
@@ -92,7 +73,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
       // Keep the new fallback positions.
       pWildSequence = pWild;
       pTameSequence = pTame;
-    } else if ( facet.toupper(*pWild) != facet.toupper(*pTame) && *pWild != '?' ) {
+    } else if ( __ascii_towupper(*pWild) != __ascii_towupper(*pTame) && *pWild != '?' ) {
       // The equivalent portion of the upper loop is really simple.
       if ( !*pTame )
         return false; // "*bcd" doesn't match "abc".
@@ -105,7 +86,7 @@ bool FastWildCompare(Char const *pWild, Char const *pTame)
       pWild = pWildSequence;
 
       // Fall back, but never so far again.
-      while ( facet.toupper(*pWild) != facet.toupper(*(++pTameSequence)) ) {
+      while ( __ascii_towupper(*pWild) != __ascii_towupper(*(++pTameSequence)) ) {
         if ( !*pTameSequence )
           return false; // "*a*b" doesn't match "ac".
       }

@@ -12,13 +12,9 @@
 #include <optional>
 #include <queue>
 
-#include "ntapi/mprotect.h"
-#include "ntapi/string.h"
-#include "versioninfo.h"
-#include "xmlhooks.h"
-#include "xmlpatch.h"
+#include <ntapi/mprotect.h>
+#include <ntapi/string.h>
 #include <detours.h>
-#include <fastwildcompare.hpp>
 #include <fmt/format.h>
 #include <fnv1a.h>
 #include <gsl/span_ext>
@@ -27,10 +23,15 @@
 #include <pe/module.h>
 #include <pugixml.hpp>
 #include <SafeInt.hpp>
-#include <thread_local_lock.h>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
 #include <xorstr.hpp>
+
+#include "fastwildcompare.h"
+#include "thread_local_lock.h"
+#include "versioninfo.h"
+#include "xmlhooks.h"
+#include "xmlpatch.h"
 
 PVOID g_pvDllNotificationCookie;
 VOID CALLBACK DllNotification(
@@ -68,16 +69,11 @@ VOID CALLBACK DllNotification(
                   DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
                   break;
                 case 14:
+                case 15: // no known difference between interface 14 and 15...
                   g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vfptr[6]);
                   DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
                   g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vfptr[7]);
                   DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
-                  break;
-                case 15:
-                  g_pfnReadFromFile15 = reinterpret_cast<decltype(g_pfnReadFromFile15)>(vfptr[6]);
-                  DetourAttach(&(PVOID &)g_pfnReadFromFile15, ReadFromFile15_hook);
-                  g_pfnReadFromBuffer15 = reinterpret_cast<decltype(g_pfnReadFromBuffer15)>(vfptr[7]);
-                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer15, ReadFromBuffer15_hook);
                   break;
               }
               pfnDestroyXmlReader(xmlReader);
