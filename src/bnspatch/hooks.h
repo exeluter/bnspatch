@@ -4,12 +4,6 @@
 
 #include <array>
 
-extern PVOID g_pvDllNotificationCookie;
-VOID CALLBACK DllNotification(
-  ULONG NotificationReason,
-  PLDR_DLL_NOTIFICATION_DATA NotificationData,
-  PVOID Context);
-
 extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,

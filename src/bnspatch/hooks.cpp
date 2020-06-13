@@ -14,7 +14,6 @@
 
 #include <ntapi/mprotect.h>
 #include <ntapi/string.h>
-#include <detours.h>
 #include <fmt/format.h>
 #include <fnv1a.h>
 #include <gsl/span_ext>
@@ -32,60 +31,6 @@
 #include "versioninfo.h"
 #include "xmlhooks.h"
 #include "xmlpatch.h"
-
-PVOID g_pvDllNotificationCookie;
-VOID CALLBACK DllNotification(
-  ULONG NotificationReason,
-  PLDR_DLL_NOTIFICATION_DATA NotificationData,
-  PVOID Context)
-{
-  static thread_local_lock mtx;
-  std::unique_lock lock(mtx, std::try_to_lock);
-  if ( !lock.owns_lock() )
-    return;
-
-  switch ( NotificationReason ) {
-    case LDR_DLL_NOTIFICATION_REASON_LOADED:
-    {
-      const auto module = static_cast<pe::module *>(NotificationData->Loaded.DllBase);
-      const wchar_t *fileName;
-
-      if ( GetModuleVersionInfo(module, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
-        switch ( fnv1a::make_hash(fileName, towupper) ) {
-          case L"XmlReader.dll"_fnv1au: {
-            auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->function(xorstr_("GetInterfaceVersion")));
-            auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->function(xorstr_("CreateXmlReader")));
-            auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->function(xorstr_("DestroyXmlReader")));
-            if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
-              DetourTransactionBegin();
-              DetourUpdateThread(NtCurrentThread());
-              auto xmlReader = pfnCreateXmlReader();
-              auto vfptr = *reinterpret_cast<void ***>(xmlReader);
-              switch ( _wtoi(pfnGetInterfaceVersion()) ) {
-                case 13:
-                  g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vfptr[6]);
-                  DetourAttach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
-                  g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vfptr[7]);
-                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
-                  break;
-                case 14:
-                case 15: // no known difference between interface 14 and 15...
-                  g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vfptr[6]);
-                  DetourAttach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
-                  g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vfptr[7]);
-                  DetourAttach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
-                  break;
-              }
-              pfnDestroyXmlReader(xmlReader);
-              DetourTransactionCommit();
-            }
-          }
-        }
-      }
-      break;
-    }
-  }
-}
 
 #ifdef _M_IX86
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;

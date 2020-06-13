@@ -22,9 +22,6 @@
 [submodule "dependencies/SafeInt"]
 	path = dependencies/SafeInt
 	url = https://github.com/dcleblanc/SafeInt.git
-[submodule "dependencies/Detours"]
-	path = dependencies/Detours
-	url = https://github.com/Microsoft/Detours.git
 [submodule "dependencies/magic_enum"]
 	path = dependencies/magic_enum
 	url = https://github.com/Neargye/magic_enum.git

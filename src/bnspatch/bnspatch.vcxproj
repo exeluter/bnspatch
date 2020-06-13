@@ -64,7 +64,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ObjectFileName>$(IntDir)%(RelativeDir)%(Filename)%(Extension).obj</ObjectFileName>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\Detours\src;$(SolutionDir)dependencies\pe\include;$(SolutionDir)dependencies\ntapi\include;$(SolutionDir)dependencies\GSL\include;$(SolutionDir)dependencies\xorstr\include;$(SolutionDir)dependencies\wil\include;$(SolutionDir)dependencies\SafeInt;$(SolutionDir)dependencies\pugixml\src;$(SolutionDir)dependencies\magic_enum\include;$(SolutionDir)dependencies\processhacker\phnt\include;$(SolutionDir)dependencies\fmt\include;$(SolutionDir)dependencies\fnv1a_constexpr\include;$(SolutionDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\pe\include;$(SolutionDir)dependencies\ntapi\include;$(SolutionDir)dependencies\GSL\include;$(SolutionDir)dependencies\xorstr\include;$(SolutionDir)dependencies\wil\include;$(SolutionDir)dependencies\SafeInt;$(SolutionDir)dependencies\pugixml\src;$(SolutionDir)dependencies\magic_enum\include;$(SolutionDir)dependencies\processhacker\phnt\include;$(SolutionDir)dependencies\fmt\include;$(SolutionDir)dependencies\fnv1a_constexpr\include;$(SolutionDir)include</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
@@ -136,11 +136,6 @@
   </ImportGroup>
   <!-- Items -->
   <ItemGroup>
-    <ClCompile Include="..\..\dependencies\Detours\src\creatwth.cpp" />
-    <ClCompile Include="..\..\dependencies\Detours\src\detours.cpp" />
-    <ClCompile Include="..\..\dependencies\Detours\src\disasm.cpp" />
-    <ClCompile Include="..\..\dependencies\Detours\src\image.cpp" />
-    <ClCompile Include="..\..\dependencies\Detours\src\modules.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="fastwildcompare.cpp" />
     <ClCompile Include="hooks.cpp" />
@@ -151,6 +146,7 @@
   <ItemGroup>
     <ClInclude Include="fastwildcompare.h" />
     <ClInclude Include="hooks.h" />
+    <ClInclude Include="pluginsdk.h" />
     <ClInclude Include="thread_local_lock.h" />
     <ClInclude Include="versioninfo.h" />
     <ClInclude Include="xmlhooks.h" />

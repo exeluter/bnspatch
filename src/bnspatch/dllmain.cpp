@@ -3,7 +3,8 @@
 
 #include "hooks.h"
 #include "versioninfo.h"
-#include <detours.h>
+#include "pluginsdk.h"
+#include "xmlhooks.h"
 #include <fnv1a.h>
 #include <pe/export_directory.h>
 #include <pe/module.h>
@@ -16,65 +17,75 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
   return TRUE;
 }
 
-LONG DetourAttach(
-  pe::module *module,
-  const char *pProcName,
-  PVOID *pPointer,
-  PVOID pDetour)
+void __cdecl DllLoadedNotification(const struct DllNotificationData *Data, void *Context)
 {
-  if ( !module ) return ERROR_INVALID_PARAMETER;
-  if ( !pPointer ) return ERROR_INVALID_PARAMETER;
-
-  if ( *pPointer = module->function(pProcName) ) {
-    return DetourAttachEx(pPointer, pDetour, nullptr, nullptr, nullptr);
+  const wchar_t *original_filename;
+  if ( GetModuleVersionInfo(Data->BaseOfImage, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)original_filename) >= 0 ) {
+    switch ( fnv1a::make_hash(original_filename, towupper) ) {
+      case L"XmlReader.dll"_fnv1au: {
+        const auto module = static_cast<pe::module *>(Data->BaseOfImage);
+        auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->function(xorstr_("GetInterfaceVersion")));
+        auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->function(xorstr_("CreateXmlReader")));
+        auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->function(xorstr_("DestroyXmlReader")));
+        if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
+          Data->Detours->TransactionBegin();
+          Data->Detours->UpdateThread(NtCurrentThread());
+          auto xmlReader = pfnCreateXmlReader();
+          auto vfptr = *reinterpret_cast<void ***>(xmlReader);
+          switch ( _wtoi(pfnGetInterfaceVersion()) ) {
+            case 13:
+              g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vfptr[6]);
+              Data->Detours->Attach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
+              g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vfptr[7]);
+              Data->Detours->Attach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
+              break;
+            case 14:
+            case 15: // no known difference between interface 14 and 15...
+              g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vfptr[6]);
+              Data->Detours->Attach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
+              g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vfptr[7]);
+              Data->Detours->Attach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
+              break;
+          }
+          pfnDestroyXmlReader(xmlReader);
+          Data->Detours->TransactionCommit();
+        }
+      }
+    }
   }
-  return ERROR_PROC_NOT_FOUND;
 }
 
-typedef struct _PLUGIN_INFO
+void __cdecl InitNotification(const struct InitNotificationData *Data, void *Context)
 {
-  const wchar_t *pwzName;
-  const wchar_t *pwzVersion;
-  const wchar_t *pwzDescription;
-  void(__cdecl *pfnInit)(void);
-} PLUGIN_INFO;
-typedef void(__cdecl *PFN_GETPLUGININFO)(PLUGIN_INFO *);
+  const wchar_t *original_filename;
+  if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)original_filename) < 0 )
+    return;
 
-void __cdecl PluginInit(void)
-{
-  const wchar_t *fileName;
-
-  if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
-    DetourTransactionBegin();
-    DetourUpdateThread(NtCurrentThread());
-    if ( const auto pfnLdrRegisterDllNotification = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
-      module->function(xorstr_("LdrRegisterDllNotification"))) ) {
-      pfnLdrRegisterDllNotification(0, &DllNotification, nullptr, &g_pvDllNotificationCookie);
-    }
-    if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
-      switch ( fnv1a::make_hash(fileName, towupper) ) {
-        case L"Client.exe"_fnv1au:
-        case L"BNSR.exe"_fnv1au:
-          NtCurrentPeb()->BeingDebugged = FALSE;
+  switch ( fnv1a::make_hash(original_filename, towupper) ) {
+    case L"Client.exe"_fnv1au:
+    case L"BNSR.exe"_fnv1au:
+      NtCurrentPeb()->BeingDebugged = FALSE;
+      Data->Detours->TransactionBegin();
+      Data->Detours->UpdateThread(NtCurrentThread());
+      if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
 #ifdef _M_IX86
-          DetourAttach(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
+        Data->Detours->Attach2(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
 #endif
-          DetourAttach(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
-          DetourAttach(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
-          DetourAttach(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
-          DetourAttach(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
-          DetourAttach(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
-          DetourAttach(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
+        Data->Detours->Attach2(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
+        Data->Detours->Attach2(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
+        Data->Detours->Attach2(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
+        Data->Detours->Attach2(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
+        Data->Detours->Attach2(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
+        Data->Detours->Attach2(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
 #ifdef _M_X64
-          DetourAttach(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
-          DetourAttach(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
-#endif
-          if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) )
-            DetourAttach(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
-          break;
+        Data->Detours->Attach2(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
+        Data->Detours->Attach2(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
       }
-      DetourTransactionCommit();
-    }
+#endif
+      if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) )
+        Data->Detours->Attach2(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
+      Data->Detours->TransactionCommit();
+      break;
   }
 }
 
@@ -83,7 +94,7 @@ void __cdecl PluginInit(void)
 #endif
 
 __declspec(dllexport)
-void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo)
+void __cdecl GetPluginInfo2(PluginInfo2 *plgi)
 {
   static std::once_flag once_flag;
   static auto name = xorstr(L"bnspatch");
@@ -96,8 +107,9 @@ void __cdecl GetPluginInfo(PLUGIN_INFO *pluginInfo)
     description.crypt();
   }, name, version, description);
 
-  pluginInfo->pwzName = name.get();
-  pluginInfo->pwzVersion = version.get();
-  pluginInfo->pwzDescription = description.get();
-  pluginInfo->pfnInit = &PluginInit;
+  plgi->Name = name.get();
+  plgi->Version = version.get();
+  plgi->Description = description.get();
+  plgi->InitNotification = &InitNotification;
+  plgi->DllLoadedNotification = &DllLoadedNotification;
 }

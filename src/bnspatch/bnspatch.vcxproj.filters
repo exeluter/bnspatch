@@ -17,9 +17,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Detours">
-      <UniqueIdentifier>{848c6380-e69b-46e0-b1be-2472a83d8be2}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -36,21 +33,6 @@
     </ClCompile>
     <ClCompile Include="versioninfo.c">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\Detours\src\creatwth.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\Detours\src\detours.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\Detours\src\disasm.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\Detours\src\image.cpp">
-      <Filter>Source Files\Detours</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\dependencies\Detours\src\modules.cpp">
-      <Filter>Source Files\Detours</Filter>
     </ClCompile>
     <ClCompile Include="fastwildcompare.cpp">
       <Filter>Source Files</Filter>
@@ -76,6 +58,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="thread_local_lock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pluginsdk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
