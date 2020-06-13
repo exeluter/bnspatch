@@ -33,7 +33,7 @@ struct memory_buffer_writer : pugi::xml_writer
 };
 
 template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
-inline T read_integer_aligned_unchecked(const void *&mem, size_t &size)
+inline T read_integer_aligned_unchecked(const void *&mem, uint32_t &size)
 {
   const T result = *reinterpret_cast<const T *>(mem);
   mem = reinterpret_cast<const uint8_t *>(mem) + ((sizeof(T) + 3) & ~3);
@@ -42,7 +42,7 @@ inline T read_integer_aligned_unchecked(const void *&mem, size_t &size)
 }
 
 template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
-inline std::optional<T> read_integer_aligned(const void *&mem, size_t &size)
+inline std::optional<T> read_integer_aligned(const void *&mem, uint32_t &size)
 {
   if ( size < ((sizeof(T) + 3) & ~3) )
     return std::nullopt;
@@ -51,7 +51,7 @@ inline std::optional<T> read_integer_aligned(const void *&mem, size_t &size)
 }
 
 template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
-inline T read_integer_unaligned_unchecked(const void *&mem, size_t &size)
+inline T read_integer_unaligned_unchecked(const void *&mem, uint32_t &size)
 {
   const T result = *reinterpret_cast<const T *>(mem);
   mem = reinterpret_cast<const uint8_t *>(mem) + sizeof(T);
@@ -60,7 +60,7 @@ inline T read_integer_unaligned_unchecked(const void *&mem, size_t &size)
 }
 
 template <class T, typename = std::enable_if_t<std::is_integral_v<T>>>
-inline std::optional<T> read_integer_unaligned(const void *&mem, size_t &size)
+inline std::optional<T> read_integer_unaligned(const void *&mem, uint32_t &size)
 {
   if ( size < sizeof(T) )
     return std::nullopt;
@@ -68,13 +68,13 @@ inline std::optional<T> read_integer_unaligned(const void *&mem, size_t &size)
   return read_integer_unaligned_unchecked<T>(mem, size);
 }
 
-inline void discard_bytes_unchecked(size_t discarded_bytes_count, const void *&mem, size_t &size)
+inline void discard_bytes_unchecked(uint32_t discarded_bytes_count, const void *&mem, uint32_t &size)
 {
   mem = reinterpret_cast<const uint8_t *>(mem) + discarded_bytes_count;
   size -= discarded_bytes_count;
 }
 
-inline bool discard_bytes(size_t discarded_bytes_count, const void *&mem, size_t &size)
+inline bool discard_bytes(uint32_t discarded_bytes_count, const void *&mem, uint32_t &size)
 {
   if ( size < discarded_bytes_count )
     return false;
@@ -83,7 +83,7 @@ inline bool discard_bytes(size_t discarded_bytes_count, const void *&mem, size_t
   return true;
 }
 
-inline bool discard_string(const void *&buf, size_t &size)
+inline bool discard_string(const void *&buf, uint32_t &size)
 {
   auto length = read_integer_aligned<int>(buf, size);
   if ( length.value_or(-1) < 0 )
@@ -92,7 +92,7 @@ inline bool discard_string(const void *&buf, size_t &size)
   return discard_bytes(*length * sizeof(wchar_t), buf, size);
 }
 
-std::optional<std::wstring> read_string(const void *&buf, size_t &size)
+std::optional<std::wstring> read_string(const void *&buf, uint32_t &size)
 {
   static const auto cipherKeys = std::array {
     0x9fa4ui16,
@@ -105,8 +105,8 @@ std::optional<std::wstring> read_string(const void *&buf, size_t &size)
     0x071aui16
   };
 
-  auto length = read_integer_aligned<int>(buf, size).value_or(-1);
-  if ( length < 0 || size < length * sizeof(wchar_t) )
+  auto length = read_integer_aligned<uint32_t>(buf, size).value_or(-1);
+  if ( size < length * sizeof(wchar_t) )
     return std::nullopt;
 
   // don't need to size-check after this
@@ -121,21 +121,21 @@ std::optional<std::wstring> read_string(const void *&buf, size_t &size)
   return result;
 }
 
-pugi::xml_node deserialize_element(pugi::xml_node &parent, const void *&mem, size_t &size);
-bool deserialize_text(pugi::xml_node &parent, const void *&mem, size_t &size);
-bool deserialize_node(pugi::xml_node &parent, const void *&mem, size_t &size);
+pugi::xml_node deserialize_element(pugi::xml_node &parent, const void *&mem, uint32_t &size);
+bool deserialize_text(pugi::xml_node &parent, const void *&mem, uint32_t &size);
+bool deserialize_node(pugi::xml_node &parent, const void *&mem, uint32_t &size);
 
-pugi::xml_node deserialize_element(pugi::xml_node &parent, const void *&mem, size_t &size)
+pugi::xml_node deserialize_element(pugi::xml_node &parent, const void *&mem, uint32_t &size)
 {
   auto node = parent.append_child();
 
-  const auto attrcount = read_integer_aligned<int>(mem, size);
+  const auto attrcount = read_integer_aligned<uint32_t>(mem, size);
   if ( !attrcount ) {
 remove_node:
     parent.remove_child(node);
     return pugi::xml_node();
   }
-  for ( int i = 0; i < *attrcount; ++i ) {
+  for ( uint32_t i = 0; i < *attrcount; ++i ) {
     const auto attrname = read_string(mem, size);
     if ( !attrname ) goto remove_node;
 
@@ -152,20 +152,20 @@ remove_node:
 
   node.set_name(name->c_str());
 
-  const auto children_count = read_integer_unaligned<int>(mem, size);
+  const auto children_count = read_integer_unaligned<uint32_t>(mem, size);
   if ( !children_count ) goto remove_node;
 
-  const auto id = read_integer_unaligned<int>(mem, size);
+  const auto id = read_integer_unaligned<uint32_t>(mem, size);
   if ( !id ) goto remove_node;
 
-  for ( int i = 0; i < *children_count; ++i ) {
+  for ( uint32_t i = 0; i < *children_count; ++i ) {
     if ( !deserialize_node(node, mem, size) )
       goto remove_node;
   }
   return node;
 }
 
-bool deserialize_text(pugi::xml_node &parent, const void *&mem, size_t &size)
+bool deserialize_text(pugi::xml_node &parent, const void *&mem, uint32_t &size)
 {
   auto pcdata = read_string(mem, size);
   if ( !pcdata ) return false;
@@ -177,20 +177,20 @@ bool deserialize_text(pugi::xml_node &parent, const void *&mem, size_t &size)
 
   return read_integer_unaligned<bool>(mem, size) // valid
     && discard_string(mem, size)                 // name
-    && read_integer_unaligned<int>(mem, size)    // children count
-    && read_integer_unaligned<int>(mem, size);   // id
+    && read_integer_unaligned<uint32_t>(mem, size)    // children count
+    && read_integer_unaligned<uint32_t>(mem, size);   // id
 }
 
-inline bool deserialize_node(pugi::xml_node &parent, const void *&mem, size_t &size)
+inline bool deserialize_node(pugi::xml_node &parent, const void *&mem, uint32_t &size)
 {
-  switch ( read_integer_unaligned<int>(mem, size).value_or(0) ) {
+  switch ( read_integer_unaligned<uint32_t>(mem, size).value_or(0) ) {
     case 1: return deserialize_element(parent, mem, size);
     case 2: return deserialize_text(parent, mem, size);
   }
   return false;
 }
 
-pugi::xml_document deserialize_document(const void *mem, const size_t size)
+pugi::xml_document deserialize_document(const void *mem, const uint32_t size)
 {
   auto document = pugi::xml_document();
   auto size_remaining = size;
@@ -200,7 +200,7 @@ pugi::xml_document deserialize_document(const void *mem, const size_t size)
     && read_integer_aligned_unchecked<int64_t>(mem, size_remaining) == 0x424C534F42584D4Ci64
     && read_integer_aligned_unchecked<char>(mem, size_remaining) == 3 ) {
 
-    const auto document_size = read_integer_aligned_unchecked<int>(mem, size_remaining);
+    const auto document_size = read_integer_aligned_unchecked<uint32_t>(mem, size_remaining);
     if ( document_size > size )
       return pugi::xml_document();
 
