@@ -52,7 +52,7 @@
       </select-node>
       <!-- instant transmutation, instant jewel usage, etc. -->
       <select-nodes query="./group[@name='particle']/option[contains(@name,'-particle-duration')]/@value">
-        <set-value value="0" />
+        <set-value value="0.0001" />
       </select-nodes>
       <!-- disable breast physics -->
       <select-node query="./group[@name='uncategorized']/option[@name='no-use-breast-physics']/@value">
