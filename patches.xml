@@ -62,10 +62,6 @@
       <select-node query="./group[@name='skill-training-room']/option[@name='retry-button-cool-time']/@value">
         <set-value value="0" />
       </select-node>
-      <!-- show quest letters in quest log -->
-      <select-node query="./group[@name='quest']/option[@name='quest-talk-to-self-from-quickslot-to-questjournal']/@value">
-        <set-value value="false" />
-      </select-node>
       <select-node query="./group[@name='context']">
         <!-- able to resurrect immediately after wipe -->
         <select-node query="./option[@name='instantaneous-dead-context-delay']/@value">
