@@ -28,7 +28,7 @@ struct xml_memory_buffer_writer : pugi::xml_writer
   {
     result.append(
       reinterpret_cast<const unsigned char *>(data),
-      reinterpret_cast<const unsigned char *>(reinterpret_cast<const unsigned char *>(data) + size));
+      reinterpret_cast<const unsigned char *>(data) + size);
   }
 };
 

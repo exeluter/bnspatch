@@ -80,8 +80,8 @@ void __cdecl InitNotification(const struct InitNotificationData *Data, void *Con
 #ifdef _M_X64
         Data->Detours->Attach2(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
         Data->Detours->Attach2(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
-      }
 #endif
+      }
       if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) )
         Data->Detours->Attach2(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
       Data->Detours->TransactionCommit();
