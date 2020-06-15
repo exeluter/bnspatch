@@ -128,6 +128,9 @@ const pugi::xml_document &patches_document()
         preprocess(document, patches_file_path().parent_path(), previously_loaded);
 #ifdef _DEBUG
         document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
+        const auto parent_path = patches_file_path().parent_path();
+        std::filesystem::create_directories(parent_path / xorstr_(L"temp"));
+        std::filesystem::create_directories(parent_path / xorstr_(L"temp_patched"));
 #endif
       }
     }, document);

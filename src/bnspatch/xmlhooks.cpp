@@ -342,7 +342,23 @@ v14::XmlDoc *THISCALL ReadFromBuffer14_hook(THISPTR(const v14::XmlReader *), con
   if ( !queue.empty() ) {
     pugi::xml_document document;
     if ( const auto res = deserialize_document(mem, size, document) ) {
+
+#ifdef _DEBUG
+      if ( xmlFileNameForLogging && *xmlFileNameForLogging ) {
+        const auto temp = patches_file_path().parent_path().append(xorstr_(L"temp")).append(xmlFileNameForLogging);
+        document.save_file(temp.c_str(), L"  ", pugi::format_default | pugi::format_no_declaration, res.encoding);
+      }
+#endif
+
       patch_xml(document, queue);
+
+#ifdef _DEBUG
+      if ( xmlFileNameForLogging && *xmlFileNameForLogging ) {
+        const auto temp_patched = patches_file_path().parent_path().append(xorstr_(L"temp_patched")).append(xmlFileNameForLogging);
+        document.save_file(temp_patched.c_str(), L"  ", pugi::format_default | pugi::format_no_declaration, res.encoding);
+      }
+#endif
+
       xml_memory_buffer_writer writer;
       document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
       return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
