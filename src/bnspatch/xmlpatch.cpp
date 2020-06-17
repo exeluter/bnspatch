@@ -13,7 +13,7 @@
 #include <unordered_set>
 
 #include "versioninfo.h"
-#include "binary_xml_reader.h"
+#include "binary_reader.h"
 #include "fastwildcompare.h"
 
 #include <fmt/format.h>
@@ -24,10 +24,10 @@
 #include <wil/win32_helpers.h>
 #include <xorstr.hpp>
 
-void deserialize_element(pugi::xml_node &parent, binary_xml_reader &reader);
-void deserialize_text(pugi::xml_node &parent, binary_xml_reader &reader);
+void deserialize_element(pugi::xml_node &parent, binary_reader &reader);
+void deserialize_text(pugi::xml_node &parent, binary_reader &reader);
 
-inline void deserialize_node(pugi::xml_node &parent, binary_xml_reader &reader)
+inline void deserialize_node(pugi::xml_node &parent, binary_reader &reader)
 {
   const auto type = reader.get<uint32_t>();
   switch ( type ) {
@@ -40,7 +40,7 @@ inline void deserialize_node(pugi::xml_node &parent, binary_xml_reader &reader)
   }
 }
 
-void deserialize_element(pugi::xml_node &parent, binary_xml_reader &reader)
+void deserialize_element(pugi::xml_node &parent, binary_reader &reader)
 {
   auto node = parent.append_child();
 
@@ -62,7 +62,7 @@ void deserialize_element(pugi::xml_node &parent, binary_xml_reader &reader)
     deserialize_node(node, reader);
 }
 
-void deserialize_text(pugi::xml_node &parent, binary_xml_reader &reader)
+void deserialize_text(pugi::xml_node &parent, binary_reader &reader)
 {
   const auto pcdata = reader.get<std::wstring>();
   if ( !std::all_of(pcdata.begin(), pcdata.end(), ::iswspace) ) {
@@ -79,7 +79,7 @@ void deserialize_text(pugi::xml_node &parent, binary_xml_reader &reader)
 
 pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size, pugi::xml_document &document)
 {
-  auto reader = binary_xml_reader(mem, size);
+  auto reader = binary_reader(mem, size);
 
   if ( mem && size > 0x50 && reader.geta<int64_t>() == 0x424C534F42584D4Ci64 ) { // rest of the header doesn't need to be size-checked
     const auto version = reader.geta<char>();

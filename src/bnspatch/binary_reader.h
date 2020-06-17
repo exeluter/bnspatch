@@ -1,21 +1,19 @@
 #pragma once
-#include <array>
-#include <cstdint>
-#include <optional>
-#include <string>
 #include <type_traits>
-#include <istream>
-#include <stdexcept>
+#include <string>
+#include <cstdint>
+#include <array>
+
 #include <SafeInt.hpp>
 
-class binary_xml_reader
+class binary_reader
 {
   const uint8_t *ptr;
   const size_t size;
   SafeInt<ptrdiff_t> pos;
 
 public:
-  binary_xml_reader(const void *ptr, const size_t size)
+  binary_reader(const void *ptr, const size_t size)
     : ptr(reinterpret_cast<const uint8_t *>(ptr)), size(size), pos(0)
   {
   }

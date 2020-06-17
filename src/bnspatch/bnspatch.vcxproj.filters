@@ -63,7 +63,7 @@
     <ClInclude Include="xmlreader_hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="binary_xml_reader.h">
+    <ClInclude Include="binary_reader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

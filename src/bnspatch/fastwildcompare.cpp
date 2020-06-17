@@ -1,6 +1,5 @@
-#include <cctype>
-
 #include "fastwildcompare.h"
+#include <cctype>
 
 bool FastWildCompare(const wchar_t *pWild, const wchar_t *pTame)
 {

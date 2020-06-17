@@ -1,22 +1,11 @@
 #include "xmlreader_hooks.h"
 #include <phnt_windows.h>
 #include <phnt.h>
-#include <Shlwapi.h>
-
-#include <array>
-#include <cstdlib>
-#include <filesystem>
-#include <memory>
-#include <optional>
-#include <queue>
-#include <string>
 
 #include <fmt/format.h>
-#include <pugixml.hpp>
-#include <safeint.hpp>
+#include <SafeInt.hpp>
 #include <xorstr.hpp>
 
-#include "fastwildcompare.h"
 #include "xmlpatch.h"
 #include "xmlreader.h"
 

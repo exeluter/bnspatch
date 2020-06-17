@@ -2,34 +2,15 @@
 
 #include <phnt_windows.h>
 #include <phnt.h>
-#include <ShlObj.h>
-#include <KnownFolders.h>
 
-#include <array>
-#include <codecvt>
-#include <filesystem>
 #include <mutex>
-#include <optional>
-#include <queue>
 
-#include <ntapi/mprotect.h>
 #include <ntapi/string.h>
-#include <fmt/format.h>
 #include <fnv1a.h>
-#include <gsl/span_ext>
-#include <gsl/span>
-#include <pe/export_directory.h>
-#include <pe/module.h>
-#include <pugixml.hpp>
-#include <SafeInt.hpp>
-#include <wil/stl.h>
-#include <wil/win32_helpers.h>
 #include <xorstr.hpp>
 
-#include "fastwildcompare.h"
 #include "thread_local_lock.h"
 #include "versioninfo.h"
-#include "xmlpatch.h"
 
 #ifdef _M_IX86
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;

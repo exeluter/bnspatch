@@ -144,7 +144,7 @@
     <ClCompile Include="xmlpatch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="binary_xml_reader.h" />
+    <ClInclude Include="binary_reader.h" />
     <ClInclude Include="fastwildcompare.h" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="pluginsdk.h" />

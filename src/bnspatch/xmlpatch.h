@@ -1,7 +1,7 @@
 #pragma once
 
-#include <queue>
 #include <filesystem>
+#include <queue>
 #include <unordered_map>
 
 #include <fnv1a.h>
