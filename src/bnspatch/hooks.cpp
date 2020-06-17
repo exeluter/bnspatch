@@ -29,7 +29,6 @@
 #include "fastwildcompare.h"
 #include "thread_local_lock.h"
 #include "versioninfo.h"
-#include "xmlhooks.h"
 #include "xmlpatch.h"
 
 #ifdef _M_IX86

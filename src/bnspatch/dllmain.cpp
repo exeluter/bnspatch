@@ -4,7 +4,7 @@
 #include "hooks.h"
 #include "versioninfo.h"
 #include "pluginsdk.h"
-#include "xmlhooks.h"
+#include "xmlreader_hooks.h"
 #include <fnv1a.h>
 #include <pe/export_directory.h>
 #include <pe/module.h>

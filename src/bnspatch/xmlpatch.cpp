@@ -7,18 +7,150 @@
 #include <algorithm>
 #include <codecvt>
 #include <filesystem>
-#include <optional>
+#include <list>
+#include <map>
+#include <queue>
 #include <unordered_set>
 
 #include "versioninfo.h"
+#include "binary_xml_reader.h"
+#include "fastwildcompare.h"
+
 #include <fmt/format.h>
 #include <fnv1a.h>
-#include <magic_enum.hpp>
 #include <pe/module.h>
 #include <pugixml.hpp>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
 #include <xorstr.hpp>
+
+void deserialize_element(pugi::xml_node &parent, binary_xml_reader &reader);
+void deserialize_text(pugi::xml_node &parent, binary_xml_reader &reader);
+
+inline void deserialize_node(pugi::xml_node &parent, binary_xml_reader &reader)
+{
+  const auto type = reader.get<uint32_t>();
+  switch ( type ) {
+    case 1: deserialize_element(parent, reader); break;
+    case 2: deserialize_text(parent, reader); break;
+    default:
+      const auto text = fmt::format(xorstr_(L"Unknown node type: {:#x}"), type);
+      MessageBoxW(nullptr, text.c_str(), xorstr_(L"bnspatch"), MB_ICONERROR | MB_OK);
+      exit(1);
+  }
+}
+
+void deserialize_element(pugi::xml_node &parent, binary_xml_reader &reader)
+{
+  auto node = parent.append_child();
+
+  const auto attrcount = reader.get<uint32_t>();
+  for ( uint32_t i = 0; i < attrcount; ++i ) {
+    const auto attrname = reader.get<std::wstring>();
+    const auto attrvalue = reader.get<std::wstring>();
+    node.append_attribute(attrname.c_str()).set_value(attrvalue.c_str());
+  }
+
+  const auto valid = reader.get<bool>();
+  const auto name = reader.get<std::wstring>();
+  node.set_name(name.c_str());
+
+  const auto children_count = reader.get<uint32_t>();
+  const auto id = reader.get<uint32_t>();
+
+  for ( auto i = 0ui32; i < children_count; ++i )
+    deserialize_node(node, reader);
+}
+
+void deserialize_text(pugi::xml_node &parent, binary_xml_reader &reader)
+{
+  const auto pcdata = reader.get<std::wstring>();
+  if ( !std::all_of(pcdata.begin(), pcdata.end(), ::iswspace) ) {
+    auto node = parent.append_child(pugi::node_pcdata);
+    node.set_value(pcdata.c_str());
+  }
+
+  const auto valid = reader.get<bool>();
+  const auto count = reader.get<uint32_t>();
+  reader.discard<uint16_t>(count); // L"text"
+  reader.discard<uint32_t>(); // child count
+  reader.discard<uint32_t>(); // id
+}
+
+pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size, pugi::xml_document &document)
+{
+  auto reader = binary_xml_reader(mem, size);
+
+  if ( mem && size > 0x50 && reader.geta<int64_t>() == 0x424C534F42584D4Ci64 ) { // rest of the header doesn't need to be size-checked
+    const auto version = reader.geta<char>();
+    if ( version != 3i8 ) {
+      const auto text = fmt::format(xorstr_(L"Unknown binary XML version: {:#x}"), version);
+      MessageBoxW(nullptr, text.c_str(), xorstr_(L"bnspatch"), MB_ICONERROR | MB_OK);
+      exit(1);
+    }
+
+    const auto document_size = reader.geta<uint32_t>();
+    if ( document_size != size ) {
+      const auto text = fmt::format(xorstr_(L"Binary XML header size mismatch: {} != {}"), document_size, size);
+      MessageBoxW(nullptr, text.c_str(), xorstr_(L"bnspatch"), MB_ICONERROR | MB_OK);
+      exit(1);
+    }
+
+    reader.discard<char>(0x40);
+
+    const auto valid = reader.get<bool>();
+    const auto document_name = reader.get<std::wstring>();
+
+    auto decl = document.prepend_child(pugi::node_declaration);
+    decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
+    decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
+    document.append_child(pugi::node_comment).set_value(document_name.c_str());
+    deserialize_element(document, reader);
+    auto res = pugi::xml_parse_result();
+    res.status = pugi::status_ok;
+    res.encoding = pugi::encoding_utf16;
+    return res;
+  } else {
+    return document.load_buffer(mem, size, pugi::parse_full);
+  }
+  return pugi::xml_parse_result();
+}
+
+std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
+{
+  auto queue = std::queue<pugi::xml_node>();
+
+  auto xml_path = std::filesystem::path(xml ? xml : L"");
+  auto name = xorstr(L"patch");
+  name.crypt();
+  for ( const auto &patch : patches_document().document_element().children(name.get()) ) {
+    auto attribute = patch.attribute(xorstr_(L"file"));
+    if ( !attribute )
+      attribute = patch.attribute(xorstr_(L"filename"));
+
+    auto str = std::unique_ptr<wchar_t, decltype(&::free)>(::_wcsdup(attribute.value()), ::free);
+    wchar_t *next_token;
+    wchar_t *token = wcstok_s(str.get(), xorstr_(L";"), &next_token);
+    while ( token ) {
+      auto file = std::filesystem::path(token);
+      if ( FastWildCompare(file.c_str(), xml_path.c_str())
+        || FastWildCompare(file.c_str(), xml_path.filename().c_str()) )
+        queue.push(patch);
+      token = wcstok_s(nullptr, xorstr_(L";"), &next_token);
+    }
+  }
+  return queue;
+}
+
+void patch_xml(pugi::xml_document &src, std::queue<pugi::xml_node> queue)
+{
+  while ( !queue.empty() ) {
+    auto const &patch = queue.front();
+    std::unordered_map<fnv1a::type, pugi::xml_node> saved_nodes;
+    process_patch(src, patch.children(), saved_nodes);
+    queue.pop();
+  }
+}
 
 pugi::xml_parse_result try_load_file(
   pugi::xml_document &document,
@@ -33,7 +165,7 @@ try_again:
       nullptr,
       fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description()).c_str(),
       xorstr_("bnspatch"),
-      MB_ICONERROR | MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
+      MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
       case IDTRYAGAIN: goto try_again;
       case IDCONTINUE: break;
       default: exit(0);
@@ -42,41 +174,51 @@ try_again:
   return result;
 }
 
-void preprocess(pugi::xml_document &doc, const std::filesystem::path &current_directory, std::unordered_set<fnv1a::type> &previously_loaded)
+void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &path, std::unordered_set<fnv1a::type> &include_guard)
 {
-  const auto &first_child = doc.document_element().first_child();
-  for ( auto &child : doc.children() ) {
-    if ( child.type() == pugi::node_pi && !_wcsicmp(child.name(), xorstr_(L"include")) ) {
-      pugi::xml_node include = child;
+  pugi::xml_document document;
+  if ( include_guard.emplace(fnv1a::make_hash(path.c_str(), towupper)).second
+    && try_load_file(document, path, pugi::parse_default | pugi::parse_pi)
+    && !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
 
-      auto result = std::wstring();
-      if ( SUCCEEDED(wil::ExpandEnvironmentStringsW(child.value(), result)) ) {
-        auto include_filter = std::filesystem::path(result);
-        if ( include_filter.is_relative() )
-          include_filter = current_directory / include_filter;
+    for ( const auto &child : document.children() ) {
+      switch ( child.type() ) {
+        case pugi::node_element:
+          if ( !_wcsicmp(child.name(), xorstr_(L"patches")) ) {
+            auto xs_patch = xorstr(L"patch");
+            xs_patch.crypt();
 
-        auto find_file_data = WIN32_FIND_DATAW();
-        auto find_file_handle = FindFirstFileW(include_filter.c_str(), &find_file_data);
-        if ( find_file_handle != INVALID_HANDLE_VALUE ) {
-          const auto parent_path = include_filter.parent_path();
-          do {
-            const auto path = std::filesystem::canonical(parent_path / find_file_data.cFileName);
-            auto document = pugi::xml_document();
-            if ( previously_loaded.emplace(fnv1a::make_hash(path.c_str(), towupper)).second
-              && try_load_file(document, path, pugi::parse_default | pugi::parse_pi)
-              && !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
-
-              preprocess(document, parent_path, previously_loaded);
-              doc.document_element().insert_child_before(pugi::node_comment, first_child).set_value(path.c_str());
-
-              for ( const auto &ic : document.document_element().children(xorstr_(L"patch")) )
-                doc.document_element().insert_copy_before(ic, first_child);
+            patches_doc.document_element().append_child(pugi::node_comment).set_value(path.c_str());
+            for ( const auto &patch : child.children(xs_patch.get()) ) {
+              if ( patch.attribute(xorstr_(L"enabled")).as_bool(true) )
+                patches_doc.document_element().append_copy(patch);
             }
-          } while ( FindNextFileW(find_file_handle, &find_file_data) );
-          FindClose(find_file_handle);
-        }
+          }
+          break;
+
+        case pugi::node_pi:
+          if ( !_wcsicmp(child.name(), xorstr_(L"include")) ) {
+            auto result = std::wstring();
+            if ( FAILED(wil::ExpandEnvironmentStringsW(child.value(), result)) )
+              continue;
+
+            auto include_filter = std::filesystem::path(result);
+            if ( include_filter.is_relative() )
+              include_filter = path.parent_path() / include_filter;
+
+            auto data = WIN32_FIND_DATAW();
+            auto handle = FindFirstFileW(include_filter.c_str(), &data);
+            if ( handle == INVALID_HANDLE_VALUE )
+              continue;
+
+            const auto parent_path = include_filter.parent_path();
+            do {
+              preprocess(patches_doc, std::filesystem::canonical(parent_path / data.cFileName), include_guard);
+            } while ( FindNextFileW(handle, &data) );
+            FindClose(handle);
+          }
+          break;
       }
-      doc.remove_child(include);
     }
   }
 }
@@ -116,23 +258,26 @@ const std::filesystem::path &patches_file_path()
 
 const pugi::xml_document &patches_document()
 {
-  static std::once_flag once_flag;
-  static pugi::xml_document document;
+  static auto once_flag = std::once_flag();
+  static auto document = pugi::xml_document();
 
   try {
     std::call_once(once_flag, [](pugi::xml_document &document) {
-      auto previously_loaded = std::unordered_set<fnv1a::type>();
-      if ( previously_loaded.emplace(fnv1a::make_hash(patches_file_path().c_str(), towupper)).second
-        && try_load_file(document, patches_file_path(), pugi::parse_default | pugi::parse_pi)
-        && !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
-        preprocess(document, patches_file_path().parent_path(), previously_loaded);
+
+      auto decl = document.prepend_child(pugi::node_declaration);
+      decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
+      decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-8");
+
+      document.append_child(xorstr_(L"patches"));
+
+      auto include_guard = std::unordered_set<fnv1a::type>();
+      preprocess(document, patches_file_path(), include_guard);
 #ifdef _DEBUG
-        document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
-        const auto parent_path = patches_file_path().parent_path();
-        std::filesystem::create_directories(parent_path / xorstr_(L"temp"));
-        std::filesystem::create_directories(parent_path / xorstr_(L"temp_patched"));
+      document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
+      const auto parent_path = patches_file_path().parent_path();
+      std::filesystem::create_directories(parent_path / xorstr_(L"temp"));
+      std::filesystem::create_directories(parent_path / xorstr_(L"temp_patched"));
 #endif
-      }
     }, document);
   } catch ( ... ) {}
   return document;
@@ -168,14 +313,14 @@ void process_patch(
 
         case L"insert-attribute-before"_fnv1au: { // ok
           auto attribute = ctx.node().insert_attribute_before(current.attribute(xorstr_(L"name")).value(), ctx.attribute());
-          if ( auto value = current.attribute(xorstr_(L"value")) )
+          if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
           process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
         }
         case L"insert-attribute-after"_fnv1au: { // ok
           auto attribute = ctx.node().insert_attribute_after(current.attribute(xorstr_(L"name")).value(), ctx.attribute());
-          if ( auto value = current.attribute(xorstr_(L"value")) )
+          if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
           process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
@@ -195,20 +340,20 @@ void process_patch(
           break;
 
         case L"select-nodes"_fnv1au: // ok
-          for ( auto &node : ctx.node().select_nodes(current.attribute(xorstr_(L"query")).value()) )
+          for ( const auto &node : ctx.node().select_nodes(current.attribute(xorstr_(L"query")).value()) )
             process_patch(node, current.children(), saved_nodes);
           break;
 
         case L"prepend-attribute"_fnv1au: { // ok
           auto attribute = ctx.node().prepend_attribute(current.attribute(xorstr_(L"name")).value());
-          if ( auto value = current.attribute(xorstr_(L"value")) )
+          if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
           process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
         }
         case L"append-attribute"_fnv1au: { // ok
           auto attribute = ctx.node().append_attribute(current.attribute(xorstr_(L"name")).value());
-          if ( auto value = current.attribute(xorstr_(L"value")) )
+          if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
           process_patch(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
@@ -229,22 +374,22 @@ void process_patch(
           break;
 
         case L"prepend-copy"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(ctx.node().prepend_copy(it->second), current.children(), saved_nodes);
           break;
 
         case L"append-copy"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(ctx.node().append_copy(it->second), current.children(), saved_nodes);
           break;
 
         case L"prepend-move"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(ctx.node().prepend_move(it->second), current.children(), saved_nodes);
           break;
 
         case L"append-move"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(ctx.node().append_move(it->second), current.children(), saved_nodes);
           break;
 
@@ -253,7 +398,7 @@ void process_patch(
           break;
 
         case L"attributes"_fnv1au: // ok
-          for ( auto &attr : ctx.node().attributes() )
+          for ( const auto &attr : ctx.node().attributes() )
             process_patch(pugi::xpath_node(attr, ctx.node()), current.children(), saved_nodes);
           break;
 
@@ -263,10 +408,10 @@ void process_patch(
 
         case L"children"_fnv1au: // ok
           if ( const auto name = current.attribute(xorstr_(L"name")) ) {
-            for ( auto &child : ctx.node().children(name.value()) )
+            for ( const auto &child : ctx.node().children(name.value()) )
               process_patch(child, current.children(), saved_nodes);
           } else {
-            for ( auto &child : ctx.node().children() )
+            for ( const auto &child : ctx.node().children() )
               process_patch(child, current.children(), saved_nodes);
           }
           break;
@@ -315,22 +460,22 @@ void process_patch(
           break;
 
         case L"insert-copy-after"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 
         case L"insert-copy-before"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(it->second.parent().insert_copy_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 
         case L"insert-move-after"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(it->second.parent().insert_move_after(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 
         case L"insert-move-before"_fnv1au: // ok
-          if ( auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
+          if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
             process_patch(it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 

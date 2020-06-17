@@ -140,16 +140,17 @@
     <ClCompile Include="fastwildcompare.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="versioninfo.c" />
-    <ClCompile Include="xmlhooks.cpp" />
+    <ClCompile Include="xmlreader_hooks.cpp" />
     <ClCompile Include="xmlpatch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="binary_xml_reader.h" />
     <ClInclude Include="fastwildcompare.h" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="pluginsdk.h" />
     <ClInclude Include="thread_local_lock.h" />
     <ClInclude Include="versioninfo.h" />
-    <ClInclude Include="xmlhooks.h" />
+    <ClInclude Include="xmlreader_hooks.h" />
     <ClInclude Include="xmlpatch.h" />
     <ClInclude Include="xmlreader.h" />
   </ItemGroup>
