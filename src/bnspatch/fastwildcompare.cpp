@@ -1,5 +1,10 @@
 #include "fastwildcompare.h"
-#include <cctype>
+#include <filesystem>
+
+bool FastWildCompare(const std::filesystem::path &wild, const std::filesystem::path &tame)
+{
+  return FastWildCompare(wild.c_str(), tame.c_str());
+}
 
 bool FastWildCompare(const wchar_t *pWild, const wchar_t *pTame)
 {

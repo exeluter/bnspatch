@@ -17,5 +17,7 @@
 // beyond it.  Otherwise compares the strings a character at a time. 
 //
 #pragma once
+#include <filesystem>
 
+bool FastWildCompare(const std::filesystem::path &wild, const std::filesystem::path &tame);
 bool FastWildCompare(const wchar_t *pWild, const wchar_t *pTame);

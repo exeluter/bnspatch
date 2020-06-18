@@ -133,8 +133,8 @@ std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
     wchar_t *token = wcstok_s(str.get(), xorstr_(L";"), &next_token);
     while ( token ) {
       auto file = std::filesystem::path(token);
-      if ( FastWildCompare(file.c_str(), xml_path.c_str())
-        || FastWildCompare(file.c_str(), xml_path.filename().c_str()) )
+      if ( FastWildCompare(file, xml_path)
+        || FastWildCompare(file, xml_path.filename()) )
         queue.push(patch);
       token = wcstok_s(nullptr, xorstr_(L";"), &next_token);
     }
@@ -202,20 +202,18 @@ void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &pa
             if ( FAILED(wil::ExpandEnvironmentStringsW(child.value(), result)) )
               continue;
 
-            auto include_filter = std::filesystem::path(result);
-            if ( include_filter.is_relative() )
-              include_filter = path.parent_path() / include_filter;
+            auto filter = std::filesystem::path(result);
 
-            auto data = WIN32_FIND_DATAW();
-            auto handle = FindFirstFileW(include_filter.c_str(), &data);
-            if ( handle == INVALID_HANDLE_VALUE )
-              continue;
+            if ( filter.is_relative() )
+              filter = path.parent_path() / filter;
 
-            const auto parent_path = include_filter.parent_path();
-            do {
-              preprocess(patches_doc, std::filesystem::canonical(parent_path / data.cFileName), include_guard);
-            } while ( FindNextFileW(handle, &data) );
-            FindClose(handle);
+            for ( const auto &it : std::filesystem::directory_iterator(filter.parent_path()) ) {
+              if ( !it.is_regular_file() )
+                continue;
+
+              if ( FastWildCompare(filter.filename(), it.path().filename()) )
+                preprocess(patches_doc, it.path(), include_guard);
+            }
           }
           break;
       }
