@@ -13,20 +13,10 @@
 
 #include "binary_reader.h"
 
-template<typename Char>
-std::basic_string<Char> &replace_all(
-  std::basic_string<Char> &haystack,
-  const std::basic_string_view<Char> &search,
-  const std::basic_string_view<Char> &replace)
-{
-  auto searcher = std::boyer_moore_horspool_searcher(search.begin(), search.end());
-  auto iterators = std::make_pair(haystack.begin(), haystack.begin());
-  while ( iterators = searcher(iterators.first, haystack.end()), iterators.first != haystack.end() ) {
-    haystack.replace(iterators.first, iterators.second, replace);
-    std::advance(iterators.first, replace.size());
-  }
-  return haystack;
-}
+std::wstring &replace_all(
+  std::wstring &haystack,
+  const std::wstring_view &search,
+  const std::wstring_view &replace);
 
 const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> get_or_load_addons();
 const std::filesystem::path &addons_path();

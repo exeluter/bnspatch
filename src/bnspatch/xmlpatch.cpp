@@ -26,60 +26,77 @@
 #include <wil/win32_helpers.h>
 #include <xorstr.hpp>
 
+std::wstring &replace_all(
+  std::wstring &haystack,
+  const std::wstring_view &search,
+  const std::wstring_view &replace)
+{
+  auto searcher = std::boyer_moore_horspool_searcher(search.begin(), search.end());
+  auto iterators = std::make_pair(haystack.begin(), haystack.begin());
+  while ( iterators = searcher(iterators.first, haystack.end()), iterators.first != haystack.end() ) {
+    auto pos = std::distance(haystack.begin(), iterators.first);
+    haystack.replace(iterators.first, iterators.second, replace.begin(), replace.end());
+    iterators.first = std::next(haystack.begin(), pos + replace.size());
+  }
+  return haystack;
+}
+
 const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> get_or_load_addons()
 {
   static auto once_flag = std::once_flag();
   static auto addons = std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>>();
 
   std::call_once(once_flag, [](std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> &addons) {
-    for ( const auto &it : std::filesystem::directory_iterator(addons_path()) ) {
-      if ( it.is_regular_file()
-        && fast_wild_compare(xorstr_(L"*.patch"), it.path().filename()) ) {
-        auto stream = std::ifstream(it.path()); // .patch files are UTF-8
-        auto line = std::string();
+    for ( const auto &entry : std::filesystem::directory_iterator(addons_path()) ) {
+      if ( entry.is_regular_file()
+        && fast_wild_compare(xorstr_(L"*.patch"), entry.path().filename()) ) {
+        auto stream = std::wifstream(entry.path());
+        stream.imbue(std::locale(stream.getloc(), new std::codecvt_utf8<wchar_t, 0x10ffff, std::consume_header>));
 
         auto filename = std::filesystem::path();
-        auto stext = std::vector<std::string>();
-        auto rtext = std::vector<std::string>();
+        auto stext = std::vector<std::wstring>();
+        auto rtext = std::vector<std::wstring>();
+        auto line = std::wstring();
         while ( std::getline(stream, line) ) {
           auto ofs = line.find('=');
-          if ( ofs == std::string::npos )
+          if ( ofs == std::wstring::npos )
             continue;
 
-          auto key = std::string_view(line.c_str(), ofs);
-          if ( const auto iter = std::find_if_not(key.begin(), key.end(), ::isspace); iter != key.end() )
-            key.remove_prefix(std::distance(key.begin(), iter));
-          if ( const auto iter = std::find_if_not(key.rbegin(), key.rend(), ::isspace); iter != key.rend() )
-            key.remove_suffix(std::distance(key.rbegin(), iter));
+          auto key = std::wstring_view(line.c_str(), ofs);
+          if ( const auto it = std::find_if_not(key.begin(), key.end(), ::iswspace); it != key.end() )
+            key.remove_prefix(std::distance(key.begin(), it));
+          if ( const auto it = std::find_if_not(key.rbegin(), key.rend(), ::iswspace); it != key.rend() )
+            key.remove_suffix(std::distance(key.rbegin(), it));
 
-          auto value = std::string_view(&line[ofs + 1]);
-          if ( const auto iter = std::find_if_not(value.begin(), value.end(), ::isspace); iter != value.end() )
-            value.remove_prefix(std::distance(value.begin(), iter));
-          if ( const auto iter = std::find_if_not(value.rbegin(), value.rend(), ::isspace); iter != value.rend() )
-            value.remove_suffix(std::distance(value.rbegin(), iter));
-
-          auto trimmed_value = std::string(value);
+          auto value = std::wstring_view(&line[ofs + 1]);
+          if ( const auto it = std::find_if_not(value.begin(), value.end(), ::iswspace); it != value.end() )
+            value.remove_prefix(std::distance(value.begin(), it));
+          if ( const auto it = std::find_if_not(value.rbegin(), value.rend(), ::iswspace); it != value.rend() )
+            value.remove_suffix(std::distance(value.rbegin(), it));
 
           switch ( fnv1a::make_hash(key) ) {
-            case "FileName"_fnv1a:
+            case L"FileName"_fnv1a: {
               filename = std::filesystem::weakly_canonical(value).filename();
               break;
-            case "Search"_fnv1a:
-              stext.push_back(replace_all<char>(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
+            } case L"Search"_fnv1a: {
+              auto s = static_cast<std::wstring>(value);
+              stext.push_back(replace_all(s, xorstr_(L"NewLine"), xorstr_(L"\n")));
               break;
-            case "Replace"_fnv1a:
-              rtext.push_back(replace_all<char>(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
+            } case L"Replace"_fnv1a: {
+              auto s = static_cast<std::wstring>(value);
+              rtext.push_back(replace_all(s, xorstr_(L"NewLine"), xorstr_(L"\n")));
               break;
+            }
           }
         }
 
         if ( !filename.empty() && stext.size() == rtext.size() ) {
-          auto converter = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>();
-          auto pairs = std::vector<std::pair<std::wstring, std::wstring>>();
-
-          for ( size_t i = 0; i < stext.size(); ++i )
-            pairs.emplace_back(converter.from_bytes(stext[i]), converter.from_bytes(rtext[i]));
-          addons.emplace(filename, pairs);
+          auto vec = std::vector<std::pair<std::wstring, std::wstring>>();
+          vec.reserve(stext.size());
+          std::transform(stext.begin(), stext.end(), rtext.begin(), std::back_inserter(vec),
+            [](std::wstring a, std::wstring b) { return std::make_pair(a, b);
+          });
+          addons.emplace(filename, vec);
         }
       }
     }

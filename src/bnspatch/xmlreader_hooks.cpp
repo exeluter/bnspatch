@@ -2,6 +2,8 @@
 #include <phnt_windows.h>
 #include <phnt.h>
 
+#include <numeric>
+
 #include <fmt/format.h>
 #include <SafeInt.hpp>
 #include <xorstr.hpp>
@@ -127,8 +129,12 @@ v14::XmlDoc *thiscall_(ReadFromBuffer14_hook, const v14::XmlReader *thisptr, con
         auto writer = xml_wstring_writer();
         document.save(writer, xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
 
+        writer.result.reserve(std::accumulate(addons.begin(), addons.end(), writer.result.size(), [](size_t capacity, const std::pair<std::wstring, std::wstring> &pair) {
+          return capacity - pair.first.size() + pair.second.size();
+        }));
+
         for ( const auto &addon : addons )
-          replace_all<wchar_t>(writer.result, addon.first, addon.second);
+          replace_all(writer.result, addon.first, addon.second);
         return g_pfnReadFromBuffer14(thisptr, reinterpret_cast<unsigned char *>(writer.result.data()), SafeInt(writer.result.size()) * sizeof(wchar_t), xmlFileNameForLogging, xmlPieceReader);
       }
       // don't apply addons
