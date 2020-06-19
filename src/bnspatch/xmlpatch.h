@@ -13,20 +13,17 @@
 
 #include "binary_reader.h"
 
-template<class Char, class Traits = std::char_traits<Char>, class Alloc = std::allocator<Char>>
-std::basic_string<Char, Traits, Alloc> replace_all(
-  std::basic_string<Char, Traits, Alloc> &haystack,
-  const Char *search,
-  const Char *replace)
+template<typename Char>
+std::basic_string<Char> &replace_all(
+  std::basic_string<Char> &haystack,
+  const std::basic_string_view<Char> &search,
+  const std::basic_string_view<Char> &replace)
 {
-  std::basic_string_view<Char, Traits> search_view = search;
-  std::basic_string_view<Char, Traits> replace_view = replace;
-
-  auto searcher = std::boyer_moore_horspool_searcher(search_view.begin(), search_view.end());
+  auto searcher = std::boyer_moore_horspool_searcher(search.begin(), search.end());
   auto iterators = std::make_pair(haystack.begin(), haystack.begin());
   while ( iterators = searcher(iterators.first, haystack.end()), iterators.first != haystack.end() ) {
     haystack.replace(iterators.first, iterators.second, replace);
-    std::advance(iterators.first, replace_view.size());
+    std::advance(iterators.first, replace.size());
   }
   return haystack;
 }

@@ -65,10 +65,10 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
               filename = std::filesystem::weakly_canonical(value).filename();
               break;
             case "Search"_fnv1a:
-              stext.push_back(replace_all(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
+              stext.push_back(replace_all<char>(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
               break;
             case "Replace"_fnv1a:
-              rtext.push_back(replace_all(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
+              rtext.push_back(replace_all<char>(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
               break;
           }
         }
