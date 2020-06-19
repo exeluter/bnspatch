@@ -1,7 +1,7 @@
-#include "fastwildcompare.h"
+#include "fast_wild_compare.h"
 #include <filesystem>
 
-bool FastWildCompare(const wchar_t *pWild, const wchar_t *pTame)
+bool fast_wild_compare(const wchar_t *pWild, const wchar_t *pTame)
 {
   const wchar_t *pWildSequence; // Points to prospective wild string match after '*'
   const wchar_t *pTameSequence; // Points to prospective tame string match

@@ -3,7 +3,7 @@
 
 #include "hooks.h"
 #include "pluginsdk.h"
-#include "versioninfo.h"
+#include "versioninfo.h" 
 #include "xmlreader_hooks.h"
 
 #include <fnv1a.h>
@@ -25,14 +25,14 @@ void __cdecl DllLoadedNotification(const struct DllNotificationData *Data, void 
     switch ( fnv1a::make_hash(original_filename, towupper) ) {
       case L"XmlReader.dll"_fnv1au: {
         const auto module = static_cast<pe::module *>(Data->BaseOfImage);
-        auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(*)()>(module->function(xorstr_("GetInterfaceVersion")));
-        auto const pfnCreateXmlReader = reinterpret_cast<void *(*)()>(module->function(xorstr_("CreateXmlReader")));
-        auto const pfnDestroyXmlReader = reinterpret_cast<void *(*)(void *)>(module->function(xorstr_("DestroyXmlReader")));
+        auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(__cdecl *)()>(module->function(xorstr_("GetInterfaceVersion")));
+        auto const pfnCreateXmlReader = reinterpret_cast<void *(__cdecl *)()>(module->function(xorstr_("CreateXmlReader")));
+        auto const pfnDestroyXmlReader = reinterpret_cast<void(__cdecl *)(void *)>(module->function(xorstr_("DestroyXmlReader")));
         if ( pfnGetInterfaceVersion && pfnCreateXmlReader && pfnDestroyXmlReader ) {
           Data->Detours->TransactionBegin();
           Data->Detours->UpdateThread(NtCurrentThread());
-          auto xmlReader = pfnCreateXmlReader();
-          auto vfptr = *reinterpret_cast<void ***>(xmlReader);
+          auto xmlReader = std::unique_ptr<void, decltype(pfnDestroyXmlReader)>(pfnCreateXmlReader(), pfnDestroyXmlReader);
+          auto vfptr = *reinterpret_cast<void ***>(xmlReader.get());
           switch ( _wtoi(pfnGetInterfaceVersion()) ) {
             case 13:
               g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vfptr[6]);
@@ -48,7 +48,6 @@ void __cdecl DllLoadedNotification(const struct DllNotificationData *Data, void 
               Data->Detours->Attach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
               break;
           }
-          pfnDestroyXmlReader(xmlReader);
           Data->Detours->TransactionCommit();
         }
       }

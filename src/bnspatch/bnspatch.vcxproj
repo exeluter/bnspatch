@@ -137,7 +137,7 @@
   <!-- Items -->
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="fastwildcompare.cpp" />
+    <ClCompile Include="fast_wild_compare.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="versioninfo.c" />
     <ClCompile Include="xmlreader_hooks.cpp" />
@@ -145,7 +145,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="binary_reader.h" />
-    <ClInclude Include="fastwildcompare.h" />
+    <ClInclude Include="fast_wild_compare.h" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="pluginsdk.h" />
     <ClInclude Include="thread_local_lock.h" />

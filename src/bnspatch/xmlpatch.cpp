@@ -9,12 +9,12 @@
 #include <filesystem>
 #include <list>
 #include <map>
-#include <queue>
 #include <unordered_set>
+#include <fstream>
 
 #include "versioninfo.h"
 #include "binary_reader.h"
-#include "fastwildcompare.h"
+#include "fast_wild_compare.h"
 
 #include <fmt/format.h>
 #include <fnv1a.h>
@@ -24,57 +24,85 @@
 #include <wil/win32_helpers.h>
 #include <xorstr.hpp>
 
-void deserialize_element(pugi::xml_node &parent, binary_reader &reader);
-void deserialize_text(pugi::xml_node &parent, binary_reader &reader);
-
-inline void deserialize_node(pugi::xml_node &parent, binary_reader &reader)
+const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> addon_files()
 {
-  const auto type = reader.get<uint32_t>();
-  switch ( type ) {
-    case 1: deserialize_element(parent, reader); break;
-    case 2: deserialize_text(parent, reader); break;
-    default:
-      const auto text = fmt::format(xorstr_(L"Unknown node type: {:#x}"), type);
-      MessageBoxW(nullptr, text.c_str(), xorstr_(L"bnspatch"), MB_ICONERROR | MB_OK);
-      exit(1);
-  }
+  static auto once_flag = std::once_flag();
+  static auto addons = std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>>();
+
+  std::call_once(once_flag, [](std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> &addons) {
+    for ( const auto &it : std::filesystem::directory_iterator(addons_path()) ) {
+      if ( it.is_regular_file()
+        && fast_wild_compare(xorstr_(L"*.patch"), it.path().filename()) ) {
+        auto stream = std::ifstream(it.path()); // .patch files are UTF-8
+        auto line = std::string();
+
+        auto filename = std::filesystem::path();
+        auto stext = std::vector<std::string>();
+        auto rtext = std::vector<std::string>();
+        while ( std::getline(stream, line) ) {
+          auto ofs = line.find('=');
+          if ( ofs == std::string::npos )
+            continue;
+
+          auto key = std::string_view(line.c_str(), ofs);
+          if ( const auto iter = std::find_if_not(key.begin(), key.end(), ::isspace); iter != key.end() )
+            key.remove_prefix(std::distance(key.begin(), iter));
+          if ( const auto iter = std::find_if_not(key.rbegin(), key.rend(), ::isspace); iter != key.rend() )
+            key.remove_suffix(std::distance(key.rbegin(), iter));
+
+          auto value = std::string_view(&line[ofs + 1]);
+          if ( const auto iter = std::find_if_not(value.begin(), value.end(), ::isspace); iter != value.end() )
+            value.remove_prefix(std::distance(value.begin(), iter));
+          if ( const auto iter = std::find_if_not(value.rbegin(), value.rend(), ::isspace); iter != value.rend() )
+            value.remove_suffix(std::distance(value.rbegin(), iter));
+
+          switch ( fnv1a::make_hash(key) ) {
+            case "FileName"_fnv1a: {
+              filename = std::filesystem::weakly_canonical(value).filename();
+              break;
+            } case "Search"_fnv1a:
+              stext.emplace_back(value);
+              break;
+            case "Replace"_fnv1a:
+              rtext.emplace_back(value);
+              break;
+          }
+        }
+
+        if ( !filename.empty() && stext.size() == rtext.size() ) {
+          auto converter = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>();
+          auto pairs = std::vector<std::pair<std::wstring, std::wstring>>();
+
+          for ( size_t i = 0; i < stext.size(); ++i )
+            pairs.emplace_back(converter.from_bytes(stext[i]), converter.from_bytes(rtext[i]));
+          addons.emplace(filename, pairs);
+        }
+      }
+    }
+  }, addons);
+  return addons;
 }
 
-void deserialize_element(pugi::xml_node &parent, binary_reader &reader)
+const std::filesystem::path &addons_path()
 {
-  auto node = parent.append_child();
+  static auto once_flag = std::once_flag();
+  static auto path = std::filesystem::path();
 
-  const auto attrcount = reader.get<uint32_t>();
-  for ( uint32_t i = 0; i < attrcount; ++i ) {
-    const auto attrname = reader.get<std::wstring>();
-    const auto attrvalue = reader.get<std::wstring>();
-    node.append_attribute(attrname.c_str()).set_value(attrvalue.c_str());
-  }
-
-  const auto valid = reader.get<bool>();
-  const auto name = reader.get<std::wstring>();
-  node.set_name(name.c_str());
-
-  const auto children_count = reader.get<uint32_t>();
-  const auto id = reader.get<uint32_t>();
-
-  for ( auto i = 0ui32; i < children_count; ++i )
-    deserialize_node(node, reader);
-}
-
-void deserialize_text(pugi::xml_node &parent, binary_reader &reader)
-{
-  const auto pcdata = reader.get<std::wstring>();
-  if ( !std::all_of(pcdata.begin(), pcdata.end(), ::iswspace) ) {
-    auto node = parent.append_child(pugi::node_pcdata);
-    node.set_value(pcdata.c_str());
-  }
-
-  const auto valid = reader.get<bool>();
-  const auto count = reader.get<uint32_t>();
-  reader.discard<uint16_t>(count); // L"text"
-  reader.discard<uint32_t>(); // child count
-  reader.discard<uint32_t>(); // id
+  std::call_once(once_flag, [](std::filesystem::path &path) {
+    const wchar_t *OriginalFilename;
+    if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) >= 0 ) {
+      switch ( fnv1a::make_hash(OriginalFilename, towupper) ) {
+        case L"Client.exe"_fnv1au:
+          path = documents_path() / xorstr_(L"BnS\\addons");
+          return;
+        case L"BNSR.exe"_fnv1au:
+          path = documents_path() / xorstr_(L"BNSR\\addons");
+          return;
+      }
+    }
+    std::filesystem::create_directories(path);
+  }, path);
+  return path;
 }
 
 pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size, pugi::xml_document &document)
@@ -108,7 +136,7 @@ pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size
     deserialize_element(document, reader);
     auto res = pugi::xml_parse_result();
     res.status = pugi::status_ok;
-    res.encoding = pugi::encoding_utf16;
+    res.encoding = pugi::encoding_utf16_le;
     return res;
   } else {
     return document.load_buffer(mem, size, pugi::parse_full);
@@ -116,9 +144,86 @@ pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size
   return pugi::xml_parse_result();
 }
 
-std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
+void deserialize_element(pugi::xml_node &parent, binary_reader &reader)
 {
-  auto queue = std::queue<pugi::xml_node>();
+  auto node = parent.append_child();
+
+  const auto attrcount = reader.get<uint32_t>();
+  for ( uint32_t i = 0; i < attrcount; ++i ) {
+    const auto attrname = reader.get<std::wstring>();
+    const auto attrvalue = reader.get<std::wstring>();
+    node.append_attribute(attrname.c_str()).set_value(attrvalue.c_str());
+  }
+
+  const auto valid = reader.get<bool>();
+  const auto name = reader.get<std::wstring>();
+  node.set_name(name.c_str());
+
+  const auto children_count = reader.get<uint32_t>();
+  const auto id = reader.get<uint32_t>();
+
+  for ( auto i = 0ui32; i < children_count; ++i )
+    deserialize_node(node, reader);
+}
+
+void deserialize_node(pugi::xml_node &parent, binary_reader &reader)
+{
+  const auto type = reader.get<uint32_t>();
+  switch ( type ) {
+    case 1: deserialize_element(parent, reader); break;
+    case 2: deserialize_text(parent, reader); break;
+    default:
+      const auto text = fmt::format(xorstr_(L"Unknown node type: {:#x}"), type);
+      MessageBoxW(nullptr, text.c_str(), xorstr_(L"bnspatch"), MB_ICONERROR | MB_OK);
+      exit(1);
+  }
+}
+
+void deserialize_text(pugi::xml_node &parent, binary_reader &reader)
+{
+  const auto pcdata = reader.get<std::wstring>();
+  if ( !std::all_of(pcdata.begin(), pcdata.end(), ::iswspace) ) {
+    auto node = parent.append_child(pugi::node_pcdata);
+    node.set_value(pcdata.c_str());
+  }
+
+  const auto valid = reader.get<bool>();
+  const auto count = reader.get<uint32_t>();
+  reader.discard<uint16_t>(count); // L"text"
+  reader.discard<uint32_t>(); // child count
+  reader.discard<uint32_t>(); // id
+}
+
+const std::filesystem::path &documents_path()
+{
+  static auto once_flag = std::once_flag();
+  static auto path = std::filesystem::path();
+
+  std::call_once(once_flag, [](std::filesystem::path &path) {
+    auto result = wil::unique_cotaskmem_string();
+    if ( SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &result)) )
+      path = result.get();
+  }, path);
+  return path;
+}
+
+std::vector<std::pair<std::wstring, std::wstring>> get_relevant_addons(const wchar_t *xml)
+{
+  if ( !xml || !*xml )
+    return {};
+
+  auto relevant_addons = std::vector<std::pair<std::wstring, std::wstring>>();
+  auto filename = std::filesystem::path(xml).filename();
+  for ( const auto &addon : addon_files() ) {
+    if ( !_wcsicmp(filename.c_str(), addon.first.c_str()) )
+      relevant_addons.insert(relevant_addons.end(), addon.second.begin(), addon.second.end());
+  }
+  return relevant_addons;
+}
+
+std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml)
+{
+  auto relevant_patches = std::vector<pugi::xml_node>();
 
   auto xml_path = std::filesystem::path(xml ? xml : L"");
   auto name = xorstr(L"patch");
@@ -133,45 +238,46 @@ std::queue<pugi::xml_node> get_xml_patches(const wchar_t *xml)
     wchar_t *token = wcstok_s(str.get(), xorstr_(L";"), &next_token);
     while ( token ) {
       auto file = std::filesystem::path(token);
-      if ( FastWildCompare(file, xml_path)
-        || FastWildCompare(file, xml_path.filename()) )
-        queue.push(patch);
+      if ( fast_wild_compare(file, xml_path)
+        || fast_wild_compare(file, xml_path.filename()) )
+        relevant_patches.push_back(patch);
       token = wcstok_s(nullptr, xorstr_(L";"), &next_token);
     }
   }
-  return queue;
+  return relevant_patches;
 }
 
-void patch_xml(pugi::xml_document &src, std::queue<pugi::xml_node> queue)
+void patch_xml(pugi::xml_document &src, const std::vector<pugi::xml_node> &patches)
 {
-  while ( !queue.empty() ) {
-    auto const &patch = queue.front();
+  for ( const auto &patch : patches ) {
     std::unordered_map<fnv1a::type, pugi::xml_node> saved_nodes;
     process_patch(src, patch.children(), saved_nodes);
-    queue.pop();
   }
 }
 
-pugi::xml_parse_result try_load_file(
-  pugi::xml_document &document,
-  const std::filesystem::path &path,
-  unsigned int options = pugi::parse_default,
-  pugi::xml_encoding encoding = pugi::encoding_auto)
+const pugi::xml_document &patches_document()
 {
-try_again:
-  const auto result = document.load_file(path.c_str(), options, encoding);
-  if ( !result && result.status != pugi::xml_parse_status::status_file_not_found ) {
-    switch ( MessageBoxA(
-      nullptr,
-      fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description()).c_str(),
-      xorstr_("bnspatch"),
-      MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
-      case IDTRYAGAIN: goto try_again;
-      case IDCONTINUE: break;
-      default: exit(0);
-    }
-  }
-  return result;
+  static auto once_flag = std::once_flag();
+  static auto document = pugi::xml_document();
+
+  std::call_once(once_flag, [](pugi::xml_document &document) {
+
+    auto decl = document.prepend_child(pugi::node_declaration);
+    decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
+    decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-8");
+
+    document.append_child(xorstr_(L"patches"));
+
+    auto include_guard = std::unordered_set<fnv1a::type>();
+    preprocess(document, patches_path(), include_guard);
+#ifdef _DEBUG
+    document.save_file(patches_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
+    const auto parent_path = patches_path().parent_path();
+    std::filesystem::create_directories(parent_path / xorstr_(L"temp"));
+    std::filesystem::create_directories(parent_path / xorstr_(L"temp_patched"));
+#endif
+  }, document);
+  return document;
 }
 
 void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &path, std::unordered_set<fnv1a::type> &include_guard)
@@ -208,10 +314,8 @@ void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &pa
               filter = path.parent_path() / filter;
 
             for ( const auto &it : std::filesystem::directory_iterator(filter.parent_path()) ) {
-              if ( !it.is_regular_file() )
-                continue;
-
-              if ( FastWildCompare(filter.filename(), it.path().filename()) )
+              if ( it.is_regular_file()
+                && fast_wild_compare(filter.filename(), it.path().filename()) )
                 preprocess(patches_doc, it.path(), include_guard);
             }
           }
@@ -221,64 +325,33 @@ void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &pa
   }
 }
 
-const std::filesystem::path &patches_file_path()
-{
-  static std::once_flag once_flag;
-  static std::filesystem::path path;
-
-  try {
-    std::call_once(once_flag, [](std::filesystem::path &path) {
-      auto result = wil::unique_cotaskmem_string();
-      if ( SUCCEEDED(wil::TryGetEnvironmentVariableW(xorstr_(L"BNS_PROFILE_XML"), result)) && result ) {
-        path = std::filesystem::canonical(result.get());
-        return;
-      }
-
-      if ( SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, nullptr, &result)) ) {
-        const wchar_t *fileName;
-        if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)fileName) >= 0 ) {
-          const auto documents = std::filesystem::path(result.get());
-          switch ( fnv1a::make_hash(fileName, towupper) ) {
-            case L"Client.exe"_fnv1au:
-              path = std::filesystem::canonical(documents / xorstr_(L"BnS\\patches.xml"));
-              return;
-            case L"BNSR.exe"_fnv1au:
-              path = std::filesystem::canonical(documents / xorstr_(L"BnS\\patches.xml"));
-              return;
-          }
-        }
-        throw std::exception();
-      }
-    }, path);
-  } catch ( ... ) {}
-  return path;
-}
-
-const pugi::xml_document &patches_document()
+const std::filesystem::path &patches_path()
 {
   static auto once_flag = std::once_flag();
-  static auto document = pugi::xml_document();
+  static auto path = std::filesystem::path();
 
-  try {
-    std::call_once(once_flag, [](pugi::xml_document &document) {
+  std::call_once(once_flag, [](std::filesystem::path &path) {
+    auto result = wil::unique_cotaskmem_string();
+    if ( SUCCEEDED(wil::TryGetEnvironmentVariableW(xorstr_(L"BNS_PROFILE_XML"), result)) && result ) {
+      path = std::filesystem::canonical(result.get());
+      return;
+    }
 
-      auto decl = document.prepend_child(pugi::node_declaration);
-      decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
-      decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-8");
+    const wchar_t *OriginalFilename;
+    if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) >= 0 ) {
+      switch ( fnv1a::make_hash(OriginalFilename, towupper) ) {
+        case L"Client.exe"_fnv1au:
+          path = documents_path() / xorstr_(L"BnS\\patches.xml");
+          return;
+        case L"BNSR.exe"_fnv1au:
+          path = documents_path() / xorstr_(L"BNSR\\patches.xml");
+          return;
+      }
+    }
 
-      document.append_child(xorstr_(L"patches"));
-
-      auto include_guard = std::unordered_set<fnv1a::type>();
-      preprocess(document, patches_file_path(), include_guard);
-#ifdef _DEBUG
-      document.save_file(patches_file_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
-      const auto parent_path = patches_file_path().parent_path();
-      std::filesystem::create_directories(parent_path / xorstr_(L"temp"));
-      std::filesystem::create_directories(parent_path / xorstr_(L"temp_patched"));
-#endif
-    }, document);
-  } catch ( ... ) {}
-  return document;
+    path = std::filesystem::path(pe::get_module()->full_name()).parent_path().append(xorstr_(L"patches.xml"));
+  }, path);
+  return path;
 }
 
 void process_patch(
@@ -519,4 +592,26 @@ void process_patch(
       }
     }
   }
+}
+
+pugi::xml_parse_result try_load_file(
+  pugi::xml_document &document,
+  const std::filesystem::path &path,
+  unsigned int options,
+  pugi::xml_encoding encoding)
+{
+try_again:
+  const auto result = document.load_file(path.c_str(), options, encoding);
+  if ( !result && result.status != pugi::xml_parse_status::status_file_not_found ) {
+    switch ( MessageBoxA(
+      nullptr,
+      fmt::format(xorstr_("{}({}): {}"), path.string(), result.offset, result.description()).c_str(),
+      xorstr_("bnspatch"),
+      MB_CANCELTRYCONTINUE | MB_ICONERROR) ) {
+      case IDTRYAGAIN: goto try_again;
+      case IDCONTINUE: break;
+      default: exit(0);
+    }
+  }
+  return result;
 }
