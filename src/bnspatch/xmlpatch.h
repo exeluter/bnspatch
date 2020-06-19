@@ -4,13 +4,34 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <functional>
+#include <string>
+#include <string_view>
 
 #include <fnv1a.h>
 #include <pugixml.hpp>
 
 #include "binary_reader.h"
 
-const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> addon_files();
+template<class Char, class Traits = std::char_traits<Char>, class Alloc = std::allocator<Char>>
+std::basic_string<Char, Traits, Alloc> replace_all(
+  std::basic_string<Char, Traits, Alloc> &haystack,
+  const Char *search,
+  const Char *replace)
+{
+  std::basic_string_view<Char, Traits> search_view = search;
+  std::basic_string_view<Char, Traits> replace_view = replace;
+
+  auto searcher = std::boyer_moore_horspool_searcher(search_view.begin(), search_view.end());
+  auto iterators = std::make_pair(haystack.begin(), haystack.begin());
+  while ( iterators = searcher(iterators.first, haystack.end()), iterators.first != haystack.end() ) {
+    haystack.replace(iterators.first, iterators.second, replace);
+    std::advance(iterators.first, replace_view.size());
+  }
+  return haystack;
+}
+
+const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> get_or_load_addons();
 const std::filesystem::path &addons_path();
 pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size, pugi::xml_document &document);
 void deserialize_element(pugi::xml_node &parent, binary_reader &reader);
@@ -20,7 +41,7 @@ const std::filesystem::path &documents_path();
 std::vector<std::pair<std::wstring, std::wstring>> get_relevant_addons(const wchar_t *xml);
 std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml);
 void patch_xml(pugi::xml_document &src, const std::vector<pugi::xml_node> &patches);
-const pugi::xml_document &patches_document();
+const pugi::xml_document &get_or_load_patches();
 void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &path, std::unordered_set<fnv1a::type> &include_guard);
 const std::filesystem::path &patches_path();
 void process_patch(

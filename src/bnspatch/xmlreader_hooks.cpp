@@ -2,10 +2,6 @@
 #include <phnt_windows.h>
 #include <phnt.h>
 
-#ifdef _DEBUG
-#include <fstream>
-#endif
-
 #include <fmt/format.h>
 #include <SafeInt.hpp>
 #include <xorstr.hpp>
@@ -114,7 +110,7 @@ v14::XmlDoc *thiscall_(ReadFromBuffer14_hook, const v14::XmlReader *thisptr, con
 #ifdef _DEBUG
       if ( xmlFileNameForLogging && *xmlFileNameForLogging ) {
         const auto temp = patches_path().parent_path().append(xorstr_(L"temp")).append(xmlFileNameForLogging);
-        document.save_file(temp.c_str(), xorstr_(L"\t"), pugi::format_default | pugi::format_no_declaration, res.encoding);
+        document.save_file(temp.c_str(), xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
       }
 #endif
 
@@ -123,34 +119,21 @@ v14::XmlDoc *thiscall_(ReadFromBuffer14_hook, const v14::XmlReader *thisptr, con
 #ifdef _DEBUG
       if ( addons.empty() && xmlFileNameForLogging && *xmlFileNameForLogging ) {
         const auto temp_patched = patches_path().parent_path().append(xorstr_(L"temp_patched")).append(xmlFileNameForLogging);
-        document.save_file(temp_patched.c_str(), xorstr_(L"\t"), pugi::format_default | pugi::format_no_declaration, res.encoding);
+        document.save_file(temp_patched.c_str(), xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
       }
 #endif
 
       if ( !addons.empty() && res.encoding == pugi::encoding_utf16_le ) {
         auto writer = xml_wstring_writer();
-        document.save(writer, xorstr_(L"\t"), pugi::format_default | pugi::format_no_declaration, res.encoding);
+        document.save(writer, xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
 
-        for ( const auto &addon : addons ) {
-          auto searcher = std::boyer_moore_horspool_searcher(addon.first.begin(), addon.first.end());
-          auto itp = std::make_pair(writer.result.begin(), writer.result.begin());
-          while ( (itp = searcher(itp.first, writer.result.end())).first != writer.result.end() ) {
-            writer.result.replace(itp.first, itp.second, addon.second);
-            std::advance(itp.first, addon.second.size());
-          }
-        }
-#ifdef _DEBUG
-        if ( xmlFileNameForLogging && *xmlFileNameForLogging ) {
-          auto f = std::wofstream(patches_path().parent_path().append(xorstr_(L"temp_patched")).append(xmlFileNameForLogging));
-          f << writer.result;
-          f.close();
-        }
-#endif
+        for ( const auto &addon : addons )
+          replace_all(writer.result, addon.first.c_str(), addon.second.c_str());
         return g_pfnReadFromBuffer14(thisptr, reinterpret_cast<unsigned char *>(writer.result.data()), SafeInt(writer.result.size()) * sizeof(wchar_t), xmlFileNameForLogging, xmlPieceReader);
       }
       // don't apply addons
       auto writer = xml_buffer_writer();
-      document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
+      document.save(writer, xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
       return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
     }
   }

@@ -4,13 +4,14 @@
 #include <ShlObj.h>
 #include <KnownFolders.h>
 
-#include <algorithm>
 #include <codecvt>
 #include <filesystem>
 #include <list>
 #include <map>
+#include <string_view>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
-#include <fstream>
 
 #include "versioninfo.h"
 #include "binary_reader.h"
@@ -24,7 +25,7 @@
 #include <wil/win32_helpers.h>
 #include <xorstr.hpp>
 
-const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> addon_files()
+const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> get_or_load_addons()
 {
   static auto once_flag = std::once_flag();
   static auto addons = std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>>();
@@ -56,15 +57,17 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
           if ( const auto iter = std::find_if_not(value.rbegin(), value.rend(), ::isspace); iter != value.rend() )
             value.remove_suffix(std::distance(value.rbegin(), iter));
 
+          auto trimmed_value = std::string(value);
+
           switch ( fnv1a::make_hash(key) ) {
-            case "FileName"_fnv1a: {
+            case "FileName"_fnv1a:
               filename = std::filesystem::weakly_canonical(value).filename();
               break;
-            } case "Search"_fnv1a:
-              stext.emplace_back(value);
+            case "Search"_fnv1a:
+              stext.push_back(replace_all(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
               break;
             case "Replace"_fnv1a:
-              rtext.emplace_back(value);
+              rtext.push_back(replace_all(trimmed_value, xorstr_("NewLine"), xorstr_("\n")));
               break;
           }
         }
@@ -94,10 +97,10 @@ const std::filesystem::path &addons_path()
       switch ( fnv1a::make_hash(OriginalFilename, towupper) ) {
         case L"Client.exe"_fnv1au:
           path = documents_path() / xorstr_(L"BnS\\addons");
-          return;
+          break;
         case L"BNSR.exe"_fnv1au:
           path = documents_path() / xorstr_(L"BNSR\\addons");
-          return;
+          break;
       }
     }
     std::filesystem::create_directories(path);
@@ -182,14 +185,10 @@ void deserialize_node(pugi::xml_node &parent, binary_reader &reader)
 void deserialize_text(pugi::xml_node &parent, binary_reader &reader)
 {
   const auto pcdata = reader.get<std::wstring>();
-  if ( !std::all_of(pcdata.begin(), pcdata.end(), ::iswspace) ) {
-    auto node = parent.append_child(pugi::node_pcdata);
-    node.set_value(pcdata.c_str());
-  }
-
-  const auto valid = reader.get<bool>();
-  const auto count = reader.get<uint32_t>();
-  reader.discard<uint16_t>(count); // L"text"
+  auto node = parent.append_child(pugi::node_pcdata);
+  node.set_value(pcdata.c_str());
+  reader.discard<bool>();
+  reader.discard<uint16_t>(reader.get<uint32_t>()); // L"text"
   reader.discard<uint32_t>(); // child count
   reader.discard<uint32_t>(); // id
 }
@@ -214,7 +213,7 @@ std::vector<std::pair<std::wstring, std::wstring>> get_relevant_addons(const wch
 
   auto relevant_addons = std::vector<std::pair<std::wstring, std::wstring>>();
   auto filename = std::filesystem::path(xml).filename();
-  for ( const auto &addon : addon_files() ) {
+  for ( const auto &addon : get_or_load_addons() ) {
     if ( !_wcsicmp(filename.c_str(), addon.first.c_str()) )
       relevant_addons.insert(relevant_addons.end(), addon.second.begin(), addon.second.end());
   }
@@ -228,7 +227,7 @@ std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml)
   auto xml_path = std::filesystem::path(xml ? xml : L"");
   auto name = xorstr(L"patch");
   name.crypt();
-  for ( const auto &patch : patches_document().document_element().children(name.get()) ) {
+  for ( const auto &patch : get_or_load_patches().document_element().children(name.get()) ) {
     auto attribute = patch.attribute(xorstr_(L"file"));
     if ( !attribute )
       attribute = patch.attribute(xorstr_(L"filename"));
@@ -255,7 +254,7 @@ void patch_xml(pugi::xml_document &src, const std::vector<pugi::xml_node> &patch
   }
 }
 
-const pugi::xml_document &patches_document()
+const pugi::xml_document &get_or_load_patches()
 {
   static auto once_flag = std::once_flag();
   static auto document = pugi::xml_document();
