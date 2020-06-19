@@ -6,6 +6,7 @@
 
 #include <codecvt>
 #include <filesystem>
+#include <fstream>
 #include <list>
 #include <map>
 #include <string_view>
