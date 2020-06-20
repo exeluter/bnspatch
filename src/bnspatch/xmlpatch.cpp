@@ -47,7 +47,8 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
   static auto addons = std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>>();
 
   std::call_once(once_flag, [](std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> &addons) {
-    for ( const auto &entry : std::filesystem::directory_iterator(addons_path()) ) {
+    auto ec = std::error_code();
+    for ( const auto &entry : std::filesystem::directory_iterator(addons_path(), ec) ) {
       if ( entry.is_regular_file()
         && fast_wild_compare(xorstr_(L"*.patch"), entry.path().filename()) ) {
         auto stream = std::wifstream(entry.path());
@@ -121,7 +122,6 @@ const std::filesystem::path &addons_path()
           break;
       }
     }
-    std::filesystem::create_directories(path);
   }, path);
   return path;
 }
@@ -330,7 +330,8 @@ void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &pa
             if ( filter.is_relative() )
               filter = path.parent_path() / filter;
 
-            for ( const auto &it : std::filesystem::directory_iterator(filter.parent_path()) ) {
+            auto ec = std::error_code();
+            for ( const auto &it : std::filesystem::directory_iterator(filter.parent_path(), ec) ) {
               if ( it.is_regular_file()
                 && fast_wild_compare(filter.filename(), it.path().filename()) )
                 preprocess(patches_doc, it.path(), include_guard);

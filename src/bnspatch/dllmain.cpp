@@ -57,11 +57,11 @@ void __cdecl DllLoadedNotification(const struct DllNotificationData *Data, void 
 
 void __cdecl InitNotification(const struct InitNotificationData *Data, void *Context)
 {
-  const wchar_t *original_filename;
-  if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)original_filename) < 0 )
+  const wchar_t *OriginalFilename;
+  if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) < 0 )
     return;
 
-  switch ( fnv1a::make_hash(original_filename, towupper) ) {
+  switch ( fnv1a::make_hash(OriginalFilename, towupper) ) {
     case L"Client.exe"_fnv1au:
     case L"BNSR.exe"_fnv1au:
       NtCurrentPeb()->BeingDebugged = FALSE;
