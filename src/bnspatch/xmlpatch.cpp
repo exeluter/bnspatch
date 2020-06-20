@@ -26,17 +26,14 @@
 #include <wil/win32_helpers.h>
 #include <xorstr.hpp>
 
-std::wstring &replace_all(
-  std::wstring &haystack,
+std::wstring &ReplaceStringInPlace(std::wstring &haystack,
   const std::wstring_view &search,
   const std::wstring_view &replace)
 {
-  auto searcher = std::boyer_moore_horspool_searcher(search.begin(), search.end());
-  auto iterators = std::make_pair(haystack.begin(), haystack.begin());
-  while ( iterators = searcher(iterators.first, haystack.end()), iterators.first != haystack.end() ) {
-    auto pos = std::distance(haystack.begin(), iterators.first);
-    haystack.replace(iterators.first, iterators.second, replace.begin(), replace.end());
-    iterators.first = std::next(haystack.begin(), pos + replace.size());
+  size_t pos = 0;
+  while ( (pos = haystack.find(search, pos)) != std::wstring::npos ) {
+    haystack.replace(pos, search.size(), replace);
+    pos += replace.size();
   }
   return haystack;
 }
@@ -81,11 +78,11 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
               break;
             } case L"Search"_fnv1a: {
               auto s = static_cast<std::wstring>(value);
-              stext.push_back(replace_all(s, xorstr_(L"NewLine"), xorstr_(L"\n")));
+              stext.push_back(ReplaceStringInPlace(s, xorstr_(L"NewLine"), xorstr_(L"\n")));
               break;
             } case L"Replace"_fnv1a: {
               auto s = static_cast<std::wstring>(value);
-              rtext.push_back(replace_all(s, xorstr_(L"NewLine"), xorstr_(L"\n")));
+              rtext.push_back(ReplaceStringInPlace(s, xorstr_(L"NewLine"), xorstr_(L"\n")));
               break;
             }
           }
@@ -154,6 +151,7 @@ pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size
     decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
     decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
     document.append_child(pugi::node_comment).set_value(document_name.c_str());
+    document.append_child(pugi::node_pcdata).set_value(xorstr_(L"\n"));
     deserialize_element(document, reader);
     auto res = pugi::xml_parse_result();
     res.status = pugi::status_ok;

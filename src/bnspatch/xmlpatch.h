@@ -13,8 +13,7 @@
 
 #include "binary_reader.h"
 
-std::wstring &replace_all(
-  std::wstring &haystack,
+std::wstring &ReplaceStringInPlace(std::wstring &haystack,
   const std::wstring_view &search,
   const std::wstring_view &replace);
 
