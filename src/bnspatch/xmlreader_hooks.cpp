@@ -89,7 +89,17 @@ v13::XmlDoc *thiscall_(ReadFromBuffer13_hook, const v13::XmlReader *thisptr, con
     pugi::xml_document document;
     if ( const auto res = deserialize_document(mem, size, document) ) {
       patch_xml(document, patches);
-      xml_buffer_writer writer;
+
+      if ( !addons.empty() && res.encoding == pugi::encoding_utf16_le ) {
+        auto writer = xml_wstring_writer();
+        document.save(writer, xorstr_(L""), pugi::format_raw | pugi::format_no_declaration, res.encoding);
+
+        for ( const auto &addon : addons )
+          ReplaceStringInPlace(writer.result, addon.first, addon.second);
+        return g_pfnReadFromBuffer13(thisptr, reinterpret_cast<unsigned char *>(writer.result.data()), SafeInt(writer.result.size()) * sizeof(wchar_t), xmlFileNameForLogging);
+      }
+      // don't apply addons
+      auto writer = xml_buffer_writer();
       document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
       return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging);
     }
@@ -112,7 +122,7 @@ v14::XmlDoc *thiscall_(ReadFromBuffer14_hook, const v14::XmlReader *thisptr, con
 #ifdef _DEBUG
       if ( xmlFileNameForLogging && *xmlFileNameForLogging ) {
         const auto temp = patches_path().parent_path().append(xorstr_(L"temp")).append(xmlFileNameForLogging);
-        document.save_file(temp.c_str(), xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
+        document.save_file(temp.c_str(), xorstr_(L""), pugi::format_raw | pugi::format_no_declaration, res.encoding);
       }
 #endif
 
@@ -121,13 +131,13 @@ v14::XmlDoc *thiscall_(ReadFromBuffer14_hook, const v14::XmlReader *thisptr, con
 #ifdef _DEBUG
       if ( addons.empty() && xmlFileNameForLogging && *xmlFileNameForLogging ) {
         const auto temp_patched = patches_path().parent_path().append(xorstr_(L"temp_patched")).append(xmlFileNameForLogging);
-        document.save_file(temp_patched.c_str(), xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
+        document.save_file(temp_patched.c_str(), xorstr_(L""), pugi::format_raw | pugi::format_no_declaration, res.encoding);
       }
 #endif
 
       if ( !addons.empty() && res.encoding == pugi::encoding_utf16_le ) {
         auto writer = xml_wstring_writer();
-        document.save(writer, xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
+        document.save(writer, xorstr_(L""), pugi::format_raw | pugi::format_no_declaration, res.encoding);
 
         for ( const auto &addon : addons )
           ReplaceStringInPlace(writer.result, addon.first, addon.second);
