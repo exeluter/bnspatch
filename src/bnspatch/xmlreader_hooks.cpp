@@ -92,16 +92,17 @@ v13::XmlDoc *thiscall_(ReadFromBuffer13_hook, const v13::XmlReader *thisptr, con
 
       if ( !addons.empty() && res.encoding == pugi::encoding_utf16_le ) {
         auto writer = xml_wstring_writer();
-        document.save(writer, xorstr_(L""), pugi::format_raw | pugi::format_no_declaration, res.encoding);
+        document.save(writer, xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
 
         for ( const auto &addon : addons )
           ReplaceStringInPlace(writer.result, addon.first, addon.second);
         return g_pfnReadFromBuffer13(thisptr, reinterpret_cast<unsigned char *>(writer.result.data()), SafeInt(writer.result.size()) * sizeof(wchar_t), xmlFileNameForLogging);
+      } else {
+        // don't apply addons
+        auto writer = xml_buffer_writer();
+        document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
+        return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging);
       }
-      // don't apply addons
-      auto writer = xml_buffer_writer();
-      document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
-      return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging);
     }
   }
   return g_pfnReadFromBuffer13(thisptr, mem, size, xmlFileNameForLogging);
@@ -137,16 +138,17 @@ v14::XmlDoc *thiscall_(ReadFromBuffer14_hook, const v14::XmlReader *thisptr, con
 
       if ( !addons.empty() && res.encoding == pugi::encoding_utf16_le ) {
         auto writer = xml_wstring_writer();
-        document.save(writer, xorstr_(L""), pugi::format_raw | pugi::format_no_declaration, res.encoding);
+        document.save(writer, xorstr_(L""), pugi::format_default | pugi::format_no_declaration, res.encoding);
 
         for ( const auto &addon : addons )
           ReplaceStringInPlace(writer.result, addon.first, addon.second);
         return g_pfnReadFromBuffer14(thisptr, reinterpret_cast<unsigned char *>(writer.result.data()), SafeInt(writer.result.size()) * sizeof(wchar_t), xmlFileNameForLogging, xmlPieceReader);
+      } else {
+        // don't apply addons
+        auto writer = xml_buffer_writer();
+        document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
+        return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
       }
-      // don't apply addons
-      auto writer = xml_buffer_writer();
-      document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
-      return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xmlFileNameForLogging, xmlPieceReader);
     }
   }
   return g_pfnReadFromBuffer14(thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);

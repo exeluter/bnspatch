@@ -150,6 +150,7 @@ pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size
     auto decl = document.prepend_child(pugi::node_declaration);
     decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
     decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
+    document.append_child(pugi::node_pcdata).set_value(xorstr_(L"\n"));
     document.append_child(pugi::node_comment).set_value(document_name.c_str());
     document.append_child(pugi::node_pcdata).set_value(xorstr_(L"\n"));
     deserialize_element(document, reader);
