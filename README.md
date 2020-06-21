@@ -11,17 +11,43 @@
 </p>
 
 ### Disclaimer
-This project is for educational purposes only. There is no support; attempts to
-contact me for support will be ignored. Using this on a live server is against
-the Blade & Soul [Rules of Conduct][0.0] and [User Agreement][0.1]. I accept no
-responsibility should you manage to get yourself banned while using it.
+This project is for educational purposes only.
+Using this on a live server is against the Blade & Soul [Rules of Conduct][0.0]
+and [User Agreement][0.1]. I accept no responsibility should you manage to get yourself
+banned while using it.
 
 [0.0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [0.1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
 
-## Features
-You can check out the [**projects**](https://github.com/zeffy/bnspatch/projects)
-page for an overview of planned and already implemented features.
+## Basic features
+
+- [x] Enables multi-client.
+- [x] Prevents `aegisty.bin`/`aegisty64.bin` from loading.
+- [x] Disable WinLicense(R) protections:
+  - [x] "Detect File/Registry Monitors"
+  - [x] "Anti-Debugger Detection"
+  - [x] "Disallow execution under VMware/Virtual PC"
+
+## XML patches at run-time
+
+bnspatch loads `%userprofile%\Documents\BnS\patches.xml`, which can be used to apply various types of
+transformations to any `.xml` file loaded by Blade & Soul.
+
+**There is also support for BnS Buddy-style addons (`.patch` files). Just place them in `%userprofile%\Documents\BnS\addons`.**
+
+The `patches.xml` format isn't documented yet but you can read the code and figure it out,
+or look at other peoples examples. It implements most of pugixml's relevant API for element and attribute nodes.
+
+For an example of basic and advanced usage, see [`patches.xml`][1.0] at the root of the repository,
+or the extra files in the [`contrib`][1.1] folder.
+
+For more info, refer to [`xmlpatch.cpp`][1.2], [XML Path Language (XPath) Version 1.0][1.3], and the [pugixml manual][1.4].
+
+[1.0]: https://github.com/bnsmodpolice/bnspatch/blob/master/patches.xml
+[1.1]: https://github.com/bnsmodpolice/bnspatch/tree/master/contrib
+[1.2]: https://github.com/bnsmodpolice/bnspatch/blob/master/src/bnspatch/xmlpatch.cpp
+[1.3]: https://www.w3.org/TR/1999/REC-xpath-19991116/
+[1.4]: https://pugixml.org/docs/manual.html
 
 ## FAQ
 
@@ -32,27 +58,25 @@ Yes it does! In fact, I highly recommend using it.
 No. Each component works individually and may be used together or separately.
 
 #### Q: Isn't this unsafe compared to BnS Buddy?
-No. I've been using some variant of it since I started development in
+Not really. I've been using some variant of it since I started development in
 2017, and have never been warned nor banned, and neither has anyone else I
 shared it with.
 
 #### Q: Is this compatible with BnS Buddy?
 There is some overlapping functionality, but yes. Just understand that `patches.xml` will
-always take priority over conflicting modifications made by BnS Buddy add-ons.
+always take priority over conflicting modifications made by BnS Buddy add-ons. 
 
-[1.0]: https://github.com/megai2/d912pxy
+[2.0]: https://github.com/megai2/d912pxy
 
 ## Acknowledgements
 - [microsoft/**Detours**][2.0] (MIT license)
 - [microsoft/**GSL**][2.1] (MIT license)
-- [ocornut/**imgui**][2.2] (MIT license)
-- [zeux/**pugixml**][2.3] (MIT license)
-- [processhacker/**phnt**][2.4] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][2.5] (Apache-2.0 license)
+- [zeux/**pugixml**][2.2] (MIT license)
+- [processhacker/**phnt**][2.3] (CC-BY-4.0 license)
+- [JustasMasiulis/**xorstr**][2.4] (Apache-2.0 license)
 
-[2.0]: https://github.com/microsoft/Detours
-[2.1]: https://github.com/microsoft/GSL
-[2.2]: https://github.com/ocornut/imgui
-[2.3]: https://github.com/zeux/pugixml
-[2.4]: https://github.com/processhacker/phnt
-[2.5]: https://github.com/JustasMasiulis/xorstr
+[3.0]: https://github.com/microsoft/Detours
+[3.1]: https://github.com/microsoft/GSL
+[3.2]: https://github.com/zeux/pugixml
+[3.3]: https://github.com/processhacker/phnt
+[3.4]: https://github.com/JustasMasiulis/xorstr
