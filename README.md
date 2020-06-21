@@ -29,7 +29,7 @@ banned while using it.
   - [x] "Anti-Debugger Detection"
   - [x] "Disallow execution under VMware/Virtual PC"
 
-## XML patches at run-time
+### XML patches at run-time
 
 bnspatch loads `%userprofile%\Documents\BnS\patches.xml`, which can be used to apply various types of
 transformations to any `.xml` file loaded by Blade & Soul.
