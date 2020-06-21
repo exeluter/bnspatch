@@ -70,11 +70,11 @@ always take priority over conflicting modifications made by BnS Buddy add-ons.
 [2.0]: https://github.com/megai2/d912pxy
 
 ## Acknowledgements
-- [microsoft/**Detours**][2.0] (MIT license)
-- [microsoft/**GSL**][2.1] (MIT license)
-- [zeux/**pugixml**][2.2] (MIT license)
-- [processhacker/**phnt**][2.3] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][2.4] (Apache-2.0 license)
+- [microsoft/**Detours**][3.0] (MIT license)
+- [microsoft/**GSL**][3.1] (MIT license)
+- [zeux/**pugixml**][3.2] (MIT license)
+- [processhacker/**phnt**][3.3] (CC-BY-4.0 license)
+- [JustasMasiulis/**xorstr**][3.4] (Apache-2.0 license)
 
 [3.0]: https://github.com/microsoft/Detours
 [3.1]: https://github.com/microsoft/GSL
