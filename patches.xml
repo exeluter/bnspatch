@@ -80,6 +80,10 @@
       <select-node query="./group[@name='boss']/option[@name='breaker-warning-countdown-start-time']/@value">
         <set-value value="1800" />
       </select-node>
+      <!-- set auto-kick disconnected party member to 15 minutes -->
+      <select-node query="./group[@name='party']/option[@name='clear-logout-member-second']/@value">
+        <set-value value="900" />
+      </select-node>
     </select-node>
   </patch>
 </patches>
