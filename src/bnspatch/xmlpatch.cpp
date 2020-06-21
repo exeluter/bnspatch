@@ -225,9 +225,6 @@ const std::filesystem::path &documents_path()
 
 std::vector<std::pair<std::wstring, std::wstring>> get_relevant_addons(const wchar_t *xml)
 {
-  if ( !xml || !*xml )
-    return {};
-
   auto relevant_addons = std::vector<std::pair<std::wstring, std::wstring>>();
   auto filename = std::filesystem::path(xml).filename();
   for ( const auto &addon : get_or_load_addons() ) {
