@@ -22,7 +22,7 @@ void __cdecl DllLoadedNotification(const struct DllNotificationData *Data, void 
 {
   const wchar_t *original_filename;
   if ( GetModuleVersionInfo(Data->BaseOfImage, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)original_filename) >= 0 ) {
-    switch ( fnv1a::make_hash(original_filename, towupper) ) {
+    switch ( fnv1a::make_hash(original_filename, fnv1a::ascii_toupper) ) {
       case L"XmlReader.dll"_fnv1au: {
         const auto module = static_cast<pe::module *>(Data->BaseOfImage);
         auto const pfnGetInterfaceVersion = reinterpret_cast<wchar_t const *(__cdecl *)()>(module->function(xorstr_("GetInterfaceVersion")));
@@ -33,15 +33,15 @@ void __cdecl DllLoadedNotification(const struct DllNotificationData *Data, void 
           Data->Detours->UpdateThread(NtCurrentThread());
           auto xmlReader = std::unique_ptr<void, decltype(pfnDestroyXmlReader)>(pfnCreateXmlReader(), pfnDestroyXmlReader);
           auto vfptr = *reinterpret_cast<void ***>(xmlReader.get());
-          switch ( _wtoi(pfnGetInterfaceVersion()) ) {
-            case 13:
+          switch ( fnv1a::make_hash(pfnGetInterfaceVersion()) ) {
+            case L"13"_fnv1a:
               g_pfnReadFromFile13 = reinterpret_cast<decltype(g_pfnReadFromFile13)>(vfptr[6]);
               Data->Detours->Attach(&(PVOID &)g_pfnReadFromFile13, ReadFromFile13_hook);
               g_pfnReadFromBuffer13 = reinterpret_cast<decltype(g_pfnReadFromBuffer13)>(vfptr[7]);
               Data->Detours->Attach(&(PVOID &)g_pfnReadFromBuffer13, ReadFromBuffer13_hook);
               break;
-            case 14:
-            case 15: // no known difference between interface 14 and 15...
+            case L"14"_fnv1a:
+            case L"15"_fnv1a: // no known difference between interface 14 and 15...
               g_pfnReadFromFile14 = reinterpret_cast<decltype(g_pfnReadFromFile14)>(vfptr[6]);
               Data->Detours->Attach(&(PVOID &)g_pfnReadFromFile14, ReadFromFile14_hook);
               g_pfnReadFromBuffer14 = reinterpret_cast<decltype(g_pfnReadFromBuffer14)>(vfptr[7]);
@@ -50,6 +50,7 @@ void __cdecl DllLoadedNotification(const struct DllNotificationData *Data, void 
           }
           Data->Detours->TransactionCommit();
         }
+        break;
       }
     }
   }
@@ -61,7 +62,7 @@ void __cdecl InitNotification(const struct InitNotificationData *Data, void *Con
   if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) < 0 )
     return;
 
-  switch ( fnv1a::make_hash(OriginalFilename, towupper) ) {
+  switch ( fnv1a::make_hash(OriginalFilename, fnv1a::ascii_toupper) ) {
     case L"Client.exe"_fnv1au:
     case L"BNSR.exe"_fnv1au:
       NtCurrentPeb()->BeingDebugged = FALSE;

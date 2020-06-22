@@ -67,7 +67,7 @@ NTSTATUS NTAPI NtCreateFile_hook(
 {
 #ifdef _M_IX86
   if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
-    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), towupper) ) {
+    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), fnv1a::ascii_toupper) ) {
       case L"\\\\.\\SICE"_fnv1au:
       case L"\\\\.\\SIWVID"_fnv1au:
       case L"\\\\.\\NTICE"_fnv1au:
@@ -116,7 +116,7 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   ULONG OpenOptions)
 {
   if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
-    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), towupper) ) {
+    switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), fnv1a::ascii_toupper) ) {
       case L"Software\\Wine"_fnv1au:
       case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
         return STATUS_OBJECT_NAME_NOT_FOUND;
@@ -258,7 +258,7 @@ HWND WINAPI FindWindowA_hook(
   LPCSTR lpWindowName)
 {
   if ( lpClassName ) {
-    switch ( fnv1a::make_hash(lpClassName, toupper) ) {
+    switch ( fnv1a::make_hash(lpClassName, fnv1a::ascii_toupper) ) {
 #ifdef _M_IX86
       case "OLLYDBG"_fnv1au:
       case "GBDYLLO"_fnv1au:

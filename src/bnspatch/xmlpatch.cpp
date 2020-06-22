@@ -110,7 +110,7 @@ const std::filesystem::path &addons_path()
   std::call_once(once_flag, [](std::filesystem::path &path) {
     const wchar_t *OriginalFilename;
     if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) >= 0 ) {
-      switch ( fnv1a::make_hash(OriginalFilename, towupper) ) {
+      switch ( fnv1a::make_hash(OriginalFilename, fnv1a::ascii_toupper) ) {
         case L"Client.exe"_fnv1au:
           path = documents_path() / xorstr_(L"BnS\\addons");
           break;
@@ -296,7 +296,7 @@ const pugi::xml_document &get_or_load_patches()
 void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &path, std::unordered_set<fnv1a::type> &include_guard)
 {
   pugi::xml_document document;
-  if ( include_guard.emplace(fnv1a::make_hash(path.c_str(), towupper)).second
+  if ( include_guard.emplace(fnv1a::make_hash(path.c_str(), fnv1a::ascii_toupper)).second
     && try_load_file(document, path, pugi::parse_default | pugi::parse_pi)
     && !_wcsicmp(document.document_element().name(), xorstr_(L"patches")) ) {
 
@@ -353,7 +353,7 @@ const std::filesystem::path &patches_path()
 
     const wchar_t *OriginalFilename;
     if ( GetModuleVersionInfo(nullptr, xorstr_(L"\\StringFileInfo\\*\\OriginalFilename"), &(LPCVOID &)OriginalFilename) >= 0 ) {
-      switch ( fnv1a::make_hash(OriginalFilename, towupper) ) {
+      switch ( fnv1a::make_hash(OriginalFilename, fnv1a::ascii_toupper) ) {
         case L"Client.exe"_fnv1au:
           path = documents_path() / xorstr_(L"BnS\\patches.xml");
           return;
@@ -375,7 +375,7 @@ void process_patch(
 {
   for ( const auto &current : children ) {
     if ( ctx.attribute() ) {
-      switch ( fnv1a::make_hash(current.name(), towupper) ) {
+      switch ( fnv1a::make_hash(current.name(), fnv1a::ascii_toupper) ) {
         case L"parent"_fnv1au: // ok
           process_patch(ctx.parent(), current.children(), saved_nodes);
           break;
@@ -415,7 +415,7 @@ void process_patch(
           return;
       }
     } else {
-      switch ( fnv1a::make_hash(current.name(), towupper) ) {
+      switch ( fnv1a::make_hash(current.name(), fnv1a::ascii_toupper) ) {
         case L"parent"_fnv1au: // ok
           process_patch(ctx.parent(), current.children(), saved_nodes);
           break;
