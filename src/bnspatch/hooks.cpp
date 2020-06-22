@@ -28,7 +28,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
-  return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
+  return g_pfnLdrGetDllHandle(DllPath, DllCharacteristics, DllName, DllHandle);
 }
 #endif
 
