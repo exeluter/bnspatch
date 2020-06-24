@@ -80,7 +80,7 @@ Since there seems to be some confusion about the technical differences, I want t
   
 - **Addons (\*.patch)**: Legacy BnS Buddy-style addons, what you're probably already used to. They are only capable of rudimentary searching & replacing text in .xml files. These belong in `%userprofile%\Documents\BnS\addons`
 
-- **Patches (\*.xml)**: This is my own format, similar to addons but much more powerful, though there is a steeper learning curve. The location is configurable, but generally you put patches.xml in %userprofile%\Documents\BnS, and any extra patches (if applicable) in %userprofile%\Documents\BnS\patches.
+- **Patches (\*.xml)**: This is my own format, similar to addons but much more powerful, though there is a steeper learning curve. The location is configurable, but generally unless you know exactly what you're doing, you'll want to put `patches.xml` in `%userprofile%\Documents\BnS`, and any extra patches (if applicable) in `%userprofile%\Documents\BnS\patches`.
 
 #### Q: I have a question that wasn't answered here!
 Join the Mod Police Discord server and ask!
