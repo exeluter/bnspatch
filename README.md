@@ -20,6 +20,10 @@ banned while using it.
 [0.0]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-rules-of-conduct.php
 [0.1]: https://us.ncsoft.com/en/legal/user-agreements/blade-and-soul-user-agreement.php
 
+## Download
+
+### **https://mega.nz/folder/uWRx1awS#BAtEoqx83WigGCo0EcS6yQ**
+
 ## Basic features
 
 - [x] Enables multi-client.
@@ -64,10 +68,25 @@ Not really. I've been using some variant of it since I started development in
 shared it with.
 
 #### Q: Is this compatible with BnS Buddy?
-There is some overlapping functionality, but yes. Just understand that `patches.xml` will
-always take priority over conflicting modifications made by BnS Buddy add-ons. 
+There is some overlapping functionality, but yes. Just understand that changes made by bnspatch will
+always take priority over conflicting changes made by BnS Buddy.
+
+#### Q: Plugins and addons and patches, oh my!
+Since there seems to be some confusion about the technical differences, I want to try and clear it up:
+
+- **Plugins (\*.dll)**: These are files that make changes to the game's code in some way. bnspatch is a plugin. They are loaded by my `winmm.dll` ([pluginloader][2.1]). They belong in:
+  * `%programfiles(x86)%\NCSOFT\BNS\bin\plugins`
+  * `%programfiles(x86)%\NCSOFT\BNS\bin64\plugins`
+  
+- **Addons (\*.patch)**: Legacy BnS Buddy-style addons, what you're probably already used to. They are only capable of rudimentary searching & replacing text in .xml files. These belong in `%userprofile%\Documents\BnS\addons`
+
+- **Patches (\*.xml)**: This is my own format, similar to addons but much more powerful, though there is a steeper learning curve. The location is configurable, but generally you put patches.xml in %userprofile%\Documents\BnS, and any extra patches (if applicable) in %userprofile%\Documents\BnS\patches.
+
+#### Q: I have a question that wasn't answered here!
+Join the Mod Police Discord server and ask!
 
 [2.0]: https://github.com/megai2/d912pxy
+[2.1]: https://github.com/bnsmodpolice/pluginloader
 
 ## Acknowledgements
 - [microsoft/**Detours**][3.0] (MIT license)
