@@ -258,11 +258,11 @@ std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml)
   return relevant_patches;
 }
 
-void apply_patches(pugi::xml_document &src, const std::vector<pugi::xml_node> &patches)
+void apply_patches(pugi::xml_document &src, const pugi::xml_encoding encoding, const std::vector<pugi::xml_node> &patches)
 {
   for ( const auto &patch : patches ) {
     std::unordered_map<fnv1a::type, pugi::xml_node> saved_nodes;
-    patch_node(src, patch.children(), saved_nodes);
+    patch_node(src, encoding, src, patch.children(), saved_nodes);
   }
 }
 
@@ -282,7 +282,7 @@ const pugi::xml_document &get_or_load_patches()
     auto include_guard = std::unordered_set<fnv1a::type>();
     preprocess(document, patches_path(), include_guard);
 #ifdef _DEBUG
-    document.save_file(patches_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), L"  ");
+    document.save_file(patches_path().parent_path().append(xorstr_(L"preprocessed.xml")).c_str(), xorstr_(L"  "));
     const auto parent_path = patches_path().parent_path();
     std::filesystem::create_directories(parent_path / xorstr_(L"temp"));
     std::filesystem::create_directories(parent_path / xorstr_(L"temp_patched"));
@@ -367,6 +367,8 @@ const std::filesystem::path &patches_path()
 }
 
 void patch_node(
+  pugi::xml_document &doc,
+  const pugi::xml_encoding encoding,
   const pugi::xpath_node &ctx,
   const pugi::xml_object_range<pugi::xml_node_iterator> &children,
   std::unordered_map<fnv1a::type, pugi::xml_node> &saved_nodes)
@@ -375,7 +377,7 @@ void patch_node(
     if ( ctx.attribute() ) {
       switch ( fnv1a::make_hash(current.name(), fnv1a::ascii_toupper) ) {
         case L"parent"_fnv1au: // ok
-          patch_node(ctx.parent(), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.parent(), current.children(), saved_nodes);
           break;
 
         case L"set-name"_fnv1au: // ok
@@ -387,25 +389,25 @@ void patch_node(
           break;
 
         case L"previous-attribute"_fnv1au: // ok
-          patch_node(pugi::xpath_node(ctx.attribute().previous_attribute(), ctx.parent()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(ctx.attribute().previous_attribute(), ctx.parent()), current.children(), saved_nodes);
           break;
 
         case L"next-attribute"_fnv1au: // ok
-          patch_node(pugi::xpath_node(ctx.attribute().next_attribute(), ctx.parent()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(ctx.attribute().next_attribute(), ctx.parent()), current.children(), saved_nodes);
           break;
 
         case L"insert-attribute-before"_fnv1au: { // ok
           auto attribute = ctx.node().insert_attribute_before(current.attribute(xorstr_(L"name")).value(), ctx.attribute());
           if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
-          patch_node(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
         }
         case L"insert-attribute-after"_fnv1au: { // ok
           auto attribute = ctx.node().insert_attribute_after(current.attribute(xorstr_(L"name")).value(), ctx.attribute());
           if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
-          patch_node(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
         }
         case L"remove"_fnv1au: // ok
@@ -414,100 +416,117 @@ void patch_node(
       }
     } else {
       switch ( fnv1a::make_hash(current.name(), fnv1a::ascii_toupper) ) {
+        case L"save-file"_fnv1au:
+          if ( ctx.node().type() == pugi::node_document )
+            doc.save_file(current.attribute(xorstr_(L"path")).value(), xorstr_(L""), pugi::format_default | pugi::format_no_declaration, encoding);
+          break;
+
+        case L"load-file"_fnv1au:
+          if ( ctx.node().type() == pugi::node_document )
+            doc.load_file(current.attribute(xorstr_(L"path")).value(), pugi::parse_full);
+          break;
+
+        case L"load-buffer"_fnv1au:
+          if ( ctx.node().type() == pugi::node_document )
+            doc.load_string(current.text().get());
+          break;
+
+        case L"reset"_fnv1au:
+          if ( ctx.node().type() == pugi::node_document )
+            doc.reset();
+          break;
+
         case L"parent"_fnv1au: // ok
-          patch_node(ctx.parent(), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.parent(), current.children(), saved_nodes);
           break;
 
         case L"select-node"_fnv1au: // ok
-          patch_node(ctx.node().select_node(current.attribute(xorstr_(L"query")).value()), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().select_node(current.attribute(xorstr_(L"query")).value()), current.children(), saved_nodes);
           break;
 
         case L"select-nodes"_fnv1au: // ok
           for ( const auto &node : ctx.node().select_nodes(current.attribute(xorstr_(L"query")).value()) )
-            patch_node(node, current.children(), saved_nodes);
+            patch_node(doc, encoding, node, current.children(), saved_nodes);
           break;
 
         case L"prepend-attribute"_fnv1au: { // ok
           auto attribute = ctx.node().prepend_attribute(current.attribute(xorstr_(L"name")).value());
           if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
-          patch_node(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
         }
         case L"append-attribute"_fnv1au: { // ok
           auto attribute = ctx.node().append_attribute(current.attribute(xorstr_(L"name")).value());
           if ( const auto value = current.attribute(xorstr_(L"value")) )
             attribute.set_value(value.value());
-          patch_node(pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(attribute, ctx.node()), current.children(), saved_nodes);
           break;
         }
         case L"prepend-child"_fnv1au: // ok
-          patch_node(ctx.node().prepend_child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().prepend_child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
           break;
 
-        case L"append-buffer"_fnv1au: { // ok
-          size_t size;
-          const auto text = current.text();
-          if ( SUCCEEDED(StringCbLengthW(text.get(), STRSAFE_MAX_CCH * sizeof(wchar_t), &size)) )
-            ctx.node().append_buffer(text.get(), size, pugi::parse_default | pugi::parse_declaration | pugi::parse_fragment | pugi::parse_trim_pcdata, pugi::encoding_utf16);
+        case L"append-buffer"_fnv1au:  // ok
+          ctx.node().append_buffer(current.text().get(), wcslen(current.text().get()) * sizeof(wchar_t), pugi::parse_full | pugi::parse_fragment, pugi::encoding_utf16);
           break;
-        }
+
         case L"append-child"_fnv1au: // ok
-          patch_node(ctx.node().append_child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().append_child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
           break;
 
         case L"prepend-copy"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(ctx.node().prepend_copy(it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, ctx.node().prepend_copy(it->second), current.children(), saved_nodes);
           break;
 
         case L"append-copy"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(ctx.node().append_copy(it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, ctx.node().append_copy(it->second), current.children(), saved_nodes);
           break;
 
         case L"prepend-move"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(ctx.node().prepend_move(it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, ctx.node().prepend_move(it->second), current.children(), saved_nodes);
           break;
 
         case L"append-move"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(ctx.node().append_move(it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, ctx.node().append_move(it->second), current.children(), saved_nodes);
           break;
 
         case L"attribute"_fnv1au: // ok
-          patch_node(pugi::xpath_node(ctx.node().attribute(current.attribute(xorstr_(L"name")).value()), ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(ctx.node().attribute(current.attribute(xorstr_(L"name")).value()), ctx.node()), current.children(), saved_nodes);
           break;
 
         case L"attributes"_fnv1au: // ok
           for ( const auto &attr : ctx.node().attributes() )
-            patch_node(pugi::xpath_node(attr, ctx.node()), current.children(), saved_nodes);
+            patch_node(doc, encoding, pugi::xpath_node(attr, ctx.node()), current.children(), saved_nodes);
           break;
 
         case L"child"_fnv1au: // ok
-          patch_node(ctx.node().child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().child(current.attribute(xorstr_(L"name")).value()), current.children(), saved_nodes);
           break;
 
         case L"children"_fnv1au: // ok
           if ( const auto name = current.attribute(xorstr_(L"name")) ) {
             for ( const auto &child : ctx.node().children(name.value()) )
-              patch_node(child, current.children(), saved_nodes);
+              patch_node(doc, encoding, child, current.children(), saved_nodes);
           } else {
             for ( const auto &child : ctx.node().children() )
-              patch_node(child, current.children(), saved_nodes);
+              patch_node(doc, encoding, child, current.children(), saved_nodes);
           }
           break;
 
         case L"find-child-by-attribute"_fnv1au: // ok
           if ( const auto name = current.attribute(xorstr_(L"name")) ) {
-            patch_node(ctx.node().find_child_by_attribute(
+            patch_node(doc, encoding, ctx.node().find_child_by_attribute(
               name.value(),
               current.attribute(xorstr_(L"attribute-name")).value(),
               current.attribute(xorstr_(L"attribute-value")).value()),
               current.children(), saved_nodes);
           } else {
-            patch_node(ctx.node().find_child_by_attribute(
+            patch_node(doc, encoding, ctx.node().find_child_by_attribute(
               current.attribute(xorstr_(L"attribute-name")).value(),
               current.attribute(xorstr_(L"attribute-value")).value()),
               current.children(), saved_nodes);
@@ -515,55 +534,55 @@ void patch_node(
           break;
 
         case L"first-attribute"_fnv1au: // ok
-          patch_node(pugi::xpath_node(ctx.node().first_attribute(), ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(ctx.node().first_attribute(), ctx.node()), current.children(), saved_nodes);
           break;
 
         case L"last-attribute"_fnv1au: // ok
-          patch_node(pugi::xpath_node(ctx.node().last_attribute(), ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, pugi::xpath_node(ctx.node().last_attribute(), ctx.node()), current.children(), saved_nodes);
           break;
 
         case L"first-child"_fnv1au: // ok
-          patch_node(ctx.node().first_child(), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().first_child(), current.children(), saved_nodes);
           break;
 
         case L"last-child"_fnv1au: // ok
-          patch_node(ctx.node().last_child(), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().last_child(), current.children(), saved_nodes);
           break;
 
         case L"first-element-by-path"_fnv1au: // ok
-          patch_node(ctx.node().first_element_by_path(current.attribute(xorstr_(L"path")).value()), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().first_element_by_path(current.attribute(xorstr_(L"path")).value()), current.children(), saved_nodes);
           break;
 
         case L"insert-sibling-after"_fnv1au: // ok
-          patch_node(ctx.node().parent().insert_child_after(current.attribute(xorstr_(L"name")).value(), ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().parent().insert_child_after(current.attribute(xorstr_(L"name")).value(), ctx.node()), current.children(), saved_nodes);
           break;
 
         case L"insert-sibling-before"_fnv1au: // ok
-          patch_node(ctx.node().parent().insert_child_before(current.attribute(xorstr_(L"name")).value(), ctx.node()), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().parent().insert_child_before(current.attribute(xorstr_(L"name")).value(), ctx.node()), current.children(), saved_nodes);
           break;
 
         case L"insert-copy-after"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 
         case L"insert-copy-before"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(it->second.parent().insert_copy_before(ctx.node(), it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, it->second.parent().insert_copy_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 
         case L"insert-move-after"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(it->second.parent().insert_move_after(ctx.node(), it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, it->second.parent().insert_move_after(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 
         case L"insert-move-before"_fnv1au: // ok
           if ( const auto it = saved_nodes.find(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper)); it != saved_nodes.end() )
-            patch_node(it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
+            patch_node(doc, encoding, it->second.parent().insert_move_before(ctx.node(), it->second), current.children(), saved_nodes);
           break;
 
         case L"next-sibling"_fnv1au: // ok
-          patch_node(ctx.node().next_sibling(), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().next_sibling(), current.children(), saved_nodes);
           break;
 
         case L"remove-attribute"_fnv1au: // ok
@@ -583,7 +602,7 @@ void patch_node(
           break;
 
         case L"root"_fnv1au: // ok
-          patch_node(ctx.node().root(), current.children(), saved_nodes);
+          patch_node(doc, encoding, ctx.node().root(), current.children(), saved_nodes);
           break;
 
         case L"set-name"_fnv1au: // ok

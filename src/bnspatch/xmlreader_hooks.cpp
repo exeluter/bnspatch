@@ -45,11 +45,11 @@ v13::XmlDoc *thiscall_(ReadFromFile13_hook, const v13::XmlReader *thisptr, const
   if ( !xml )
     return nullptr;
 
-  auto queue = get_relevant_patches(xml);
-  if ( !queue.empty() ) {
+  auto patches = get_relevant_patches(xml);
+  if ( !patches.empty() ) {
     pugi::xml_document document;
     if ( const auto res = document.load_file(xml, pugi::parse_full) ) {
-      patch_xml(document, queue);
+      apply_patches(document, res.encoding, patches);
       xml_buffer_writer writer;
       document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
       return g_pfnReadFromBuffer13(thisptr, writer.result.data(), SafeInt(writer.result.size()), xml);
@@ -64,11 +64,11 @@ v14::XmlDoc *thiscall_(ReadFromFile14_hook, const v14::XmlReader *thisptr, const
   if ( !xml )
     return nullptr;
 
-  auto queue = get_relevant_patches(xml);
-  if ( !queue.empty() ) {
+  auto patches = get_relevant_patches(xml);
+  if ( !patches.empty() ) {
     pugi::xml_document document;
     if ( const auto res = document.load_file(xml, pugi::parse_full) ) {
-      patch_xml(document, queue);
+      apply_patches(document, res.encoding, patches);
       xml_buffer_writer writer;
       document.save(writer, nullptr, pugi::format_raw | pugi::format_no_declaration, res.encoding);
       return g_pfnReadFromBuffer14(thisptr, writer.result.data(), SafeInt(writer.result.size()), xml, xmlPieceReader);
@@ -89,7 +89,7 @@ v13::XmlDoc *thiscall_(ReadFromBuffer13_hook, const v13::XmlReader *thisptr, con
     if ( !patches.empty() || !addons.empty() ) {
       pugi::xml_document document;
       if ( const auto res = deserialize_document(mem, size, document) ) {
-        patch_xml(document, patches);
+        apply_patches(document, res.encoding, patches);
 
         if ( !addons.empty() && res.encoding == pugi::encoding_utf16_le ) {
           auto writer = xml_wstring_writer();
@@ -130,7 +130,7 @@ v14::XmlDoc *thiscall_(ReadFromBuffer14_hook, const v14::XmlReader *thisptr, con
         }
 #endif
 
-        patch_xml(document, patches);
+        apply_patches(document, res.encoding, patches);
 
 #ifdef _DEBUG
         if ( addons.empty() && xmlFileNameForLogging && *xmlFileNameForLogging ) {

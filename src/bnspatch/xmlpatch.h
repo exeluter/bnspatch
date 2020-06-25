@@ -26,11 +26,13 @@ void deserialize_text(pugi::xml_node &parent, binary_reader &reader);
 const std::filesystem::path &documents_path();
 std::vector<std::pair<std::wstring, std::wstring>> get_relevant_addons(const wchar_t *xml);
 std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml);
-void patch_xml(pugi::xml_document &src, const std::vector<pugi::xml_node> &patches);
+void apply_patches(pugi::xml_document &src, const pugi::xml_encoding, const std::vector<pugi::xml_node> &patches);
 const pugi::xml_document &get_or_load_patches();
 void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &path, std::unordered_set<fnv1a::type> &include_guard);
 const std::filesystem::path &patches_path();
-void process_patch(
+void patch_node(
+  pugi::xml_document &doc,
+  const pugi::xml_encoding encoding,
   const pugi::xpath_node &ctx,
   const pugi::xml_object_range<pugi::xml_node_iterator> &children,
   std::unordered_map<fnv1a::type, pugi::xml_node> &saved_nodes);
