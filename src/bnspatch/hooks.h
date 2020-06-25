@@ -46,7 +46,6 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   ULONG OpenOptions);
 
-extern std::array<ULONG_PTR, 2> g_ReadOnlyAddresses;
 extern decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,

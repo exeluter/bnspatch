@@ -125,7 +125,6 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   return g_pfnNtOpenKeyEx(KeyHandle, DesiredAccess, ObjectAttributes, OpenOptions);
 }
 
-std::array<ULONG_PTR, 2> g_ReadOnlyAddresses;
 decltype(&NtProtectVirtualMemory) g_pfnNtProtectVirtualMemory;
 NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   HANDLE ProcessHandle,
