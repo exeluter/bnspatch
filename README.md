@@ -22,7 +22,7 @@ banned while using it.
 
 ## Download
 
-### **https://mega.nz/folder/uWRx1awS#BAtEoqx83WigGCo0EcS6yQ**
+### **https://mega.nz/folder/WXhzUZ7Y#XzlqkPa8DU4X8xrILQDdZA**
 
 ## Basic features
 
