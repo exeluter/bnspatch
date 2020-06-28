@@ -21,12 +21,12 @@
 
 bool fast_wild_compare(const wchar_t *pWild, const wchar_t *pTame);
 
-inline bool fast_wild_compare(const std::filesystem::path &wild, const std::filesystem::path &tame)
+inline bool FastWildCompare(const std::filesystem::path &wild, const std::filesystem::path &tame)
 {
   return fast_wild_compare(wild.c_str(), tame.c_str());
 }
 
-inline bool fast_wild_compare(const wchar_t *pWild, const std::filesystem::path &tame)
+inline bool FastWildCompare(const wchar_t *pWild, const std::filesystem::path &tame)
 {
   return fast_wild_compare(pWild, tame.c_str());
 }

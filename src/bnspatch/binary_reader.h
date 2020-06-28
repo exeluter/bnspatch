@@ -30,7 +30,7 @@ public:
   }
 
   template <class T>
-  inline const T geta()
+  inline const T get_aligned()
   {
     static_assert(std::is_integral_v<T>);
 

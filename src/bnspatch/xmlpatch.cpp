@@ -24,6 +24,7 @@
 #include <pugixml.hpp>
 #include <wil/stl.h>
 #include <wil/win32_helpers.h>
+
 #include <xorstr.hpp>
 
 std::wstring &ReplaceStringInPlace(std::wstring &haystack,
@@ -47,7 +48,7 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
     auto ec = std::error_code();
     for ( const auto &entry : std::filesystem::directory_iterator(addons_path(), ec) ) {
       if ( entry.is_regular_file()
-        && fast_wild_compare(xorstr_(L"*.patch"), entry.path().filename()) ) {
+        && FastWildCompare(xorstr_(L"*.patch"), entry.path().filename()) ) {
         auto stream = std::wifstream(entry.path());
         stream.imbue(std::locale(stream.getloc(), new std::codecvt_utf8<wchar_t, 0x10ffff, std::consume_header>));
 
@@ -127,15 +128,15 @@ pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size
 {
   auto reader = binary_reader(mem, size);
 
-  if ( mem && size > 0x50 && reader.geta<int64_t>() == 0x424C534F42584D4Ci64 ) { // rest of the header doesn't need to be size-checked
-    const auto version = reader.geta<char>();
+  if ( mem && size > 0x50 && reader.get_aligned<int64_t>() == 0x424C534F42584D4Ci64 ) { // rest of the header doesn't need to be size-checked
+    const auto version = reader.get_aligned<char>();
     if ( version != 3i8 ) {
       const auto text = fmt::format(xorstr_(L"Unknown binary XML version: {:#x}"), version);
       MessageBoxW(nullptr, text.c_str(), xorstr_(L"bnspatch"), MB_ICONERROR | MB_OK);
       exit(1);
     }
 
-    const auto document_size = reader.geta<uint32_t>();
+    const auto document_size = reader.get_aligned<uint32_t>();
     if ( document_size != size ) {
       const auto text = fmt::format(xorstr_(L"Binary XML header size mismatch: {} != {}"), document_size, size);
       MessageBoxW(nullptr, text.c_str(), xorstr_(L"bnspatch"), MB_ICONERROR | MB_OK);
@@ -236,7 +237,7 @@ std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml)
 {
   auto relevant_patches = std::vector<pugi::xml_node>();
 
-  auto xml_path = std::filesystem::path(xml ? xml : L"");
+  auto xml_path = std::filesystem::path(xml);
   auto name = xorstr(L"patch");
   name.crypt();
   for ( const auto &patch : get_or_load_patches().document_element().children(name.get()) ) {
@@ -249,8 +250,8 @@ std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml)
     wchar_t *token = wcstok_s(str.get(), xorstr_(L";"), &next_token);
     while ( token ) {
       auto file = std::filesystem::path(token);
-      if ( fast_wild_compare(file, xml_path)
-        || fast_wild_compare(file, xml_path.filename()) )
+      if ( FastWildCompare(file, xml_path)
+        || FastWildCompare(file, xml_path.filename()) )
         relevant_patches.push_back(patch);
       token = wcstok_s(nullptr, xorstr_(L";"), &next_token);
     }
@@ -327,7 +328,7 @@ void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &pa
             auto ec = std::error_code();
             for ( const auto &it : std::filesystem::directory_iterator(filter.parent_path(), ec) ) {
               if ( it.is_regular_file()
-                && fast_wild_compare(filter.filename(), it.path().filename()) )
+                && FastWildCompare(filter.filename(), it.path().filename()) )
                 preprocess(patches_doc, it.path(), include_guard);
             }
           }

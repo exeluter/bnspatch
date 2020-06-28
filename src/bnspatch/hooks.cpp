@@ -7,6 +7,7 @@
 
 #include <ntapi/string.h>
 #include <fnv1a.h>
+
 #include <xorstr.hpp>
 
 #include "thread_local_lock.h"
@@ -98,8 +99,7 @@ NTSTATUS NTAPI NtCreateMutant_hook(
 {
   if ( ObjectAttributes && ObjectAttributes->ObjectName ) {
     const auto objectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName);
-    if ( objectName->starts_with(xorstr_(L"BnSGameClient"))
-      || objectName->starts_with(xorstr_(L"Global\\MtxNPG")) ) {
+    if ( objectName->starts_with(xorstr_(L"BnSGameClient")) ) {
       ObjectAttributes->ObjectName = nullptr;
       ObjectAttributes->Attributes &= ~OBJ_OPENIF;
       ObjectAttributes->RootDirectory = nullptr;
@@ -205,24 +205,24 @@ NTSTATUS NTAPI NtQuerySystemInformation_hook(
   PULONG ReturnLength)
 {
   switch ( SystemInformationClass ) {
-    case SystemProcessInformation:
     case SystemModuleInformation:
+      if ( SystemInformationLength < FIELD_OFFSET(RTL_PROCESS_MODULES, Modules) )
+        return STATUS_INFO_LENGTH_MISMATCH;
+      return STATUS_ACCESS_DENIED;
+
     case SystemModuleInformationEx:
+      if ( SystemInformationLength < sizeof(RTL_PROCESS_MODULE_INFORMATION_EX) )
+        return STATUS_INFO_LENGTH_MISMATCH;
       return STATUS_ACCESS_DENIED;
 
     case SystemKernelDebuggerInformation:
-    {
       if ( SystemInformationLength < sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION) )
         return STATUS_INFO_LENGTH_MISMATCH;
-
-      auto KernelDebuggerInformation = (PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation;
-      KernelDebuggerInformation->KernelDebuggerEnabled = FALSE;
-      KernelDebuggerInformation->KernelDebuggerNotPresent = TRUE;
-
+      ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerEnabled = FALSE;
+      ((PSYSTEM_KERNEL_DEBUGGER_INFORMATION)SystemInformation)->KernelDebuggerNotPresent = TRUE;
       if ( ReturnLength )
         *ReturnLength = sizeof(SYSTEM_KERNEL_DEBUGGER_INFORMATION);
       return STATUS_SUCCESS;
-    }
   }
   return g_pfnNtQuerySystemInformation(
     SystemInformationClass,
