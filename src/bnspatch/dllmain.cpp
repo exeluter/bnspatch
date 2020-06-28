@@ -86,26 +86,26 @@ void __cdecl InitNotification(const struct InitNotificationData *Data, void *Con
     case L"Client.exe"_fnv1au:
     case L"BNSR.exe"_fnv1au:
       NtCurrentPeb()->BeingDebugged = FALSE;
-      Data->Detours->TransactionBegin();
-      Data->Detours->UpdateThread(NtCurrentThread());
+      g_DetoursData->TransactionBegin();
+      g_DetoursData->UpdateThread(NtCurrentThread());
       if ( const auto module = pe::get_module(xorstr_(L"ntdll.dll")) ) {
 #ifdef _M_IX86
-        Data->Detours->Attach2(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
+        g_DetoursData->Attach2(module, xorstr_("LdrGetDllHandle"), &(PVOID &)g_pfnLdrGetDllHandle, &LdrGetDllHandle_hook);
 #endif
-        Data->Detours->Attach2(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
-        Data->Detours->Attach2(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
-        Data->Detours->Attach2(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
-        Data->Detours->Attach2(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
-        Data->Detours->Attach2(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
-        Data->Detours->Attach2(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
+        g_DetoursData->Attach2(module, xorstr_("LdrLoadDll"), &(PVOID &)g_pfnLdrLoadDll, &LdrLoadDll_hook);
+        g_DetoursData->Attach2(module, xorstr_("NtCreateFile"), &(PVOID &)g_pfnNtCreateFile, &NtCreateFile_hook);
+        g_DetoursData->Attach2(module, xorstr_("NtCreateMutant"), &(PVOID &)g_pfnNtCreateMutant, &NtCreateMutant_hook);
+        g_DetoursData->Attach2(module, xorstr_("NtOpenKeyEx"), &(PVOID &)g_pfnNtOpenKeyEx, &NtOpenKeyEx_hook);
+        g_DetoursData->Attach2(module, xorstr_("NtProtectVirtualMemory"), &(PVOID &)g_pfnNtProtectVirtualMemory, &NtProtectVirtualMemory_hook);
+        g_DetoursData->Attach2(module, xorstr_("NtQuerySystemInformation"), &(PVOID &)g_pfnNtQuerySystemInformation, &NtQuerySystemInformation_hook);
 #ifdef _M_X64
-        Data->Detours->Attach2(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
-        Data->Detours->Attach2(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
+        g_DetoursData->Attach2(module, xorstr_("NtQueryInformationProcess"), &(PVOID &)g_pfnNtQueryInformationProcess, &NtQueryInformationProcess_hook);
+        g_DetoursData->Attach2(module, xorstr_("NtSetInformationThread"), &(PVOID &)g_pfnNtSetInformationThread, &NtSetInformationThread_hook);
 #endif
       }
       if ( const auto module = pe::get_module(xorstr_(L"user32.dll")) )
-        Data->Detours->Attach2(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
-      Data->Detours->TransactionCommit();
+        g_DetoursData->Attach2(module, xorstr_("FindWindowA"), &(PVOID &)g_pfnFindWindowA, &FindWindowA_hook);
+      g_DetoursData->TransactionCommit();
       break;
   }
 }

@@ -62,22 +62,12 @@
       <select-node query="./group[@name='skill-training-room']/option[@name='retry-button-cool-time']/@value">
         <set-value value="0" />
       </select-node>
-      <select-node query="./group[@name='context']">
-        <!-- able to resurrect immediately after wipe -->
-        <select-node query="./option[@name='instantaneous-dead-context-delay']/@value">
-          <set-value value="0" />
-        </select-node>
-        <!-- able to gather chi immediately -->
-        <select-node query="./option[@name='exhaust-context-delay']/@value">
-          <set-value value="0" />
-        </select-node>
-      </select-node>
       <!-- show server delay period for 3 minutes -->
       <select-node query="./group[@name='latency']/option[@name='show-duration']/@value">
         <set-value value="180" />
       </select-node>
       <!-- show enrage timer for 30 minutes -->
-      <select-node query="./group[@name='boss']/option[@name='breaker-warning-countdown-start-time']/@value">
+      <select-node query="./group[@name='hud']/group[@name='boss']/option[@name='breaker-warning-countdown-start-time']/@value">
         <set-value value="1800" />
       </select-node>
       <!-- set auto-kick disconnected party member to 15 minutes -->
