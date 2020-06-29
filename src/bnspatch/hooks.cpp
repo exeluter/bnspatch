@@ -21,11 +21,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  static thread_local_lock mtx;
-  std::unique_lock lock(mtx, std::try_to_lock);
-
-  if ( lock.owns_lock()
-    && static_cast<ntapi::ustring *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
+  if ( static_cast<ntapi::ustring *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -40,14 +36,9 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  static thread_local_lock mtx;
-  std::unique_lock lock(mtx, std::try_to_lock);
-
-  if ( lock.owns_lock() ) {
-    if ( static_cast<ntapi::ustring *>(DllName)->istarts_with(xorstr_(L"aegisty")) ) {
-      *DllHandle = nullptr;
-      return STATUS_DLL_NOT_FOUND;
-    }
+  if ( static_cast<ntapi::ustring *>(DllName)->istarts_with(xorstr_(L"aegisty")) ) {
+    *DllHandle = nullptr;
+    return STATUS_DLL_NOT_FOUND;
   }
   return g_pfnLdrLoadDll(DllPath, DllCharacteristics, DllName, DllHandle);
 }
