@@ -2,9 +2,13 @@
 <patches>
   <patch file="system.config2.xml">
     <!-- enable ingame login -->
-    <select-node query="/config/option[@name='use-web-launching']/@value">
-      <set-value value="false" />
-    </select-node> 
+    <select-node query="/config/option[@name='region' and (@value='' or @value='NCWEST')]">
+      <root>
+        <select-node query="/config/option[@name='use-web-launching']/@value">
+          <set-value value="false" />
+        </select-node> 
+      </root>
+    </select-node>
   </patch>
   <patch file="release.config2.xml">
     <select-node query="/config">

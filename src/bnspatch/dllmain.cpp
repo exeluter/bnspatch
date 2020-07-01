@@ -23,15 +23,14 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 BOOL(WINAPI *g_pfnDllEntryPoint)(HINSTANCE, DWORD, LPVOID);
 BOOL WINAPI DllEntryPoint_hook(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
-  auto res = g_pfnDllEntryPoint(hInstance, fdwReason, lpvReserved);
-
+  const auto res = g_pfnDllEntryPoint(hInstance, fdwReason, lpvReserved);
   if ( res && fdwReason == DLL_PROCESS_ATTACH ) {
-    auto const GetInterfaceVersion = reinterpret_cast<const wchar_t *(__cdecl *)(void)>(GetProcAddress(hInstance, xorstr_("GetInterfaceVersion")));
-    auto const CreateXmlReader = reinterpret_cast<void *(__cdecl *)()>(GetProcAddress(hInstance, xorstr_("CreateXmlReader")));
-    auto const DestroyXmlReader = reinterpret_cast<void(__cdecl *)(void *)>(GetProcAddress(hInstance, xorstr_("DestroyXmlReader")));
+    g_DetoursData->TransactionBegin();
+    g_DetoursData->UpdateThread(NtCurrentThread());
+    const auto GetInterfaceVersion = reinterpret_cast<const wchar_t *(__cdecl *)(void)>(GetProcAddress(hInstance, xorstr_("GetInterfaceVersion")));
+    const auto CreateXmlReader = reinterpret_cast<void *(__cdecl *)()>(GetProcAddress(hInstance, xorstr_("CreateXmlReader")));
+    const auto DestroyXmlReader = reinterpret_cast<void(__cdecl *)(void *)>(GetProcAddress(hInstance, xorstr_("DestroyXmlReader")));
     if ( GetInterfaceVersion && CreateXmlReader && DestroyXmlReader ) {
-      g_DetoursData->TransactionBegin();
-      g_DetoursData->UpdateThread(NtCurrentThread());
       auto xmlReader = std::unique_ptr<void, decltype(DestroyXmlReader)>(CreateXmlReader(), DestroyXmlReader);
       auto vfptr = *reinterpret_cast<void ***>(xmlReader.get());
       switch ( fnv1a::make_hash(GetInterfaceVersion()) ) {
@@ -50,8 +49,9 @@ BOOL WINAPI DllEntryPoint_hook(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvR
           g_DetoursData->Attach(&(PVOID &)g_pfnReadFromBuffer14, ReadFromBuffer14_hook);
           break;
       }
-      g_DetoursData->TransactionCommit();
     }
+    g_DetoursData->Detach(&(PVOID &)g_pfnDllEntryPoint, &DllEntryPoint_hook);
+    g_DetoursData->TransactionCommit();
   }
   return res;
 }
