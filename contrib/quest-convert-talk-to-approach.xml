@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <patches>
-  <patch file="quest\questdata.*.xml">
+  <patch file="QuestData*.xml">
     <select-nodes query="/table/quest[not(@retired='y')]">
       <!-- convert all talk quests to approach -->
       <select-nodes query="./acquisition/case/@type[.='talk']">
