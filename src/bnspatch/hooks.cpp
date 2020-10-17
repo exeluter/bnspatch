@@ -5,15 +5,13 @@
 
 #include <mutex>
 
-#include <ntapi/string.h>
+#include <ntrtl.hpp>
+#include <ntmm.hpp>
 #include <fnv1a.h>
-
 #include <xorstr.hpp>
-
-#include "thread_local_lock.h"
 #include "versioninfo.h"
 
-#ifdef _M_IX86
+#ifdef _X86_
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,
@@ -21,7 +19,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  if ( static_cast<ntapi::ustring *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
+  if ( static_cast<nt::rtl::unicode_string_view *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -36,7 +34,7 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  if ( static_cast<ntapi::ustring *>(DllName)->istarts_with(xorstr_(L"aegisty")) ) {
+  if ( static_cast<nt::rtl::unicode_string_view *>(DllName)->istarts_with(xorstr_(L"aegisty")) ) {
     *DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -58,7 +56,7 @@ NTSTATUS NTAPI NtCreateFile_hook(
   ULONG EaLength)
 {
 #ifdef _M_IX86
-  if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
+  if ( auto const ObjectName = static_cast<nt::rtl::unicode_string_view *>(ObjectAttributes->ObjectName) ) {
     switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), fnv1a::ascii_toupper) ) {
       case L"\\\\.\\SICE"_fnv1au:
       case L"\\\\.\\SIWVID"_fnv1au:
@@ -88,9 +86,8 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner)
 {
-  if ( ObjectAttributes && ObjectAttributes->ObjectName ) {
-    const auto objectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName);
-    if ( objectName->starts_with(xorstr_(L"BnSGameClient")) ) {
+  if ( ObjectAttributes ) {
+    if ( static_cast<nt::rtl::unicode_string_view *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
       ObjectAttributes->ObjectName = nullptr;
       ObjectAttributes->Attributes &= ~OBJ_OPENIF;
       ObjectAttributes->RootDirectory = nullptr;
@@ -106,7 +103,7 @@ NTSTATUS NTAPI NtOpenKeyEx_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   ULONG OpenOptions)
 {
-  if ( auto const ObjectName = static_cast<ntapi::ustring *>(ObjectAttributes->ObjectName) ) {
+  if ( auto const ObjectName = static_cast<nt::rtl::unicode_string_view *>(ObjectAttributes->ObjectName) ) {
     switch ( fnv1a::make_hash(ObjectName->data(), ObjectName->size(), fnv1a::ascii_toupper) ) {
       case L"Software\\Wine"_fnv1au:
       case L"HARDWARE\\ACPI\\DSDT\\VBOX__"_fnv1au:
@@ -126,22 +123,22 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
 {
   PROCESS_BASIC_INFORMATION pbi;
   SYSTEM_BASIC_INFORMATION sbi;
-  ULONG_PTR StartingAddress;
+  PVOID StartingAddress;
 
-  if ( NewProtect & (PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY | PAGE_WRITECOMBINE)
-    && (ProcessHandle == NtCurrentProcess()
-      || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-        && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-    && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
+  if ( NewProtect & nt::mm::page_write_any
+      && (ProcessHandle == NtCurrentProcess()
+          || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+              && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
+      && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
-      StartingAddress = (ULONG_PTR)*BaseAddress & ~((ULONG_PTR)sbi.PageSize - 1);
+      StartingAddress = nt::mm::page_align(*BaseAddress, sbi.PageSize);
     } __except ( EXCEPTION_EXECUTE_HANDLER ) {
       return GetExceptionCode();
     }
 
-    for ( const auto Address : std::array { (ULONG_PTR)&DbgBreakPoint, (ULONG_PTR)&DbgUiRemoteBreakin } ) {
-      if ( Address && StartingAddress == (Address & ~((ULONG_PTR)sbi.PageSize - 1)) )
+    for ( const auto Address : std::array{(PVOID)&DbgBreakPoint, (PVOID)&DbgUiRemoteBreakin} ) {
+      if ( StartingAddress == nt::mm::page_align(Address, sbi.PageSize) )
         return STATUS_INVALID_PARAMETER_2;
     }
   }
@@ -159,8 +156,8 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
   PROCESS_BASIC_INFORMATION pbi;
 
   if ( ProcessHandle == NtCurrentProcess()
-    || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-      && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+      || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+          && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
 
     switch ( ProcessInformationClass ) {
       case ProcessDebugPort:
@@ -232,10 +229,10 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
   THREAD_BASIC_INFORMATION tbi;
 
   if ( ThreadInformationClass == ThreadHideFromDebugger
-    && ThreadInformationLength == 0 ) {
+      && ThreadInformationLength == 0 ) {
     if ( ThreadHandle == NtCurrentThread()
-      || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0))
-        && tbi.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+        || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0))
+            && tbi.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
       return STATUS_SUCCESS;
     }
   }
@@ -249,7 +246,7 @@ HWND WINAPI FindWindowA_hook(
 {
   if ( lpClassName ) {
     switch ( fnv1a::make_hash(lpClassName, fnv1a::ascii_toupper) ) {
-#ifdef _M_IX86
+#ifdef _X86_
       case "OLLYDBG"_fnv1au:
       case "GBDYLLO"_fnv1au:
       case "pediy06"_fnv1au:

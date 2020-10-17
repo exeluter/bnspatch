@@ -23,6 +23,12 @@
     <Filter Include="Source Files\Detours">
       <UniqueIdentifier>{90bf20e1-f3c1-45e2-a37d-f5080808e04a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\xml">
+      <UniqueIdentifier>{fd30f10a-12bc-45b6-b338-024de3636bed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\xml">
+      <UniqueIdentifier>{5e4dde41-db7c-4cfe-a622-d8c1117f75e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -34,42 +40,57 @@
     <ClCompile Include="versioninfo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="xmlreader_hooks.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\dependencies\Detours\src\modules.cpp">
+      <Filter>Source Files\Detours</Filter>
     </ClCompile>
-    <ClCompile Include="xmlpatch.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\dependencies\Detours\src\disasm.cpp">
+      <Filter>Source Files\Detours</Filter>
     </ClCompile>
-    <ClCompile Include="fast_wild_compare.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\dependencies\Detours\src\detours.cpp">
+      <Filter>Source Files\Detours</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\dependencies\Detours\src\image.cpp">
+      <Filter>Source Files\Detours</Filter>
+    </ClCompile>
+    <ClCompile Include="xml\hooks.cpp">
+      <Filter>Source Files\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="xml\patch.cpp">
+      <Filter>Source Files\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="xml\common.cpp">
+      <Filter>Source Files\xml</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="xmlreader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="xmlpatch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="versioninfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="thread_local_lock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pluginsdk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="xmlreader_hooks.h">
+    <ClInclude Include="..\..\dependencies\Detours\src\detours.h">
+      <Filter>Header Files\Detours</Filter>
+    </ClInclude>
+    <ClInclude Include="utility.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="binary_reader.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="xml\xmlreader.h">
+      <Filter>Header Files\xml</Filter>
     </ClInclude>
-    <ClInclude Include="fast_wild_compare.h">
+    <ClInclude Include="xml\patch.h">
+      <Filter>Header Files\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="xml\hooks.h">
+      <Filter>Header Files\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="xml\common.h">
+      <Filter>Header Files\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\util.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

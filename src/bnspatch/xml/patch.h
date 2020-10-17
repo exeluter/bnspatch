@@ -11,18 +11,12 @@
 #include <fnv1a.h>
 #include <pugixml.hpp>
 
-#include "binary_reader.h"
-
 std::wstring &ReplaceStringInPlace(std::wstring &haystack,
   const std::wstring_view &search,
   const std::wstring_view &replace);
 
 const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> get_or_load_addons();
 const std::filesystem::path &addons_path();
-pugi::xml_parse_result deserialize_document(const void *mem, const uint32_t size, pugi::xml_document &document);
-void deserialize_element(pugi::xml_node &parent, binary_reader &reader);
-void deserialize_node(pugi::xml_node &parent, binary_reader &reader);
-void deserialize_text(pugi::xml_node &parent, binary_reader &reader);
 const std::filesystem::path &documents_path();
 std::vector<std::pair<std::wstring, std::wstring>> get_relevant_addons(const wchar_t *xml);
 std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml);

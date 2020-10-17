@@ -31,3 +31,6 @@
 [submodule "dependencies/fnv1a_constexpr"]
 	path = dependencies/fnv1a_constexpr
 	url = https://github.com/zeffy/fnv1a_constexpr.git
+[submodule "dependencies/Detours"]
+	path = dependencies/Detours
+	url = https://github.com/microsoft/Detours.git

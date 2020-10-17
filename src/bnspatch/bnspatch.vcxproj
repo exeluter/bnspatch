@@ -50,26 +50,61 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)$(PlatformShortName.ToUpper())\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)$(PlatformShortName.ToUpper())\</IntDir>
     <GenerateManifest>false</GenerateManifest>
     <EmbedManifest>false</EmbedManifest>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)\bin64\plugins\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\bin64\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRelease|x64'">
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)\bin64\plugins\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\bin64\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)\bin64\plugins\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\bin64\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)\bin\plugins\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\bin\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRelease|Win32'">
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)\bin\plugins\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\bin\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Configuration)\bin\plugins\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\bin\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>UNICODE;_UNICODE;_WINDOWS;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;RESULT_DIAGNOSTICS_LEVEL=0;FMT_HEADER_ONLY;PUGIXML_HEADER_ONLY;JM_XORSTR_DISABLE_AVX_INTRINSICS;PUGIXML_WCHAR_MODE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>
+				_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;
+				_UNICODE;
+				_WINDOWS;
+				FMT_HEADER_ONLY;
+				IMGUI_IMPL_WIN32_DISABLE_GAMEPAD;
+				JM_XORSTR_DISABLE_AVX_INTRINSICS;
+				NOMINMAX;
+				PHNT_VERSION=PHNT_THRESHOLD;
+				PUGIXML_HEADER_ONLY;
+				PUGIXML_WCHAR_MODE;
+				RESULT_DIAGNOSTICS_LEVEL=0;
+				SPDLOG_FMT_EXTERNAL;
+				SPDLOG_WCHAR_TO_UTF8_SUPPORT;
+				UNICODE;
+			</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ObjectFileName>$(IntDir)%(RelativeDir)%(Filename)%(Extension).obj</ObjectFileName>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\pe\include;$(SolutionDir)dependencies\ntapi\include;$(SolutionDir)dependencies\GSL\include;$(SolutionDir)dependencies\xorstr\include;$(SolutionDir)dependencies\wil\include;$(SolutionDir)dependencies\SafeInt;$(SolutionDir)dependencies\pugixml\src;$(SolutionDir)dependencies\magic_enum\include;$(SolutionDir)dependencies\processhacker\phnt\include;$(SolutionDir)dependencies\fmt\include;$(SolutionDir)dependencies\fnv1a_constexpr\include;$(SolutionDir)include</AdditionalIncludeDirectories>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalIncludeDirectories>$(SolutionDir)dependencies\pe\include;$(SolutionDir)dependencies\ntapi\include;$(SolutionDir)dependencies\GSL\include;$(SolutionDir)dependencies\xorstr\include;$(SolutionDir)dependencies\wil\include;$(SolutionDir)dependencies\SafeInt;$(SolutionDir)dependencies\pugixml\src;$(SolutionDir)dependencies\magic_enum\include;$(SolutionDir)dependencies\processhacker\phnt\include;$(SolutionDir)dependencies\fmt\include;$(SolutionDir)dependencies\fnv1a_constexpr\include;$(SolutionDir)include;$(SolutionDir)dependencies\Detours\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>ntdll.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(TargetName)_$(PlatformShortName).def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -82,6 +117,9 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -90,13 +128,18 @@
   <!-- MinSizeRelease -->
   <ItemDefinitionGroup Condition="'$(Configuration)'=='MinSizeRelease'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Optimization>MaxSpeed</Optimization>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>
+      </EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UseFullPaths>false</UseFullPaths>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
@@ -106,20 +149,26 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SetChecksum>true</SetChecksum>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <AdditionalOptions>/MERGE:.detourd=.data /MERGE:.detourc=.rdata /MERGE:_RDATA=.rdata %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <!-- Release -->
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <Optimization>MaxSpeed</Optimization>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <EnableEnhancedInstructionSet>
+      </EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <UseFullPaths>false</UseFullPaths>
-      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -127,6 +176,7 @@
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <SetChecksum>true</SetChecksum>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <AdditionalOptions>/MERGE:.detourd=.data /MERGE:.detourc=.rdata /MERGE:_RDATA=.rdata %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <!-- Targets -->
@@ -136,23 +186,28 @@
   </ImportGroup>
   <!-- Items -->
   <ItemGroup>
+    <ClCompile Include="..\..\dependencies\Detours\src\detours.cpp" />
+    <ClCompile Include="..\..\dependencies\Detours\src\disasm.cpp" />
+    <ClCompile Include="..\..\dependencies\Detours\src\image.cpp" />
+    <ClCompile Include="..\..\dependencies\Detours\src\modules.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="fast_wild_compare.cpp" />
     <ClCompile Include="hooks.cpp" />
     <ClCompile Include="versioninfo.c" />
-    <ClCompile Include="xmlreader_hooks.cpp" />
-    <ClCompile Include="xmlpatch.cpp" />
+    <ClCompile Include="xml\common.cpp" />
+    <ClCompile Include="xml\patch.cpp" />
+    <ClCompile Include="xml\hooks.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="binary_reader.h" />
-    <ClInclude Include="fast_wild_compare.h" />
+    <ClInclude Include="..\..\dependencies\Detours\src\detours.h" />
+    <ClInclude Include="..\..\include\util.hpp" />
+    <ClInclude Include="utility.hpp" />
     <ClInclude Include="hooks.h" />
     <ClInclude Include="pluginsdk.h" />
-    <ClInclude Include="thread_local_lock.h" />
     <ClInclude Include="versioninfo.h" />
-    <ClInclude Include="xmlreader_hooks.h" />
-    <ClInclude Include="xmlpatch.h" />
-    <ClInclude Include="xmlreader.h" />
+    <ClInclude Include="xml\common.h" />
+    <ClInclude Include="xml\patch.h" />
+    <ClInclude Include="xml\xmlreader.h" />
+    <ClInclude Include="xml\hooks.h" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\dependencies\pugixml\scripts\natvis\pugixml.natvis" />

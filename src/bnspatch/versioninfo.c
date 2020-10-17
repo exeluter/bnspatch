@@ -53,10 +53,10 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
     || !(cb = SizeofResource(hModule, rsrc))
     || !(head = (VERHEAD *)LoadResource(hModule, rsrc))
     || head->wTotLen > cb
-    || head->wTotLen < sizeof * head
+    || head->wTotLen < sizeof(VERHEAD)
     || head->wTotLen > MAXSHORT
     || head->wType
-    || head->wValLen != sizeof head->vsf
+    || head->wValLen != sizeof(VS_FIXEDFILEINFO)
     || FAILED(StringCbLengthW(head->szKey, KEYSIZEMAX(head), &cb))
     || (off = DWORDUP(sizeof(VERBLOCK) + cb)) != FIELD_OFFSET(VERHEAD, vsf)
     || head->vsf.dwSignature != VS_FFI_SIGNATURE
@@ -92,26 +92,17 @@ EXTERN_C int GetModuleVersionInfo(HMODULE hModule, PCWSTR pwszSubBlock, LPCVOID 
 
     ncmp = 0;
     while ( SUCCEEDED(UIntPtrSub(end, (UINT_PTR)sub, &remain))
-      && remain >= sizeof * sub
-      && sub->wTotLen >= sizeof * sub
+      && remain >= sizeof(VERBLOCK)
+      && sub->wTotLen >= sizeof(VERBLOCK)
       && sub->wTotLen <= remain
       && SUCCEEDED(StringCbLengthW(sub->szKey, KEYSIZEMAX(sub), &cb))
-      && (len = (off = DWORDUP(sizeof * sub + cb)) + sub->wValLen) <= sub->wTotLen ) {
+      && (len = (off = DWORDUP(sizeof(VERBLOCK) + cb)) + sub->wValLen) <= sub->wTotLen ) {
 
       if ( index >= 0 ) {
         if ( !index-- )
           ncmp = CSTR_EQUAL;
       } else {
-        ncmp = CompareStringEx(
-          LOCALE_NAME_INVARIANT,
-          NORM_IGNORECASE,
-          start,
-          cch,
-          sub->szKey,
-          (int)(cb / sizeof * sub->szKey),
-          NULL,
-          NULL,
-          0);
+        ncmp = CompareStringEx(LOCALE_NAME_INVARIANT, NORM_IGNORECASE, start, cch, sub->szKey, (int)(cb / sizeof(WCHAR)), NULL, NULL, 0);
         if ( !ncmp )
           return -1;
       }
