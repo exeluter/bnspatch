@@ -16,13 +16,6 @@
 #include "common.h"
 #include <util.hpp>
 
-#ifdef _M_X64
-#define thiscall_(name, thisarg, ...) name(thisarg, ## __VA_ARGS__) 
-#else
-#include <cstdint>
-#define thiscall_(name, thisarg, ...) __fastcall name(thisarg, intptr_t, ## __VA_ARGS__) 
-#endif
-
 XmlDoc* __fastcall ReadMem(
   PFN_XMLREADER_READMEM pfnReadMem,
   PFN_XMLREADER_READFILE pfnReadFile,
@@ -108,64 +101,26 @@ XmlDoc* __fastcall ReadFile(
   return pfnReadFile(thisptr, xml, xmlPieceReader);
 }
 
-PFN_XMLREADER_READFILE g_pfnClientReadFile;
 PFN_XMLREADER_READMEM g_pfnClientReadMem;
-
 XmlDoc* thiscall_(ClientReadMem_hook, const XmlReader* thisptr, const unsigned char* mem, unsigned int size, const wchar_t* xmlFileNameForLogging, class XmlPieceReader* xmlPieceReader)
 {
   return ReadMem(g_pfnClientReadMem, g_pfnClientReadFile, thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
 }
 
+PFN_XMLREADER_READFILE g_pfnClientReadFile;
 XmlDoc* thiscall_(ClientReadFile_hook, const XmlReader* thisptr, const wchar_t* xml, class XmlPieceReader* xmlPieceReader)
 {
   return ReadFile(g_pfnClientReadMem, g_pfnClientReadFile, thisptr, xml, xmlPieceReader);
 }
 
 PFN_XMLREADER_READFILE g_pfnEngineReadFile;
-PFN_XMLREADER_READMEM g_pfnEngineReadMem;
-
 XmlDoc* thiscall_(EngineReadFile_hook, const XmlReader* thisptr, const wchar_t* xml, class XmlPieceReader* xmlPieceReader)
 {
   return ReadFile(g_pfnEngineReadMem, g_pfnEngineReadFile, thisptr, xml, xmlPieceReader);
 }
 
+PFN_XMLREADER_READMEM g_pfnEngineReadMem;
 XmlDoc* thiscall_(EngineReadMem_hook, const XmlReader* thisptr, const unsigned char* mem, unsigned int size, const wchar_t* xmlFileNameForLogging, class XmlPieceReader* xmlPieceReader)
 {
   return ReadMem(g_pfnEngineReadMem, g_pfnEngineReadFile, thisptr, mem, size, xmlFileNameForLogging, xmlPieceReader);
-}
-
-PFN_CREATEXMLREADER g_pfnEngineCreateXmlReader;
-
-XmlReader* __cdecl EngineCreateXmlReader_hook()
-{
-  const auto xmlReader = g_pfnEngineCreateXmlReader();
-  if (xmlReader) {
-    static std::once_flag once;
-    static std::vector<PVOID> vfXmlReader;
-    std::call_once(once, [](void* xmlReader, std::vector<PVOID>& vfXmlReader) {
-      vfXmlReader = duplicate_vftable(xmlReader);
-      g_pfnEngineReadFile = reinterpret_cast<decltype(g_pfnEngineReadFile)>(InterlockedExchangePointer(&vfXmlReader[6], &EngineReadFile_hook));
-      g_pfnEngineReadMem = reinterpret_cast<decltype(g_pfnEngineReadMem)>(InterlockedExchangePointer(&vfXmlReader[7], &EngineReadMem_hook));
-      }, xmlReader, vfXmlReader);
-    *reinterpret_cast<PVOID**>(xmlReader) = vfXmlReader.data();
-  }
-  return xmlReader;
-}
-
-PFN_CREATEXMLREADER g_pfnClientCreateXmlReader;
-
-XmlReader* __cdecl ClientCreateXmlReader_hook()
-{
-  const auto xmlReader = g_pfnClientCreateXmlReader();
-  if (xmlReader) {
-    static std::once_flag once;
-    static std::vector<PVOID> vfXmlReader;
-    std::call_once(once, [](void* xmlReader, std::vector<PVOID>& vfXmlReader) {
-      vfXmlReader = duplicate_vftable(xmlReader);
-      g_pfnClientReadFile = reinterpret_cast<decltype(g_pfnClientReadFile)>(InterlockedExchangePointer(&vfXmlReader[6], &ClientReadFile_hook));
-      g_pfnClientReadMem = reinterpret_cast<decltype(g_pfnClientReadMem)>(InterlockedExchangePointer(&vfXmlReader[7], &ClientReadMem_hook));
-      }, xmlReader, vfXmlReader);
-    *reinterpret_cast<PVOID**>(xmlReader) = vfXmlReader.data();
-  }
-  return xmlReader;
 }
