@@ -50,10 +50,16 @@
       <select-node query="./group[@name='arena']/option[@name='use-team-average-score']/@value">
         <set-value value="true" />
       </select-node>
-      <!-- instant transmutation, instant jewel usage, etc. -->
-      <select-nodes query="./group[@name='particle']/option[contains(@name,'-particle-duration')]/@value">
-        <set-value value="0.0001" />
-      </select-nodes>
+      <select-node query="./group[@name='particle']">
+        <!-- instantly use jewels -->
+        <select-node query="./option[@name='item-growth-2-progress-particle-duration-growth']/@value">
+            <set-value value="0.01" />
+        </select-node>
+        <!-- instant transmute -->
+        <select-node query="./option[@name='item-transform-progressing-particle-duration']/@value">
+            <set-value value="0.01" />
+        </select-node>
+      </select-node>
       <!-- disable breast physics -->
       <select-node query="./group[@name='uncategorized']/option[@name='no-use-breast-physics']/@value">
         <set-value value="yes" />
