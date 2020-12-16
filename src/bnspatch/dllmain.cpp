@@ -56,7 +56,7 @@ void hook_xmlreader_from_rtti(
   PVOID pfnReadMemHook)
 {
   const char Name[] = ".?AVXmlReaderImpl@@";
-  for ( auto Iter = data.begin();; std::advance(Iter, sizeof(Name)); ) {
+  for ( auto Iter = data.begin();; std::advance(Iter, sizeof(Name)) ) {
     Iter = std::search(data.begin(), data.end(), std::begin(Name), std::end(Name));
     if ( Iter == data.end() )
       break;
