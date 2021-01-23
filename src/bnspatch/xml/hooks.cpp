@@ -29,6 +29,10 @@ XmlDoc* __fastcall ReadMem(
     return nullptr;
 
   if (xmlFileNameForLogging && *xmlFileNameForLogging) {
+#ifdef _DEBUG
+    OutputDebugStringW(xmlFileNameForLogging);
+#endif
+
     const auto patches = get_relevant_patches(xmlFileNameForLogging);
     const auto addons = get_relevant_addons(xmlFileNameForLogging);
     if (!patches.empty() || !addons.empty()) {

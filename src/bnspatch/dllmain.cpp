@@ -56,7 +56,7 @@ void hook_xmlreader_from_rtti(
   PVOID pfnReadMemHook)
 {
   const char Name[] = ".?AVXmlReaderImpl@@";
-  for ( auto Iter = data.begin();; std::advance(Iter, sizeof(Name)) ) {
+  for ( auto Iter = data.begin();; std::advance(Iter, 1) ) {
     Iter = std::search(data.begin(), data.end(), std::begin(Name), std::end(Name));
     if ( Iter == data.end() )
       break;
@@ -68,14 +68,14 @@ void hook_xmlreader_from_rtti(
 #else
       const auto typeDescriptor = tmp;
 #endif
-      for ( auto Iter2 = rdata.begin();; std::advance(Iter2, sizeof(typeDescriptor)) ) {
+      for ( auto Iter2 = rdata.begin();; std::advance(Iter2, 1) ) {
         Iter2 = std::search(rdata.begin(), rdata.end(), reinterpret_cast<const uint8_t *>(&typeDescriptor), reinterpret_cast<const uint8_t *>(&typeDescriptor) + sizeof(typeDescriptor));
         if ( Iter2 == rdata.end() )
           break;
 
         const auto completeObjectLocator = reinterpret_cast<_RTTICompleteObjectLocator *>(&*std::prev(Iter2, offsetof(_RTTICompleteObjectLocator, pTypeDescriptor)));
         if ( (reinterpret_cast<uintptr_t>(completeObjectLocator) & 3) == 0 ) {
-          for ( auto Iter3 = rdata.begin();; std::advance(Iter3, sizeof(completeObjectLocator)) ) {
+          for ( auto Iter3 = rdata.begin();; std::advance(Iter3, 1) ) {
             Iter3 = std::search(rdata.begin(), rdata.end(), reinterpret_cast<const uint8_t *>(&completeObjectLocator), reinterpret_cast<const uint8_t *>(&completeObjectLocator) + sizeof(completeObjectLocator));
             if ( Iter3 == rdata.end() )
               break;

@@ -524,7 +524,7 @@ void patch_node(
           break;
 
         case L"assign-node-key"_fnv1au: // ok
-          saved_nodes.insert_or_assign(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), towupper), ctx.node());
+          saved_nodes.insert_or_assign(fnv1a::make_hash(current.attribute(xorstr_(L"node-key")).value(), fnv1a::ascii_toupper), ctx.node());
           break;
 
         case L"remove"_fnv1au: // ok
