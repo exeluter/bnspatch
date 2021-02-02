@@ -131,7 +131,6 @@ const pugi::xml_document &get_or_load_patches()
   static pugi::xml_document doc;
 
   std::call_once(once_flag, [](pugi::xml_document &document) {
-
     auto decl = document.prepend_child(pugi::node_declaration);
     decl.append_attribute(L"version") = L"1.0";
     decl.append_attribute(L"encoding") = L"utf-8";

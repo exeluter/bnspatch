@@ -305,19 +305,18 @@ DWORD WINAPI GetPrivateProfileStringW_hook(
         if ( (section_header.Characteristics & IMAGE_SCN_MEM_READ) != IMAGE_SCN_MEM_READ
           || section_header.VirtualAddress + section_header.Misc.VirtualSize > nt_headers->OptionalHeader.SizeOfImage )
           continue;
-        const std::span<UCHAR> section{nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header.VirtualAddress), section_header.Misc.VirtualSize};
 
+        const auto section = nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header.VirtualAddress);
         const char name[] = ".?AVXmlReaderImpl@@";
-        for ( auto iter = section.begin();; ++iter ) {
-          iter = std::search(iter, section.end(), std::begin(name), std::end(name));
-          if ( iter == section.end() )
-            break;
-
-          const auto tmp = reinterpret_cast<TypeDescriptor *>(&*std::prev(iter, offsetof(TypeDescriptor, name)));
-          if ( (reinterpret_cast<ULONG_PTR>(tmp) & (alignof(TypeDescriptor) - 1)) != 0 )
+        for ( auto ptr = section;
+          ptr + std::size(name) <= section + section_header.Misc.VirtualSize;
+          ptr = (PUCHAR)(((ULONG_PTR)ptr + (alignof(TypeDescriptor) + 1)) & ~(alignof(TypeDescriptor) - 1)) ) {
+          if ( !std::equal(std::begin(name), std::end(name), ptr + offsetof(TypeDescriptor, name)) )
             continue;
+
+          const auto tmp = (TypeDescriptor *)ptr;
 #if _RTTI_RELATIVE_TYPEINFO
-          const auto ptd = static_cast<int>(reinterpret_cast<ULONG_PTR>(tmp) - reinterpret_cast<ULONG_PTR>(NtCurrentPeb()->ImageBaseAddress));
+          const auto ptd = (int)((ULONG_PTR)tmp - (ULONG_PTR)NtCurrentPeb()->ImageBaseAddress);
 #else
           const auto ptd = tmp;
 #endif
@@ -325,26 +324,22 @@ DWORD WINAPI GetPrivateProfileStringW_hook(
             if ( (section_header2.Characteristics & IMAGE_SCN_MEM_READ) != IMAGE_SCN_MEM_READ
               || section_header2.VirtualAddress + section_header2.Misc.VirtualSize > nt_headers->OptionalHeader.SizeOfImage )
               continue;
-            const std::span<UCHAR> section2{nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header2.VirtualAddress), section_header2.Misc.VirtualSize};
 
-            for ( auto iter2 = section2.begin();; ++iter2 ) {
-              iter2 = std::search(iter2, section2.end(), reinterpret_cast<const UCHAR *>(&ptd), reinterpret_cast<const UCHAR *>(&ptd) + sizeof(ptd));
-              if ( iter2 == section2.end() )
-                break;
-
-              const auto col = reinterpret_cast<_RTTICompleteObjectLocator *>(&*std::prev(iter2, offsetof(_RTTICompleteObjectLocator, pTypeDescriptor)));
-              if ( (reinterpret_cast<ULONG_PTR>(col) & (alignof(_RTTICompleteObjectLocator) - 1)) != 0 )
+            const auto section2 = nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header2.VirtualAddress);
+            for ( auto ptr2 = section2;
+              ptr2 + sizeof(ptd) <= section2 + section_header2.Misc.VirtualSize;
+              ptr2 = (PUCHAR)(((ULONG_PTR)ptr2 + (alignof(_RTTICompleteObjectLocator) + 1)) & ~(alignof(_RTTICompleteObjectLocator) - 1)) ) {
+              if ( *(int *)(ptr2 + offsetof(_RTTICompleteObjectLocator, pTypeDescriptor)) != ptd )
                 continue;
 
-              for ( auto iter3 = section2.begin();; ++iter3 ) {
-                iter3 = std::search(iter3, section2.end(), reinterpret_cast<const UCHAR *>(&col), reinterpret_cast<const UCHAR *>(&col) + sizeof(col));
-                if ( iter3 == section2.end() )
-                  break;
-
-                if ( (reinterpret_cast<ULONG_PTR>(&*iter3) & (alignof(_RTTICompleteObjectLocator *) - 1)) != 0 )
+              const auto col = (_RTTICompleteObjectLocator *)ptr2;
+              for ( auto ptr3 = section2;
+                ptr3 + sizeof(col) <= section2 + section_header2.Misc.VirtualSize;
+                ptr3 = (PUCHAR)(((ULONG_PTR)ptr3 + (alignof(_RTTICompleteObjectLocator *) + 1)) & ~(alignof(_RTTICompleteObjectLocator *) - 1)) ) {
+                if ( *(_RTTICompleteObjectLocator **)ptr3 != col )
                   continue;
 
-                const auto vfptr = reinterpret_cast<void **>(&*std::next(iter3, sizeof(_RTTICompleteObjectLocator *)));
+                const auto vfptr = (void **)(ptr3 + sizeof(_RTTICompleteObjectLocator *));
                 THROW_IF_WIN32_ERROR(DetourTransactionBegin());
                 THROW_IF_WIN32_ERROR(DetourUpdateThread(NtCurrentThread()));
                 g_pfnReadFile = reinterpret_cast<decltype(g_pfnReadFile)>(vfptr[6]);
@@ -381,7 +376,7 @@ HWND WINAPI FindWindowA_hook(
       case "RegmonClass"_fnv1au:
       case "18467-41"_fnv1au:
         return nullptr;
-}
+    }
   }
   if ( lpWindowName ) {
     switch ( fnv1a::make_hash(lpWindowName) ) {
