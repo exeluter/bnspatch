@@ -30,19 +30,19 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
         std::filesystem::path filename;
         std::vector<std::wstring> stext;
         std::vector<std::wstring> rtext;
-        std::wstring line = std::wstring();
+        std::wstring line;
         while ( std::getline(stream, line) ) {
-          auto ofs = line.find('=');
+          const auto ofs = line.find('=');
           if ( ofs == std::wstring::npos )
             continue;
 
-          auto key = std::wstring_view(line.c_str(), ofs);
+          std::wstring_view key{line.c_str(), ofs};
           if ( const auto it = std::find_if_not(key.begin(), key.end(), ::iswspace); it != key.end() )
             key.remove_prefix(std::distance(key.begin(), it));
           if ( const auto it = std::find_if_not(key.rbegin(), key.rend(), ::iswspace); it != key.rend() )
             key.remove_suffix(std::distance(key.rbegin(), it));
 
-          auto value = std::wstring_view(&line[ofs + 1]);
+          std::wstring_view value{&line[ofs + 1]};
           if ( const auto it = std::find_if_not(value.begin(), value.end(), ::iswspace); it != value.end() )
             value.remove_prefix(std::distance(value.begin(), it));
           if ( const auto it = std::find_if_not(value.rbegin(), value.rend(), ::iswspace); it != value.rend() )
@@ -53,11 +53,11 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
               filename = std::filesystem::weakly_canonical(value).filename();
               break;
             } case L"Search"_fnv1a: {
-              auto s = static_cast<std::wstring>(value);
+              std::wstring s{value};
               stext.push_back(ReplaceStringInPlace(s, L"NewLine", L"\n"));
               break;
             } case L"Replace"_fnv1a: {
-              auto s = static_cast<std::wstring>(value);
+              std::wstring s{value};
               rtext.push_back(ReplaceStringInPlace(s, L"NewLine", L"\n"));
               break;
             }
@@ -65,7 +65,7 @@ const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, s
         }
 
         if ( !filename.empty() && stext.size() == rtext.size() ) {
-          auto vec = std::vector<std::pair<std::wstring, std::wstring>>();
+          std::vector<std::pair<std::wstring, std::wstring>> vec;
           vec.reserve(stext.size());
           std::transform(stext.begin(), stext.end(), rtext.begin(), std::back_inserter(vec), [](std::wstring a, std::wstring b) {
             return std::make_pair(a, b);
@@ -279,6 +279,11 @@ void patch_node(
         case L"select-nodes"_fnv1au: // ok
           for ( const auto &node : ctx.node().select_nodes(current.attribute(L"query").value()) )
             patch_node(doc, encoding, node, current.children(), node_keys);
+          break;
+
+        case L"if"_fnv1au:
+          if ( ctx.node().select_node(current.attribute(L"query").value()) )
+            patch_node(doc, encoding, ctx.node(), current.children(), node_keys);
           break;
 
         case L"prepend-attribute"_fnv1au: { // ok
