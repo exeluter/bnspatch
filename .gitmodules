@@ -16,9 +16,9 @@
 [submodule "dependencies/processhacker"]
 	path = dependencies/processhacker
 	url = https://github.com/processhacker/processhacker.git
-[submodule "dependencies/cx_fnv1a"]
-	path = dependencies/cx_fnv1a
-	url = https://github.com/zeffy/cx_fnv1a.git
 [submodule "dependencies/Detours"]
 	path = dependencies/Detours
 	url = https://github.com/microsoft/Detours.git
+[submodule "dependencies/cx_fnv1a"]
+	path = dependencies/cx_fnv1a
+	url = https://github.com/zeffy/cx_fnv1a.git

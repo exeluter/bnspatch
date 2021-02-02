@@ -1,15 +1,8 @@
+#include "pch.h"
+#include <rttidata.h>
+#include <ehdata.h>
 #include "hooks.h"
-
-#include <phnt_windows.h>
-#include <phnt.h>
-
-#include <mutex>
-
-#include <ntrtl.hpp>
-#include <ntmm.hpp>
-#include <fnv1a.h>
-#include <xorstr.hpp>
-#include "versioninfo.h"
+#include "xmlhooks.h"
 
 #ifdef _X86_
 decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
@@ -19,7 +12,7 @@ NTSTATUS NTAPI LdrGetDllHandle_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  if ( static_cast<nt::rtl::unicode_string_view *>(DllName)->iequals(xorstr_(L"kmon.dll")) ) {
+  if ( static_cast<nt::rtl::unicode_string_view *>(DllName)->iequals(L"kmon.dll") ) {
     DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -34,7 +27,7 @@ NTSTATUS NTAPI LdrLoadDll_hook(
   PUNICODE_STRING DllName,
   PVOID *DllHandle)
 {
-  if ( static_cast<nt::rtl::unicode_string_view *>(DllName)->istarts_with(xorstr_(L"aegisty")) ) {
+  if ( static_cast<nt::rtl::unicode_string_view *>(DllName)->istarts_with(L"aegisty") ) {
     *DllHandle = nullptr;
     return STATUS_DLL_NOT_FOUND;
   }
@@ -86,8 +79,11 @@ NTSTATUS NTAPI NtCreateMutant_hook(
   POBJECT_ATTRIBUTES ObjectAttributes,
   BOOLEAN InitialOwner)
 {
+  static std::once_flag once;
+
   if ( ObjectAttributes ) {
-    if ( static_cast<nt::rtl::unicode_string_view *>(ObjectAttributes->ObjectName)->starts_with(xorstr_(L"BnSGameClient")) ) {
+    const auto ObjectName = static_cast<nt::rtl::unicode_string_view *>(ObjectAttributes->ObjectName);
+    if ( ObjectName->starts_with(L"BnSGameClient") ) {
       ObjectAttributes->ObjectName = nullptr;
       ObjectAttributes->Attributes &= ~OBJ_OPENIF;
       ObjectAttributes->RootDirectory = nullptr;
@@ -121,24 +117,25 @@ NTSTATUS NTAPI NtProtectVirtualMemory_hook(
   ULONG NewProtect,
   PULONG OldProtect)
 {
-  PROCESS_BASIC_INFORMATION pbi;
-  SYSTEM_BASIC_INFORMATION sbi;
+  constexpr ULONG PAGE_WRITE_ANY = PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY | PAGE_WRITECOMBINE;
+  PROCESS_BASIC_INFORMATION ProcessInfo;
+  SYSTEM_BASIC_INFORMATION SystemInfo;
   PVOID StartingAddress;
 
-  if ( NewProtect & nt::mm::page_write_any
-      && (ProcessHandle == NtCurrentProcess()
-          || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-              && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
-      && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
+  if ( (NewProtect & PAGE_WRITE_ANY) != 0
+    && (ProcessHandle == NtCurrentProcess()
+      || (NT_SUCCESS(NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+        && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess))
+    && NT_SUCCESS(NtQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SYSTEM_BASIC_INFORMATION), nullptr)) ) {
 
     __try {
-      StartingAddress = nt::mm::page_align(*BaseAddress, sbi.PageSize);
+      StartingAddress = (PVOID)((ULONG_PTR)*BaseAddress & ~((SIZE_T)SystemInfo.PageSize - 1));
     } __except ( EXCEPTION_EXECUTE_HANDLER ) {
       return GetExceptionCode();
     }
 
     for ( const auto Address : std::array{(PVOID)&DbgBreakPoint, (PVOID)&DbgUiRemoteBreakin} ) {
-      if ( StartingAddress == nt::mm::page_align(Address, sbi.PageSize) )
+      if ( StartingAddress == (PVOID)((ULONG_PTR)Address & ~((SIZE_T)SystemInfo.PageSize - 1)) )
         return STATUS_INVALID_PARAMETER_2;
     }
   }
@@ -153,11 +150,11 @@ NTSTATUS NTAPI NtQueryInformationProcess_hook(
   ULONG ProcessInformationLength,
   PULONG ReturnLength)
 {
-  PROCESS_BASIC_INFORMATION pbi;
+  PROCESS_BASIC_INFORMATION ProcessInfo;
 
   if ( ProcessHandle == NtCurrentProcess()
-      || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
-          && pbi.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+    || (NT_SUCCESS(g_pfnNtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(PROCESS_BASIC_INFORMATION), nullptr))
+      && ProcessInfo.UniqueProcessId == NtCurrentTeb()->ClientId.UniqueProcess) ) {
 
     switch ( ProcessInformationClass ) {
       case ProcessDebugPort:
@@ -226,17 +223,145 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
   PVOID ThreadInformation,
   ULONG ThreadInformationLength)
 {
-  THREAD_BASIC_INFORMATION tbi;
+  THREAD_BASIC_INFORMATION ThreadInfo;
 
   if ( ThreadInformationClass == ThreadHideFromDebugger
-      && ThreadInformationLength == 0 ) {
+    && ThreadInformationLength == 0 ) {
     if ( ThreadHandle == NtCurrentThread()
-        || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &tbi, sizeof(THREAD_BASIC_INFORMATION), 0))
-            && tbi.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+      || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &ThreadInfo, sizeof(THREAD_BASIC_INFORMATION), 0))
+        && ThreadInfo.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
       return STATUS_SUCCESS;
     }
   }
   return g_pfnNtSetInformationThread(ThreadHandle, ThreadInformationClass, ThreadInformation, ThreadInformationLength);
+}
+
+decltype(&NtGetContextThread) g_pfnNtGetContextThread;
+NTSTATUS NTAPI NtGetContextThread_hook(
+  HANDLE ThreadHandle,
+  PCONTEXT ThreadContext)
+{
+  THREAD_BASIC_INFORMATION ThreadInfo;
+  DWORD ContextFlags = 0;
+
+  if ( ThreadHandle == NtCurrentThread()
+    || (NT_SUCCESS(NtQueryInformationThread(ThreadHandle, ThreadBasicInformation, &ThreadInfo, sizeof(THREAD_BASIC_INFORMATION), 0))
+      && ThreadInfo.ClientId.UniqueProcess == NtCurrentTeb()->ClientId.UniqueProcess) ) {
+
+    __try {
+      ContextFlags = ThreadContext->ContextFlags;
+      ThreadContext->ContextFlags &= ~CONTEXT_DEBUG_REGISTERS;
+    } __except ( EXCEPTION_EXECUTE_HANDLER ) {
+      return GetExceptionCode();
+    }
+  }
+
+  const auto Status = g_pfnNtGetContextThread(ThreadHandle, ThreadContext);
+
+  if ( NT_SUCCESS(Status) ) {
+    ThreadContext->ContextFlags = ContextFlags;
+    if ( (ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS ) {
+      ThreadContext->Dr0 = 0;
+      ThreadContext->Dr1 = 0;
+      ThreadContext->Dr2 = 0;
+      ThreadContext->Dr3 = 0;
+      ThreadContext->Dr6 = 0;
+      ThreadContext->Dr7 = 0;
+#ifdef _WIN64
+      ThreadContext->LastBranchToRip = 0;
+      ThreadContext->LastBranchFromRip = 0;
+      ThreadContext->LastExceptionToRip = 0;
+      ThreadContext->LastExceptionFromRip = 0;
+#endif
+    }
+  }
+  return Status;
+}
+
+decltype(&GetPrivateProfileStringW) g_pfnGetPrivateProfileStringW;
+DWORD WINAPI GetPrivateProfileStringW_hook(
+  LPCWSTR lpAppName,
+  LPCWSTR lpKeyName,
+  LPCWSTR lpDefault,
+  LPWSTR lpReturnedString,
+  DWORD nSize,
+  LPCWSTR lpFileName)
+{
+  static std::once_flag once;
+
+  try {
+    std::call_once(once, [&]() {
+      if ( !lpAppName
+        || !lpKeyName
+        || !lpFileName
+        || _wcsicmp(lpAppName, L"Locale")
+        || _wcsicmp(lpKeyName, L"Publisher")
+        || _wcsicmp(PathFindFileNameW(lpFileName), L"Local.ini") )
+        throw std::exception{};
+
+      const auto nt_headers = nt::rtl::image_nt_headers(nullptr);
+      const auto sections = nt::rtl::image_sections(nullptr);
+      for ( const auto &section_header : sections ) {
+        if ( (section_header.Characteristics & IMAGE_SCN_MEM_READ) != IMAGE_SCN_MEM_READ
+          || section_header.VirtualAddress + section_header.Misc.VirtualSize > nt_headers->OptionalHeader.SizeOfImage )
+          continue;
+        const std::span<UCHAR> section{nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header.VirtualAddress), section_header.Misc.VirtualSize};
+
+        const char name[] = ".?AVXmlReaderImpl@@";
+        for ( auto iter = section.begin();; ++iter ) {
+          iter = std::search(iter, section.end(), std::begin(name), std::end(name));
+          if ( iter == section.end() )
+            break;
+
+          const auto tmp = reinterpret_cast<TypeDescriptor *>(&*std::prev(iter, offsetof(TypeDescriptor, name)));
+          if ( (reinterpret_cast<ULONG_PTR>(tmp) & (alignof(TypeDescriptor) - 1)) != 0 )
+            continue;
+#if _RTTI_RELATIVE_TYPEINFO
+          const auto ptd = static_cast<int>(reinterpret_cast<ULONG_PTR>(tmp) - reinterpret_cast<ULONG_PTR>(NtCurrentPeb()->ImageBaseAddress));
+#else
+          const auto ptd = tmp;
+#endif
+          for ( const auto &section_header2 : sections ) {
+            if ( (section_header2.Characteristics & IMAGE_SCN_MEM_READ) != IMAGE_SCN_MEM_READ
+              || section_header2.VirtualAddress + section_header2.Misc.VirtualSize > nt_headers->OptionalHeader.SizeOfImage )
+              continue;
+            const std::span<UCHAR> section2{nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header2.VirtualAddress), section_header2.Misc.VirtualSize};
+
+            for ( auto iter2 = section2.begin();; ++iter2 ) {
+              iter2 = std::search(iter2, section2.end(), reinterpret_cast<const UCHAR *>(&ptd), reinterpret_cast<const UCHAR *>(&ptd) + sizeof(ptd));
+              if ( iter2 == section2.end() )
+                break;
+
+              const auto col = reinterpret_cast<_RTTICompleteObjectLocator *>(&*std::prev(iter2, offsetof(_RTTICompleteObjectLocator, pTypeDescriptor)));
+              if ( (reinterpret_cast<ULONG_PTR>(col) & (alignof(_RTTICompleteObjectLocator) - 1)) != 0 )
+                continue;
+
+              for ( auto iter3 = section2.begin();; ++iter3 ) {
+                iter3 = std::search(iter3, section2.end(), reinterpret_cast<const UCHAR *>(&col), reinterpret_cast<const UCHAR *>(&col) + sizeof(col));
+                if ( iter3 == section2.end() )
+                  break;
+
+                if ( (reinterpret_cast<ULONG_PTR>(&*iter3) & (alignof(_RTTICompleteObjectLocator *) - 1)) != 0 )
+                  continue;
+
+                const auto vfptr = reinterpret_cast<void **>(&*std::next(iter3, sizeof(_RTTICompleteObjectLocator *)));
+                THROW_IF_WIN32_ERROR(DetourTransactionBegin());
+                THROW_IF_WIN32_ERROR(DetourUpdateThread(NtCurrentThread()));
+                g_pfnReadFile = reinterpret_cast<decltype(g_pfnReadFile)>(vfptr[6]);
+                THROW_IF_WIN32_ERROR(DetourAttach(reinterpret_cast<PVOID *>(&g_pfnReadFile), ReadFile_hook));
+                g_pfnReadMem = reinterpret_cast<decltype(g_pfnReadMem)>(vfptr[7]);
+                THROW_IF_WIN32_ERROR(DetourAttach(reinterpret_cast<PVOID *>(&g_pfnReadMem), ReadMem_hook));
+                THROW_IF_WIN32_ERROR(DetourTransactionCommit());
+                return;
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch ( ... ) {
+  }
+  return g_pfnGetPrivateProfileStringW(lpAppName, lpKeyName, lpDefault, lpReturnedString, nSize, lpFileName);
 }
 
 decltype(&FindWindowA) g_pfnFindWindowA;
@@ -256,7 +381,7 @@ HWND WINAPI FindWindowA_hook(
       case "RegmonClass"_fnv1au:
       case "18467-41"_fnv1au:
         return nullptr;
-    }
+}
   }
   if ( lpWindowName ) {
     switch ( fnv1a::make_hash(lpWindowName) ) {

@@ -2,8 +2,6 @@
 #include <phnt_windows.h>
 #include <phnt.h>
 
-#include <array>
-
 extern decltype(&LdrGetDllHandle) g_pfnLdrGetDllHandle;
 NTSTATUS NTAPI LdrGetDllHandle_hook(
   PWSTR DllPath,
@@ -75,6 +73,20 @@ NTSTATUS NTAPI NtSetInformationThread_hook(
   THREADINFOCLASS ThreadInformationClass,
   PVOID ThreadInformation,
   ULONG ThreadInformationLength);
+
+extern decltype(&NtGetContextThread) g_pfnNtGetContextThread;
+NTSTATUS NTAPI NtGetContextThread_hook(
+  HANDLE ThreadHandle,
+  PCONTEXT ThreadContext);
+
+extern decltype(&GetPrivateProfileStringW) g_pfnGetPrivateProfileStringW;
+DWORD WINAPI GetPrivateProfileStringW_hook(
+  LPCWSTR lpAppName,
+  LPCWSTR lpKeyName,
+  LPCWSTR lpDefault,
+  LPWSTR lpReturnedString,
+  DWORD nSize,
+  LPCWSTR lpFileName);
 
 extern decltype(&FindWindowA) g_pfnFindWindowA;
 HWND WINAPI FindWindowA_hook(

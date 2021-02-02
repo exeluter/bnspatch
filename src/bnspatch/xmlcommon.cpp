@@ -1,7 +1,5 @@
-#include <pugixml.hpp>
-#include <xorstr.hpp>
-
-#include "common.h"
+#include "pch.h"
+#include "xmlcommon.h"
 #include "xmlreader.h"
 
 pugi::xml_node convert_append_child(pugi::xml_node &parent, const XmlNode *node)
@@ -35,11 +33,11 @@ pugi::xml_parse_result convert_document(pugi::xml_document &doc, XmlDoc *xmlDoc)
   if ( !xmlDoc ) return {};
 
   auto decl = doc.prepend_child(pugi::node_declaration);
-  decl.append_attribute(xorstr_(L"version")) = xorstr_(L"1.0");
-  decl.append_attribute(xorstr_(L"encoding")) = xorstr_(L"utf-16");
-  doc.append_child(pugi::node_pcdata).set_value(xorstr_(L"\n"));
+  decl.append_attribute(L"version") = L"1.0";
+  decl.append_attribute(L"encoding") = L"utf-16";
+  doc.append_child(pugi::node_pcdata).set_value(L"\n");
   doc.append_child(pugi::node_comment).set_value(xmlDoc->Name());
-  doc.append_child(pugi::node_pcdata).set_value(xorstr_(L"\n"));
+  doc.append_child(pugi::node_pcdata).set_value(L"\n");
   convert_append_child(doc, xmlDoc->Root()->ToXmlNode());
 
   pugi::xml_parse_result res;

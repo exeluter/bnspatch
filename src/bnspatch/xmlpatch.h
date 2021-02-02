@@ -16,14 +16,13 @@ std::wstring &ReplaceStringInPlace(std::wstring &haystack,
   const std::wstring_view &replace);
 
 const std::multimap<std::filesystem::path, std::vector<std::pair<std::wstring, std::wstring>>> get_or_load_addons();
-const std::filesystem::path &addons_path();
-const std::filesystem::path &documents_path();
+std::filesystem::path documents_path();
 std::vector<std::pair<std::wstring, std::wstring>> get_relevant_addons(const wchar_t *xml);
 std::vector<pugi::xml_node> get_relevant_patches(const wchar_t *xml);
 void apply_patches(pugi::xml_document &src, const pugi::xml_encoding, const std::vector<pugi::xml_node> &patches);
 const pugi::xml_document &get_or_load_patches();
 void preprocess(pugi::xml_document &patches_doc, const std::filesystem::path &path, std::unordered_set<fnv1a::type> &include_guard);
-const std::filesystem::path &patches_path();
+std::filesystem::path patches_path();
 void patch_node(
   pugi::xml_document &doc,
   const pugi::xml_encoding encoding,

@@ -57,10 +57,7 @@ For more info, refer to [`xmlpatch.cpp`][1.2], [XML Path Language (XPath) Versio
 ## FAQ
 
 #### Q: Does this work with [**d912pxy**][1.0]?
-Yes it does! In fact, I highly recommend using it.
-
-#### Q: Do I have to use all of the components for this to work?
-No. Each component works individually and may be used together or separately.
+Yes it does!
 
 #### Q: Isn't this unsafe compared to BnS Buddy?
 Not really. I've been using some variant of it since I started development in
@@ -89,14 +86,16 @@ Join the Mod Police Discord server and ask!
 [2.1]: https://github.com/bnsmodpolice/pluginloader
 
 ## Acknowledgements
-- [microsoft/**Detours**][3.0] (MIT license)
-- [microsoft/**GSL**][3.1] (MIT license)
-- [zeux/**pugixml**][3.2] (MIT license)
-- [processhacker/**phnt**][3.3] (CC-BY-4.0 license)
-- [JustasMasiulis/**xorstr**][3.4] (Apache-2.0 license)
+- [dcleblanc/**SafeInt**][3.0] (MIT license)
+- [fmtlib/**fmt**][3.1] (MIT license)
+- [microsoft/**Detours**][3.2] (MIT license)
+- [microsoft/**wil**][3.3] (CC-BY-4.0 license)
+- [processhacker/**phnt**][3.4] (CC-BY-4.0 license)
+- [zeux/**pugixml**][3.5] (MIT license)
 
-[3.0]: https://github.com/microsoft/Detours
-[3.1]: https://github.com/microsoft/GSL
-[3.2]: https://github.com/zeux/pugixml
-[3.3]: https://github.com/processhacker/phnt
-[3.4]: https://github.com/JustasMasiulis/xorstr
+[3.0]: https://github.com/dcleblanc/SafeInt
+[3.1]: https://github.com/fmtlib/fmt
+[3.2]: https://github.com/microsoft/Detours
+[3.3]: https://github.com/microsoft/wil
+[3.4]: https://github.com/processhacker/phnt
+[3.5]: https://github.com/zeux/pugixml

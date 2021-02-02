@@ -1,42 +1,8 @@
 #pragma once
-#include <phnt_windows.h>
-#include <phnt.h>
-#include <span>
-#include <vector>
-#include <ntmm.hpp>
 
-[[nodiscard]] inline std::vector<PVOID> duplicate_vftable(PVOID thisptr)
-{
-  std::vector<PVOID> v;
-  MEMORY_BASIC_INFORMATION mbi;
-  for ( auto vfptr = *reinterpret_cast<PVOID **>(thisptr); VirtualQuery(*vfptr, &mbi, sizeof(MEMORY_BASIC_INFORMATION)); ++vfptr ) {
-    if ( (mbi.Protect & nt::mm::page_execute_any) == 0 )
-      break;
-    v.emplace_back(*vfptr);
-  }
-  return v;
-}
+#include <cctype>
 
-struct patternbyte
-{
-  const unsigned char value;
-  const unsigned char mask;
-
-  patternbyte() : value(0), mask(0) {}
-  patternbyte(const unsigned char value, const unsigned char mask = 0xff) : value(value), mask(mask) {}
-
-  inline bool operator==(const unsigned char &rhs) const
-  {
-    return (rhs & mask) == (value & mask);
-  }
-
-  friend inline bool operator==(const unsigned char &lhs, const patternbyte &rhs)
-  {
-    return (lhs & rhs.mask) == (rhs.value & rhs.mask);
-  }
-};
-
-inline bool wildcard_eq(PCWSTR String, PCWSTR Pattern)
+inline bool FastWildCompareW(const wchar_t *String, const wchar_t *Pattern)
 {
   // Copyright 2018 IBM Corporation
   // 
@@ -51,13 +17,13 @@ inline bool wildcard_eq(PCWSTR String, PCWSTR Pattern)
   // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   // See the License for the specific language governing permissions and
   // limitations under the License.
-  //
+  
   // Compares two text strings.  Accepts '?' as a single-character wildcard.  
   // For each '*' wildcard, seeks out a matching sequence of any characters 
   // beyond it.  Otherwise compares the strings a character at a time. 
   //
-  PCWSTR pPatternSequence; // Points to prospective wild string match after '*'
-  PCWSTR pStringSequence;  // Points to prospective tame string match
+  const wchar_t *pPatternSequence; // Points to prospective wild string match after '*'
+  const wchar_t *pStringSequence;  // Points to prospective tame string match
 
   // Find a first wildcard, if one exists, and the beginning of any  
   // prospectively matching sequence after it.
