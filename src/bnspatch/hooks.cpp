@@ -309,7 +309,7 @@ DWORD WINAPI GetPrivateProfileStringW_hook(
         const auto section = nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header.VirtualAddress);
         const char name[] = ".?AVXmlReaderImpl@@";
         for ( auto ptr = section;
-          ptr + std::size(name) <= section + section_header.Misc.VirtualSize;
+          ptr + sizeof(TypeDescriptor) <= section + section_header.Misc.VirtualSize;
           ptr = (PUCHAR)(((ULONG_PTR)ptr + (alignof(TypeDescriptor) + 1)) & ~(alignof(TypeDescriptor) - 1)) ) {
           if ( !std::equal(std::begin(name), std::end(name), ptr + offsetof(TypeDescriptor, name)) )
             continue;
@@ -327,14 +327,14 @@ DWORD WINAPI GetPrivateProfileStringW_hook(
 
             const auto section2 = nt::rtl::image_rva_to_va<UCHAR>(nullptr, section_header2.VirtualAddress);
             for ( auto ptr2 = section2;
-              ptr2 + sizeof(ptd) <= section2 + section_header2.Misc.VirtualSize;
+              ptr2 + sizeof(_RTTICompleteObjectLocator) <= section2 + section_header2.Misc.VirtualSize;
               ptr2 = (PUCHAR)(((ULONG_PTR)ptr2 + (alignof(_RTTICompleteObjectLocator) + 1)) & ~(alignof(_RTTICompleteObjectLocator) - 1)) ) {
               if ( *(int *)(ptr2 + offsetof(_RTTICompleteObjectLocator, pTypeDescriptor)) != ptd )
                 continue;
 
               const auto col = (_RTTICompleteObjectLocator *)ptr2;
               for ( auto ptr3 = section2;
-                ptr3 + sizeof(col) <= section2 + section_header2.Misc.VirtualSize;
+                ptr3 + sizeof(_RTTICompleteObjectLocator *) <= section2 + section_header2.Misc.VirtualSize;
                 ptr3 = (PUCHAR)(((ULONG_PTR)ptr3 + (alignof(_RTTICompleteObjectLocator *) + 1)) & ~(alignof(_RTTICompleteObjectLocator *) - 1)) ) {
                 if ( *(_RTTICompleteObjectLocator **)ptr3 != col )
                   continue;
